@@ -2,8 +2,10 @@ package openwsdk
 
 import (
 	"fmt"
+	"github.com/blocktree/OpenWallet/common/file"
 	"github.com/blocktree/OpenWallet/hdkeystore"
 	"github.com/blocktree/OpenWallet/owtp"
+	"path/filepath"
 	"testing"
 )
 
@@ -54,7 +56,29 @@ func TestAPINode_GetSymbolList(t *testing.T) {
 
 func TestAPINode_CreateWallet(t *testing.T) {
 	api := testNewAPINode()
-	api.CreateWallet("jane", "90000001", hdkeystore.OpenwCoinTypePath, true,
+
+	keypath := filepath.Join("testkeys")
+
+	file.MkdirAll(keypath)
+
+	name := "gooaglag"
+	password := "1234qwer"
+
+	//随机生成keystore
+	key, _, err := hdkeystore.StoreHDKey(
+		keypath,
+		name,
+		password,
+		hdkeystore.StandardScryptN,
+		hdkeystore.StandardScryptP,
+	)
+
+	if err != nil {
+		t.Logf("unexpected error: %v\n", err)
+		return
+	}
+
+	api.CreateWallet(name, key.KeyID, hdkeystore.OpenwCoinTypePath, true,
 		func(status uint64, msg string, wallet *Wallet) {
 		if wallet != nil {
 			t.Logf("wallet: %+v\n", wallet)
@@ -63,7 +87,7 @@ func TestAPINode_CreateWallet(t *testing.T) {
 }
 
 func TestAPINode_FindAccountByWalletID(t *testing.T) {
-	walletID := "W5tsrnzFBVG1gJFgpugrDShB3QT1fqheCB"
+	walletID := "VysrzgpsLsgDpHM2KQMYuPY57fL3BAFU34"
 	api := testNewAPINode()
 	api.FindWalletByWalletID(walletID, true,
 		func(status uint64, msg string, wallet *Wallet) {

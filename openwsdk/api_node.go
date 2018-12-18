@@ -80,7 +80,7 @@ func (api APINode) BindAppDevice() error {
 }
 
 //GetSymbolList 获取主链列表
-func (api *APINode) GetSymbolList(offset, limit uint64, sync bool, reqFunc func(uint64, string, []*Symbol)) error {
+func (api *APINode) GetSymbolList(offset, limit uint64, sync bool, reqFunc func(status uint64, msg string, symbols []*Symbol)) error {
 
 	params := map[string]interface{}{
 		"appID":  api.config.AppID,
@@ -89,14 +89,14 @@ func (api *APINode) GetSymbolList(offset, limit uint64, sync bool, reqFunc func(
 	}
 
 	return api.node.Call(api.config.HostNodeID, "getSymbolList", params, sync, func(resp owtp.Response) {
-		result := resp.JsonData()
+		data := resp.JsonData()
 		symbols := make([]*Symbol, 0)
-		symbolArray := result.Get("Symbols").Array()
+		symbolArray := data.Get("Symbols").Array()
 		for _, s := range symbolArray {
-			var sym Symbol
-			err := json.Unmarshal([]byte(s.Raw), &sym)
+			var sym *Symbol
+			err := json.Unmarshal([]byte(s.Raw), sym)
 			if err == nil {
-				symbols = append(symbols, &sym)
+				symbols = append(symbols, sym)
 			}
 		}
 
@@ -105,7 +105,7 @@ func (api *APINode) GetSymbolList(offset, limit uint64, sync bool, reqFunc func(
 }
 
 //CreateWallet 创建钱包
-func (api *APINode) CreateWallet(alias, walletID, rootPath string, sync bool, reqFunc owtp.RequestFunc) error {
+func (api *APINode) CreateWallet(alias, walletID, rootPath string, sync bool, reqFunc func(status uint64, msg string, wallet *Wallet)) error {
 
 	params := map[string]interface{}{
 		"appID":    api.config.AppID,
@@ -115,5 +115,115 @@ func (api *APINode) CreateWallet(alias, walletID, rootPath string, sync bool, re
 		"isTrust":  0,
 	}
 
-	return api.node.Call(api.config.HostNodeID, "createWallet", params, sync, reqFunc)
+	return api.node.Call(api.config.HostNodeID, "createWallet", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		var wallet *Wallet
+		json.Unmarshal([]byte(data.Raw), wallet)
+		reqFunc(resp.Status, resp.Msg, wallet)
+	})
+}
+
+//FindWalletByWalletID 通过钱包ID获取钱包信息
+func (api *APINode) FindWalletByWalletID(walletID, sync bool, reqFunc func(status uint64, msg string, wallet *Wallet)) error {
+
+	params := map[string]interface{}{
+		"appID":    api.config.AppID,
+		"walletID": walletID,
+	}
+
+	return api.node.Call(api.config.HostNodeID, "findWalletByWalletID", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		var wallet *Wallet
+		json.Unmarshal([]byte(data.Raw), wallet)
+		reqFunc(resp.Status, resp.Msg, wallet)
+	})
+}
+
+//CreateAccount 创建资产账户
+func (api *APINode) CreateAccount(
+	alias string,
+	walletID string,
+	accountID string,
+	symbol string,
+	publicKey string,
+	accountIndex string,
+	hdPath string,
+	otherOwnerKeys []string,
+	reqSigs uint64,
+	sync bool,
+	reqFunc func(status uint64, msg string, account *Account, addresses []*Address)) error {
+
+	params := map[string]interface{}{
+		"appID":          api.config.AppID,
+		"alias":          alias,
+		"walletID":       walletID,
+		"accountID":      accountID,
+		"symbol":         symbol,
+		"publicKey":      publicKey,
+		"accountIndex":   accountIndex,
+		"hdPath":         hdPath,
+		"otherOwnerKeys": otherOwnerKeys,
+		"reqSigs":        reqSigs,
+		"isTrust":        0,
+	}
+
+	return api.node.Call(api.config.HostNodeID, "createAccount", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		var account *Account
+		json.Unmarshal([]byte(data.Get("account").Raw), account)
+
+		var addresses []*Address
+		addressArray := data.Get("address").Array()
+		for _, a := range addressArray {
+			var addr *Address
+			err := json.Unmarshal([]byte(a.Raw), addr)
+			if err == nil {
+				addresses = append(addresses, addr)
+			}
+		}
+
+		reqFunc(resp.Status, resp.Msg, account, addresses)
+	})
+}
+
+//FindAccountByAccountID 通过资产账户ID获取资产账户信息
+func (api *APINode) FindAccountByAccountID(accountID string, sync bool, reqFunc func(status uint64, msg string, account *Account)) error {
+
+	params := map[string]interface{}{
+		"appID":    api.config.AppID,
+		"accountID": accountID,
+	}
+
+	return api.node.Call(api.config.HostNodeID, "findAccountByAccountID", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		var account *Account
+		json.Unmarshal([]byte(data.Raw), account)
+		reqFunc(resp.Status, resp.Msg, account)
+	})
+}
+
+
+//FindAccountByWalletID 通过钱包ID获取资产账户列表信息
+func (api *APINode) FindAccountByWalletID(walletID string, sync bool, reqFunc func(status uint64, msg string, accounts []*Account)) error {
+
+	params := map[string]interface{}{
+		"appID":    api.config.AppID,
+		"walletID": walletID,
+	}
+
+	return api.node.Call(api.config.HostNodeID, "findAccountByWalletID", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+
+		var accounts []*Account
+		accountArray := data.Array()
+		for _, a := range accountArray {
+			var acc *Account
+			err := json.Unmarshal([]byte(a.Raw), acc)
+			if err == nil {
+				accounts = append(accounts, acc)
+			}
+		}
+
+		reqFunc(resp.Status, resp.Msg, accounts)
+	})
 }

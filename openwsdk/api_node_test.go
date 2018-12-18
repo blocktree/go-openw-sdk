@@ -2,6 +2,7 @@ package openwsdk
 
 import (
 	"fmt"
+	"github.com/blocktree/OpenWallet/hdkeystore"
 	"github.com/blocktree/OpenWallet/owtp"
 	"testing"
 )
@@ -48,5 +49,15 @@ func TestAPINode_GetSymbolList(t *testing.T) {
 			fmt.Printf("symbol: %+v\n", s)
 		}
 
+	})
+}
+
+func TestAPINode_CreateWallet(t *testing.T) {
+	api := testNewAPINode()
+	api.CreateWallet("jane", "90000001", hdkeystore.OpenwCoinTypePath, true,
+		func(status uint64, msg string, wallet *Wallet) {
+		if wallet != nil {
+			t.Logf("wallet: %+v\n", wallet)
+		}
 	})
 }

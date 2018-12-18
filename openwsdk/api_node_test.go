@@ -61,3 +61,14 @@ func TestAPINode_CreateWallet(t *testing.T) {
 		}
 	})
 }
+
+func TestAPINode_FindAccountByWalletID(t *testing.T) {
+	walletID := "W5tsrnzFBVG1gJFgpugrDShB3QT1fqheCB"
+	api := testNewAPINode()
+	api.FindWalletByWalletID(walletID, true,
+		func(status uint64, msg string, wallet *Wallet) {
+			if wallet != nil {
+				t.Logf("wallet: %+v\n", wallet)
+			}
+		})
+}

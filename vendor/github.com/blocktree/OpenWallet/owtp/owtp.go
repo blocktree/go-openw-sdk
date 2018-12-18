@@ -83,6 +83,10 @@ const (
 	FinishMethod = "internal_finish"
 )
 
+var (
+	Debug = true
+)
+
 //节点主配置 作为json解析工具
 type MainConfig struct {
 	Address     string

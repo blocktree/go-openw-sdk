@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+func init() {
+	owtp.Debug = false
+}
+
 type APINodeConfig struct {
 	Address         string           `json:"address"`
 	ConnectType     string           `json:"connectType"`
@@ -91,12 +95,12 @@ func (api *APINode) GetSymbolList(offset, limit uint64, sync bool, reqFunc func(
 	return api.node.Call(api.config.HostNodeID, "getSymbolList", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
 		symbols := make([]*Symbol, 0)
-		symbolArray := data.Get("Symbols").Array()
+		symbolArray := data.Get("symbols").Array()
 		for _, s := range symbolArray {
-			var sym *Symbol
-			err := json.Unmarshal([]byte(s.Raw), sym)
+			var sym Symbol
+			err := json.Unmarshal([]byte(s.Raw), &sym)
 			if err == nil {
-				symbols = append(symbols, sym)
+				symbols = append(symbols, &sym)
 			}
 		}
 
@@ -117,14 +121,14 @@ func (api *APINode) CreateWallet(alias, walletID, rootPath string, sync bool, re
 
 	return api.node.Call(api.config.HostNodeID, "createWallet", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
-		var wallet *Wallet
-		json.Unmarshal([]byte(data.Raw), wallet)
-		reqFunc(resp.Status, resp.Msg, wallet)
+		var wallet Wallet
+		json.Unmarshal([]byte(data.Raw), &wallet)
+		reqFunc(resp.Status, resp.Msg, &wallet)
 	})
 }
 
 //FindWalletByWalletID 通过钱包ID获取钱包信息
-func (api *APINode) FindWalletByWalletID(walletID, sync bool, reqFunc func(status uint64, msg string, wallet *Wallet)) error {
+func (api *APINode) FindWalletByWalletID(walletID string, sync bool, reqFunc func(status uint64, msg string, wallet *Wallet)) error {
 
 	params := map[string]interface{}{
 		"appID":    api.config.AppID,
@@ -133,9 +137,9 @@ func (api *APINode) FindWalletByWalletID(walletID, sync bool, reqFunc func(statu
 
 	return api.node.Call(api.config.HostNodeID, "findWalletByWalletID", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
-		var wallet *Wallet
-		json.Unmarshal([]byte(data.Raw), wallet)
-		reqFunc(resp.Status, resp.Msg, wallet)
+		var wallet Wallet
+		json.Unmarshal([]byte(data.Raw), &wallet)
+		reqFunc(resp.Status, resp.Msg, &wallet)
 	})
 }
 
@@ -169,20 +173,20 @@ func (api *APINode) CreateAccount(
 
 	return api.node.Call(api.config.HostNodeID, "createAccount", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
-		var account *Account
-		json.Unmarshal([]byte(data.Get("account").Raw), account)
+		var account Account
+		json.Unmarshal([]byte(data.Get("account").Raw), &account)
 
 		var addresses []*Address
 		addressArray := data.Get("address").Array()
 		for _, a := range addressArray {
-			var addr *Address
-			err := json.Unmarshal([]byte(a.Raw), addr)
+			var addr Address
+			err := json.Unmarshal([]byte(a.Raw), &addr)
 			if err == nil {
-				addresses = append(addresses, addr)
+				addresses = append(addresses, &addr)
 			}
 		}
 
-		reqFunc(resp.Status, resp.Msg, account, addresses)
+		reqFunc(resp.Status, resp.Msg, &account, addresses)
 	})
 }
 
@@ -196,9 +200,9 @@ func (api *APINode) FindAccountByAccountID(accountID string, sync bool, reqFunc 
 
 	return api.node.Call(api.config.HostNodeID, "findAccountByAccountID", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
-		var account *Account
-		json.Unmarshal([]byte(data.Raw), account)
-		reqFunc(resp.Status, resp.Msg, account)
+		var account Account
+		json.Unmarshal([]byte(data.Raw), &account)
+		reqFunc(resp.Status, resp.Msg, &account)
 	})
 }
 
@@ -217,10 +221,10 @@ func (api *APINode) FindAccountByWalletID(walletID string, sync bool, reqFunc fu
 		var accounts []*Account
 		accountArray := data.Array()
 		for _, a := range accountArray {
-			var acc *Account
-			err := json.Unmarshal([]byte(a.Raw), acc)
+			var acc Account
+			err := json.Unmarshal([]byte(a.Raw), &acc)
 			if err == nil {
-				accounts = append(accounts, acc)
+				accounts = append(accounts, &acc)
 			}
 		}
 

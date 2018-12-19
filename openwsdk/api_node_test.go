@@ -7,12 +7,13 @@ import (
 	"github.com/blocktree/OpenWallet/log"
 	"github.com/blocktree/OpenWallet/owtp"
 	"github.com/blocktree/go-owcrypt"
+	"github.com/google/uuid"
 	"path/filepath"
 	"testing"
 )
 
 func init() {
-	owtp.Debug = true
+	owtp.Debug = false
 }
 
 func testNewAPINode() *APINode {
@@ -36,6 +37,27 @@ func testNewAPINode() *APINode {
 
 	api := NewAPINode(config)
 	return api
+}
+
+func testGetLocalKey() (*hdkeystore.HDKey, error) {
+	keypath := filepath.Join("testkeys")
+	keystore := hdkeystore.NewHDKeystore(
+		keypath,
+		hdkeystore.StandardScryptN,
+		hdkeystore.StandardScryptP,
+	)
+
+	key, err := keystore.GetKey(
+		"VysrzgpsLsgDpHM2KQMYuPY57fL3BAFU34",
+		"gooaglag-VysrzgpsLsgDpHM2KQMYuPY57fL3BAFU34.key",
+		"1234qwer",
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return key, nil
 }
 
 func TestAPINode_BindAppDevice(t *testing.T) {
@@ -104,34 +126,34 @@ func TestAPINode_FindWalletByWalletID(t *testing.T) {
 
 func TestAPINode_CreateAccount(t *testing.T) {
 	api := testNewAPINode()
-	keypath := filepath.Join("testkeys")
-	keystore := hdkeystore.NewHDKeystore(
-		keypath,
-		hdkeystore.StandardScryptN,
-		hdkeystore.StandardScryptP,
-	)
 
-	symbol := &Symbol{}
-	symbol.Coin = "BTC"
-	symbol.Curve = int64(owcrypt.ECC_CURVE_SECP256K1)
-
-	key, err := keystore.GetKey(
-		"VysrzgpsLsgDpHM2KQMYuPY57fL3BAFU34",
-		"gooaglag-VysrzgpsLsgDpHM2KQMYuPY57fL3BAFU34.key",
-		"1234qwer",
-	)
-
+	key, err := testGetLocalKey()
 	if err != nil {
 		t.Logf("GetKey error: %v\n", err)
 		return
 	}
 
-	wallet := &Wallet{}
-	wallet.WalletID = key.KeyID
-	wallet.AccountIndex = -1
-	wallet.RootPath = key.RootPath
+	symbol := &Symbol{}
+	symbol.Coin = "LTC"
+	symbol.Curve = int64(owcrypt.ECC_CURVE_SECP256K1)
 
-	newacc, err := wallet.CreateAccount("newacc", symbol, key)
+	var findWallet *Wallet
+
+	api.FindWalletByWalletID(key.KeyID, true,
+		func(status uint64, msg string, wallet *Wallet) {
+
+			if status != owtp.StatusSuccess {
+				return
+			}
+
+			findWallet = wallet
+		})
+
+	if findWallet == nil {
+		return
+	}
+
+	newacc, err := findWallet.CreateAccount("newacc", symbol, key)
 	if err != nil {
 		t.Logf("CreateAccount unexpected error: %v\n", err)
 		return
@@ -210,5 +232,147 @@ func TestAPINode_FindAddressByAccountID(t *testing.T) {
 			for i, a := range addresses {
 				log.Infof("Address[%d]:%+v", i, a)
 			}
+		})
+}
+
+func testCreateTrade(
+	accountID string,
+	sid string,
+	coin Coin,
+	amount string,
+	address string,
+	feeRate string,
+) (*RawTransaction, error) {
+
+	var (
+		retRawTx *RawTransaction
+		err      error
+	)
+
+	api := testNewAPINode()
+	api.CreateTrade(accountID, sid, coin, amount, address, feeRate, "", true,
+		func(status uint64, msg string, rawTx *RawTransaction) {
+			if status != owtp.StatusSuccess {
+				err = fmt.Errorf(msg)
+				return
+			}
+
+			retRawTx = rawTx
+		})
+
+	return retRawTx, err
+}
+
+func testSubmitTrade(
+	rawTx *RawTransaction,
+) (*Transaction, error) {
+
+	var (
+		retTx *Transaction
+		err   error
+	)
+
+	api := testNewAPINode()
+	api.SubmitTrade(rawTx, true,
+		func(status uint64, msg string, rawTx *Transaction) {
+			if status != owtp.StatusSuccess {
+				err = fmt.Errorf(msg)
+				return
+			}
+
+			retTx = rawTx
+		})
+
+	return retTx, err
+}
+
+func TestAPINode_Send_LTC(t *testing.T) {
+	accountID := "Aa7Chh2MdaGDejHdCJZAaX7AwvGNmMEMry2kZZTq114a"
+	sid := uuid.New().String()
+	amount := "0.01"
+	address := "mkSfFCHPAaHAyx9gBokXQMGWmyRtzpk4JK"
+	feeRate := "0.001"
+
+	coin := Coin{
+		Symbol:     "LTC",
+		IsContract: 0,
+	}
+
+	rawTx, err := testCreateTrade(accountID, sid, coin, amount, address, feeRate)
+	if err != nil {
+		t.Logf("CreateTrade unexpected error: %v\n", err)
+		return
+	}
+	log.Infof("rawTx: %+v", rawTx)
+
+	key, err := testGetLocalKey()
+	if err != nil {
+		t.Logf("GetKey error: %v\n", err)
+		return
+	}
+
+	//签名交易单
+	err = SignRawTransaction(rawTx, key)
+	if err != nil {
+		t.Logf("SignRawTransaction unexpected error: %v\n", err)
+		return
+	}
+
+	log.Infof("signed rawTx: %+v", rawTx)
+
+	tx, err := testSubmitTrade(rawTx)
+
+	if err != nil {
+		t.Logf("SubmitTrade unexpected error: %v\n", err)
+		return
+	}
+	log.Infof("tx: %+v", tx)
+}
+
+func TestAPINode_FindTradeLog(t *testing.T) {
+	walletID := "VysrzgpsLsgDpHM2KQMYuPY57fL3BAFU34"
+	accountID := "Aa7Chh2MdaGDejHdCJZAaX7AwvGNmMEMry2kZZTq114a"
+	api := testNewAPINode()
+	api.FindTradeLog(walletID, accountID, "", "",
+		0, 0, 0, 1000, true,
+		func(status uint64, msg string, tx []*Transaction) {
+
+		})
+}
+
+func TestAPINode_GetContracts(t *testing.T) {
+	api := testNewAPINode()
+	api.GetContracts("ETH", 0, 1000, true,
+		func(status uint64, msg string, tokens []*TokenContract) {
+
+			for _, s := range tokens {
+				fmt.Printf("token: %+v\n", s)
+			}
+
+		})
+}
+
+func TestAPINode_GetTokenBalanceByAccount(t *testing.T) {
+	accountID := "Aa7Chh2MdaGDejHdCJZAaX7AwvGNmMEMry2kZZTq114a"
+	contractID := "rsD1RPmcpo33cnqobvX0hBi7Lex0mmN4RwXt1bLV6fs="
+	api := testNewAPINode()
+	api.GetTokenBalanceByAccount(accountID, contractID, true,
+		func(status uint64, msg string, balance string) {
+
+			log.Infof("balance: %s", balance)
+
+		})
+}
+
+
+
+func TestAPINode_GetFeeRate(t *testing.T) {
+	symbol := "BTC"
+	api := testNewAPINode()
+	api.GetFeeRate(symbol, true,
+		func(status uint64, msg string, symbol, feeRate, unit string) {
+
+			log.Infof("balance: %s %s/%s", feeRate, symbol, unit)
+
 		})
 }

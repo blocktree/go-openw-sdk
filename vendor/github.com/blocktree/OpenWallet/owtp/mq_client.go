@@ -21,12 +21,11 @@ import (
 	"fmt"
 	"github.com/blocktree/OpenWallet/log"
 	"github.com/gorilla/websocket"
+	"github.com/streadway/amqp"
 	"github.com/tidwall/gjson"
 	"net"
 	"sync"
-	"github.com/streadway/amqp"
 )
-
 
 //MQClient 基于mq的通信客户端
 type MQClient struct {
@@ -58,7 +57,7 @@ func MQDial(pid, url string, handler PeerHandler) (*MQClient, error) {
 	//if auth != nil && auth.EnableAuth() {
 	//	authURL = auth.ConnectAuth(url)
 	//}
-	log.Info("Connecting URL:", url)
+	log.Debug("Connecting URL:", url)
 
 	conn, err := amqp.Dial(url)
 	if err != nil {
@@ -88,12 +87,12 @@ func NewMQClient(pid string, conn *amqp.Connection, channel *amqp.Channel, hande
 	}
 
 	client := &MQClient{
-		pid:  pid,
-		conn: conn,
-		channel:channel,
-		send: make(chan []byte, MaxMessageSize),
-		auth: auth,
-		done: done,
+		pid:     pid,
+		conn:    conn,
+		channel: channel,
+		send:    make(chan []byte, MaxMessageSize),
+		auth:    auth,
+		done:    done,
 	}
 
 	client.isConnect = true
@@ -127,7 +126,6 @@ func (c *MQClient) IsConnected() bool {
 func (c *MQClient) GetConfig() map[string]string {
 	return c.config
 }
-
 
 //Close 关闭连接
 func (c *MQClient) Close() error {
@@ -169,7 +167,7 @@ func (c *MQClient) RemoteAddr() net.Addr {
 		return nil
 	}
 	addr := &MqAddr{
-		NetWork:c.config["address"],
+		NetWork: c.config["address"],
 	}
 	return addr
 }
@@ -271,13 +269,13 @@ func (c *MQClient) readPump() {
 	queueName := c.config["receiveQueueName"]
 	exchange := c.config["exchange"]
 	//首次启动声明创建通道
-	c.channel.QueueDeclare(queueName,true,false,false,false,nil)
-	c.channel.QueueBind(queueName,queueName,exchange,false,nil)
+	c.channel.QueueDeclare(queueName, true, false, false, false, nil)
+	c.channel.QueueBind(queueName, queueName, exchange, false, nil)
 
 	messages, err := c.channel.Consume(queueName, "", true, false, false, false, nil)
 
-	if err!=nil{
-		log.Error("readPump: ",err)
+	if err != nil {
+		log.Error("readPump: ", err)
 	}
 
 	forever := make(chan bool)
@@ -286,7 +284,7 @@ func (c *MQClient) readPump() {
 		//fmt.Println(*msgs)
 		for d := range messages {
 			packet := NewDataPacket(gjson.ParseBytes(d.Body))
-			fmt.Printf("packet：%s",string(d.Body))
+			fmt.Printf("packet：%s", string(d.Body))
 			//开一个goroutine处理消息
 			go c.handler.OnPeerNewDataPacketReceived(c, packet)
 		}
@@ -299,7 +297,6 @@ func (c *MQClient) readPump() {
 		<-c.channel.NotifyClose(errChan)
 		forever <- false
 	}()
-
 
 	<-forever
 

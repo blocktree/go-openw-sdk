@@ -36,4 +36,3 @@ func (v Int) String() string {
 	string := strconv.FormatInt(int64(v), 10)
 	return string
 }
-

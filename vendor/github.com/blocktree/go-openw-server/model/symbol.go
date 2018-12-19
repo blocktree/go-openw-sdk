@@ -8,6 +8,7 @@ type OwSymbol struct {
 	Ctype    int64  `json:"ctype" bson:"ctype"`
 	Name     string `json:"name" bson:"name"`
 	Coin     string `json:"coin" bson:"coin"`
+	Curve    int64  `json:"curve" bson:"curve"`
 	Resume   string `json:"resume" bson:"resume"`
 	Icon     string `json:"icon" bson:"icon"`
 	Orderno  int64  `json:"orderno" bson:"orderno"`

@@ -2,8 +2,8 @@ package model
 
 import (
 	"github.com/blocktree/OpenWallet/common"
-	"github.com/blocktree/OpenWallet/openwallet"
 	"github.com/blocktree/OpenWallet/crypto"
+	"github.com/blocktree/OpenWallet/openwallet"
 	owkeychain "github.com/blocktree/go-owcdrivers/owkeychain"
 )
 

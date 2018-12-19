@@ -88,7 +88,7 @@ func (api APINode) BindAppDevice() error {
 }
 
 //GetSymbolList 获取主链列表
-func (api *APINode) GetSymbolList(offset, limit uint64, sync bool, reqFunc func(status uint64, msg string, symbols []*Symbol)) error {
+func (api *APINode) GetSymbolList(offset, limit int, sync bool, reqFunc func(status uint64, msg string, symbols []*Symbol)) error {
 
 	params := map[string]interface{}{
 		"appID":  api.config.AppID,
@@ -296,5 +296,168 @@ func (api *APINode) FindAddressByAccountID(accountID string, sync bool, reqFunc 
 		}
 
 		reqFunc(resp.Status, resp.Msg, addresses)
+	})
+}
+
+//CreateTrade 创建转账交易订单
+func (api *APINode) CreateTrade(
+	accountID string,
+	sid string,
+	coin Coin,
+	amount string,
+	address string,
+	feeRate string,
+	memo string,
+	sync bool,
+	reqFunc func(status uint64, msg string, rawTx *RawTransaction),
+) error {
+
+	params := map[string]interface{}{
+		"appID":     api.config.AppID,
+		"accountID": accountID,
+		"sid":       sid,
+		"coin":      coin,
+		"amount":    amount,
+		"address":   address,
+		"feeRate":   feeRate,
+		"memo":      memo,
+	}
+
+	return api.node.Call(HostNodeID, "createTrade", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		jsonRawTx := data.Get("rawTx")
+
+		var rawTx RawTransaction
+		json.Unmarshal([]byte(jsonRawTx.Raw), &rawTx)
+
+		reqFunc(resp.Status, resp.Msg, &rawTx)
+	})
+}
+
+//SubmitTrade 广播转账交易订单
+func (api *APINode) SubmitTrade(
+	rawTx *RawTransaction,
+	sync bool,
+	reqFunc func(status uint64, msg string, tx *Transaction),
+) error {
+
+	params := map[string]interface{}{
+		"appID": api.config.AppID,
+		"rawTx": rawTx,
+	}
+
+	return api.node.Call(HostNodeID, "submitTrade", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+
+		var tx Transaction
+		json.Unmarshal([]byte(data.Raw), &tx)
+
+		reqFunc(resp.Status, resp.Msg, &tx)
+	})
+}
+
+//FindTradeLog 获取转账交易订单日志
+func (api *APINode) FindTradeLog(
+	walletID string,
+	accountID string,
+	txid string,
+	address string,
+	isTmp int,
+	orderType int,
+	offset int,
+	limit int,
+	sync bool,
+	reqFunc func(status uint64, msg string, tx []*Transaction),
+) error {
+
+	params := map[string]interface{}{
+		"appID": api.config.AppID,
+	}
+
+	return api.node.Call(HostNodeID, "findTradeLog", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+
+		var txs []*Transaction
+		array := data.Array()
+		for _, a := range array {
+			var tx Transaction
+			err := json.Unmarshal([]byte(a.Raw), &tx)
+			if err == nil {
+				txs = append(txs, &tx)
+			}
+		}
+
+		reqFunc(resp.Status, resp.Msg, txs)
+	})
+}
+
+//GetContracts 获取智能合约
+func (api *APINode) GetContracts(
+	symbol string,
+	offset, limit int,
+	sync bool,
+	reqFunc func(status uint64, msg string, tokenContract []*TokenContract)) error {
+
+	params := map[string]interface{}{
+		"appID":  api.config.AppID,
+		"symbol": symbol,
+		"offset": offset,
+		"limit":  limit,
+	}
+
+	return api.node.Call(HostNodeID, "getContracts", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		tokens := make([]*TokenContract, 0)
+		array := data.Get("symbols").Array()
+		for _, s := range array {
+			var t TokenContract
+			err := json.Unmarshal([]byte(s.Raw), &t)
+			if err == nil {
+				tokens = append(tokens, &t)
+			}
+		}
+
+		reqFunc(resp.Status, resp.Msg, tokens)
+	})
+}
+
+//GetTokenBalanceByAccount 获取token余额接口
+func (api *APINode) GetTokenBalanceByAccount(
+	accountID string,
+	contractID string,
+	sync bool,
+	reqFunc func(status uint64, msg string, balance string)) error {
+
+	params := map[string]interface{}{
+		"appID":      api.config.AppID,
+		"accountID":  accountID,
+		"contractID": contractID,
+	}
+
+	return api.node.Call(HostNodeID, "getTokenBalanceByAccount", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		balance := data.Get("balance").String()
+		reqFunc(resp.Status, resp.Msg, balance)
+	})
+}
+
+
+//GetFeeRate 获取推荐手续费率接口
+func (api *APINode) GetFeeRate(
+	symbol string,
+	sync bool,
+	reqFunc func(status uint64, msg string, symbol, feeRate, unit string)) error {
+
+	params := map[string]interface{}{
+		"appID":      api.config.AppID,
+		"symbol":  symbol,
+	}
+
+	return api.node.Call(HostNodeID, "getFeeRate", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		symbol := data.Get("symbol").String()
+		feeRate := data.Get("feeRate").String()
+		unit := data.Get("unit").String()
+		reqFunc(resp.Status, resp.Msg, symbol, feeRate, unit)
 	})
 }

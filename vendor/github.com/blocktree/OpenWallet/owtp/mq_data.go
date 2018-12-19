@@ -15,15 +15,14 @@
 
 package owtp
 
-
 type MqAddr struct {
 	NetWork string
 }
 
-func (m *MqAddr)Network() string {
+func (m *MqAddr) Network() string {
 	return m.NetWork
 }
 
-func (m *MqAddr)String() string {
+func (m *MqAddr) String() string {
 	return m.NetWork
 }

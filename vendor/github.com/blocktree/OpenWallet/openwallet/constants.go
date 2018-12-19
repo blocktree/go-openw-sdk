@@ -20,7 +20,7 @@ type WalletType = uint
 
 const (
 	WalletTypeSingle = 0
-	WalletTypeMulti = 1
+	WalletTypeMulti  = 1
 )
 
 const (
@@ -33,7 +33,4 @@ const (
 
 	/// 公钥字节长度（未压缩）
 	PublicKeyLengthUncompressed = 65
-
 )
-
-

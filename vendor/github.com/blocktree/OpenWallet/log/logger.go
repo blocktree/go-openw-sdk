@@ -35,7 +35,7 @@ func newLogger(prefix string) *logger {
 }
 
 // SetPrefix
-func (bl *logger)SetPrefix(prefix string) {
+func (bl *logger) SetPrefix(prefix string) {
 	if len(prefix) > 0 {
 		bl.prefix = fmt.Sprintf("[%s] ", prefix)
 	}
@@ -43,62 +43,58 @@ func (bl *logger)SetPrefix(prefix string) {
 
 // Emergency Log EMERGENCY level message.
 func (bl *logger) Emergency(format string, v ...interface{}) {
-	bl.BeeLogger.Emergency(bl.prefix + format, v...)
+	bl.BeeLogger.Emergency(bl.prefix+format, v...)
 }
 
 // Alert Log ALERT level message.
 func (bl *logger) Alert(format string, v ...interface{}) {
-	bl.BeeLogger.Alert(bl.prefix + format, v...)
+	bl.BeeLogger.Alert(bl.prefix+format, v...)
 }
 
 // Critical Log CRITICAL level message.
 func (bl *logger) Critical(format string, v ...interface{}) {
-	bl.BeeLogger.Critical(bl.prefix + format, v...)
+	bl.BeeLogger.Critical(bl.prefix+format, v...)
 }
 
 // Error Log ERROR level message.
 func (bl *logger) Error(format string, v ...interface{}) {
-	bl.BeeLogger.Error(bl.prefix + format, v...)
+	bl.BeeLogger.Error(bl.prefix+format, v...)
 }
 
 // Warning Log WARNING level message.
 func (bl *logger) Warning(format string, v ...interface{}) {
-	bl.BeeLogger.Warning(bl.prefix + format, v...)
+	bl.BeeLogger.Warning(bl.prefix+format, v...)
 }
 
 // Notice Log NOTICE level message.
 func (bl *logger) Notice(format string, v ...interface{}) {
-	bl.BeeLogger.Notice(bl.prefix + format, v...)
+	bl.BeeLogger.Notice(bl.prefix+format, v...)
 }
 
 // Informational Log INFORMATIONAL level message.
 func (bl *logger) Informational(format string, v ...interface{}) {
-	bl.BeeLogger.Informational(bl.prefix + format, v...)
+	bl.BeeLogger.Informational(bl.prefix+format, v...)
 }
 
 // Debug Log DEBUG level message.
 func (bl *logger) Debug(format string, v ...interface{}) {
-	bl.BeeLogger.Debug(bl.prefix + format, v...)
+	bl.BeeLogger.Debug(bl.prefix+format, v...)
 }
 
 // Warn Log WARN level message.
 // compatibility alias for Warning()
 func (bl *logger) Warn(format string, v ...interface{}) {
-	bl.BeeLogger.Warn(bl.prefix + format, v...)
+	bl.BeeLogger.Warn(bl.prefix+format, v...)
 }
 
 // Info Log INFO level message.
 // compatibility alias for Informational()
 func (bl *logger) Info(format string, v ...interface{}) {
-	bl.BeeLogger.Info(bl.prefix + format, v...)
+	bl.BeeLogger.Info(bl.prefix+format, v...)
 }
 
 // Trace Log TRACE level message.
 // compatibility alias for Debug()
 func (bl *logger) Trace(format string, v ...interface{}) {
-	bl.BeeLogger.Trace(bl.prefix + format, v...)
+	bl.BeeLogger.Trace(bl.prefix+format, v...)
 }
-
-
-
-

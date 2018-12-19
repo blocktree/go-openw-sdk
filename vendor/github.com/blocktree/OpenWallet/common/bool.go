@@ -15,7 +15,6 @@
 
 package common
 
-
 func BoolToUInt(b bool) uint64 {
 	if b {
 		return 1

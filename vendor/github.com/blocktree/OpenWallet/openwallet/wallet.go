@@ -99,6 +99,7 @@ func (base *WalletDAIBase) GetAddressList(offset, limit int, cols ...interface{}
 func (base *WalletDAIBase) SetAddressExtParam(address string, key string, val interface{}) error {
 	return fmt.Errorf("not implement")
 }
+
 //获取地址的扩展字段
 func (base *WalletDAIBase) GetAddressExtParam(address string, key string) (interface{}, error) {
 	return nil, fmt.Errorf("not implement")

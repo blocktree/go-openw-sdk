@@ -24,9 +24,9 @@ import (
 
 type SmartContract struct {
 	ContractID string `json:"contractID" storm:"id"` //计算ID：base64(sha256({symbol}_{address})) 主链symbol
-	Symbol     string `json:"symbol"`	//主币的symbol
+	Symbol     string `json:"symbol"`                //主币的symbol
 	Address    string `json:"address"`
-	Token      string `json:"token"`    //合约的symbol
+	Token      string `json:"token"` //合约的symbol
 	Protocol   string `json:"protocol"`
 	Name       string `json:"name"`
 	Decimals   uint64 `json:"decimals"`

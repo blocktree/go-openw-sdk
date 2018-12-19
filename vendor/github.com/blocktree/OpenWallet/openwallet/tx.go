@@ -95,10 +95,10 @@ type RawTransaction struct {
 
 	/* 以下字段作为备注，实际生成Transaction时填充相关字段 */
 
-	Fees        string                     `json:"fees"`       //手续费
-	TxAmount    string                     `json:"txAmount"`   //交易单实际对账户发生的数量变化
-	TxFrom      []string                   `json:"txFrom"`     //格式："地址":"数量"，备注订单使用
-	TxTo        []string                   `json:"txTo"`       //格式："地址":"数量"，备注订单使用
+	Fees     string   `json:"fees"`     //手续费
+	TxAmount string   `json:"txAmount"` //交易单实际对账户发生的数量变化
+	TxFrom   []string `json:"txFrom"`   //格式："地址":"数量"，备注订单使用
+	TxTo     []string `json:"txTo"`     //格式："地址":"数量"，备注订单使用
 }
 
 //KeySignature 签名信息

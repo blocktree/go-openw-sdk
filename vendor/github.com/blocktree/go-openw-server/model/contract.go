@@ -21,13 +21,12 @@ type OwContract struct {
 // 中心数据库contract转成openwallet.SmartContract
 func (contract OwContract) ToSmartContract() openwallet.SmartContract {
 	return openwallet.SmartContract{
-		ContractID:contract.ContractID,
-		Symbol:contract.Symbol,
-		Address:contract.Address,
-		Token:contract.Token,
-		Protocol:contract.Protocol,
-		Name:contract.Name,
-		Decimals:uint64(contract.Decimals),
+		ContractID: contract.ContractID,
+		Symbol:     contract.Symbol,
+		Address:    contract.Address,
+		Token:      contract.Token,
+		Protocol:   contract.Protocol,
+		Name:       contract.Name,
+		Decimals:   uint64(contract.Decimals),
 	}
 }
-

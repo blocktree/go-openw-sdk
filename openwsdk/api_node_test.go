@@ -26,7 +26,7 @@ func testNewAPINode() *APINode {
 	//--------------- NODE ID ---------------
 	//G6s787hxsrGyfhaFss8VNaEimXo22qWdRkFQA953eziz
 
-	cert, _ := owtp.NewCertificate("APt4potcFAqr6aSh5XdNPgWPtvExLnRvQP9KXYWfM5rR", "")
+	cert, _ := owtp.NewCertificate(owtp.RandomPrivateKey(), "")
 
 	config := &APINodeConfig{
 		AppID:  "b4b1962d415d4d30ec71b28769fda585",
@@ -36,6 +36,8 @@ func testNewAPINode() *APINode {
 	}
 
 	api := NewAPINode(config)
+	api.BindAppDevice()
+
 	return api
 }
 

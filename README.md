@@ -86,4 +86,36 @@ $ xgo -h
    
 基于OWTP协议库，封装所有与openw-server钱包服务API交互方法。用于集成到go语言开发下的应用方系统。
 
+### 使用教程
+
+```go
+
+    //随机生成一个通信证书
+    cert, _ := owtp.NewCertificate(owtp.RandomPrivateKey(), "")
+
+    //配置APISDK参数
+	config := &APINodeConfig{
+		AppID:  "b4b1962d415d4d30ec71b28769fda585",
+		AppKey: "8c511cb683041f3589419440fab0a7b7710907022b0d035baea9001d529ca72f",
+		Host:   "47.52.191.89",
+		Cert:   cert,
+	}
+
+    //创建API实例
+	api := NewAPINode(config)
+	
+	//App授权当前通信设备
+	api.BindAppDevice()
+	
+	//查询币种列表，sync = true 同步线程，false 异步线程
+	api.GetSymbolList(0, 1000, true, func(status uint64, msg string, symbols []*Symbol) {
+
+		for _, s := range symbols {
+			fmt.Printf("symbol: %+v\n", s)
+		}
+
+	})
+
+```
+
 ---

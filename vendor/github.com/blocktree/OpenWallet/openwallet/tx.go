@@ -38,6 +38,8 @@ type TransactionDecoder interface {
 	VerifyRawTransaction(wrapper WalletDAI, rawTx *RawTransaction) error
 	//GetRawTransactionFeeRate 获取交易单的费率
 	GetRawTransactionFeeRate() (feeRate string, unit string, err error)
+	//CreateSummaryRawTransaction 创建汇总交易，返回原始交易单数组
+	CreateSummaryRawTransaction(wrapper WalletDAI, sumRawTx *SummaryRawTransaction) ([]*RawTransaction, error)
 }
 
 //TransactionDecoderBase 实现TransactionDecoder的基类
@@ -67,6 +69,11 @@ func (decoder *TransactionDecoderBase) VerifyRawTransaction(wrapper *WalletWrapp
 //GetRawTransactionFeeRate 获取交易单的费率
 func (decoder *TransactionDecoderBase) GetRawTransactionFeeRate() (feeRate string, unit string, err error) {
 	return "", "", fmt.Errorf("not implement")
+}
+
+//CreateSummaryRawTransaction 创建汇总交易
+func (decoder *TransactionDecoderBase) CreateSummaryRawTransaction(wrapper WalletDAI, sumRawTx *SummaryRawTransaction) ([]*RawTransaction, error) {
+	return nil, fmt.Errorf("CreateSummaryRawTransaction not implement")
 }
 
 //RawTransaction 原始交易单
@@ -133,6 +140,16 @@ type Transaction struct {
 	ConfirmTime int64    `json:"confirmTime"` //@required
 	Status      string   `json:"status"`      //链上状态
 	Reason      string   `json:"reason"`      //失败原因
+}
+
+//SummaryRawTransaction 汇总交易
+type SummaryRawTransaction struct {
+	Coin            Coin           `json:"coin"`            //@required 区块链类型标识
+	FeeRate         string         `json:"feeRate"`         //自定义费率
+	SummaryAddress  string         `json:"summaryAddress"`  //@required 目的地址:转账数量
+	MinTransfer     string         `json:"minTransfer"`     //最低转账额，默认0
+	RetainedBalance string         `json:"retainedBalance"` //账户的地址保留余额，默认0
+	Account         *AssetsAccount `json:"account"`         //@required 创建交易单的账户
 }
 
 //GenTransactionWxID 生成交易单的WxID，格式为 base64(sha1(tx_{txID}_{symbol}_contractID}))

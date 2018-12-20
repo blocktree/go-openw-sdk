@@ -21,8 +21,11 @@ type PublicKey []byte
 //字节流
 type Bytes []byte
 
+
 func BytesToPublicKey(b []byte) PublicKey {
 	var pk PublicKey
 	copy(pk, b)
 	return pk
 }
+
+

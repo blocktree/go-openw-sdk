@@ -452,11 +452,11 @@ func (node *OWTPNode) Close() {
 }
 
 //CallSync 同步请求
-func (node *OWTPNode) CallSync(
+func  (node *OWTPNode) CallSync(
 	pid string,
 	method string,
 	params interface{},
-) (*Response, error) {
+	) (*Response, error) {
 
 	var (
 		err      error
@@ -471,7 +471,7 @@ func (node *OWTPNode) CallSync(
 		return nil, err
 	}
 
-	response := <-respChan
+	response := <- respChan
 	return &response, nil
 }
 

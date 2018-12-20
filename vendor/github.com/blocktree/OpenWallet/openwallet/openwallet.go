@@ -30,3 +30,4 @@ type hookfunc func() error
 var (
 	hooks = make([]hookfunc, 0) //hook function slice to store the hookfunc
 )
+

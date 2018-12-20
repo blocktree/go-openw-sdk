@@ -3,14 +3,14 @@ package file
 
 import (
 	"errors"
-	"fmt"
 	"io"
-	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"log"
+	"io/ioutil"
+	"fmt"
 )
 
 // FileInfo describes a file. It's a wrapper around os.FileInfo.
@@ -221,6 +221,7 @@ func Delete(file string) bool {
 	}
 }
 
+
 // IsUserFile ignores editor backups, hidden files and folders/symlinks.
 func IsUserFile(fi os.FileInfo) bool {
 	// Skip editor backups and UNIX-style hidden files.
@@ -233,6 +234,7 @@ func IsUserFile(fi os.FileInfo) bool {
 	}
 	return true
 }
+
 
 // TODO: implement those functions
 func isReadable(mode os.FileMode) bool { return mode&0400 != 0 }

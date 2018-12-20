@@ -3,27 +3,86 @@ package openwsdk
 import (
 	"fmt"
 	"github.com/blocktree/OpenWallet/hdkeystore"
-	"github.com/blocktree/go-openw-server/model"
+	"github.com/blocktree/OpenWallet/openwallet"
 )
 
 type Wallet struct {
-	model.OwWallet
+	AppID        string `json:"appID" bson:"appID"`
+	WalletID     string `json:"walletID" bson:"walletID"`
+	Alias        string `json:"alias" bson:"alias"`
+	IsTrust      int64  `json:"isTrust" bson:"isTrust"`
+	PasswordType int64  `json:"passwordType" bson:"passwordType"`
+	Password     string `json:"password" bson:"password"`
+	AuthKey      string `json:"authKey" bson:"authKey"`
+	RootPath     string `json:"rootPath" bson:"rootPath"`
+	AccountIndex int64  `json:"accountIndex" bson:"accountIndex"`
+	Keystore     string `json:"keystore" bson:"keystore"`
+	Applytime    int64  `json:"applytime" bson:"applytime"`
+	Dealstate    int64  `json:"dealstate" bson:"dealstate"`
 }
 
 type Symbol struct {
-	model.OwSymbol
+	Name     string `json:"name" bson:"name"`
+	Coin     string `json:"coin" bson:"coin"`
+	Curve    int64  `json:"curve" bson:"curve"`
+	Orderno  int64  `json:"orderno" bson:"orderno"`
+	Confirm  int64  `json:"confirm" bson:"confirm"`
+	Decimals int64  `json:"decimals" bson:"decimals"`
 }
 
 type Account struct {
-	model.OwAccount
+	AppID           string   `json:"appID" bson:"appID"`
+	WalletID        string   `json:"walletID" bson:"walletID"`
+	AccountID       string   `json:"accountID" bson:"accountID"`
+	Alias           string   `json:"alias" bson:"alias"`
+	Symbol          string   `json:"symbol" bson:"symbol"`
+	OtherOwnerKeys  []string `json:"otherOwnerKeys" bson:"otherOwnerKeys"`
+	ReqSigs         int64    `json:"reqSigs" bson:"reqSigs"`
+	IsTrust         int64    `json:"isTrust" bson:"isTrust"`
+	Password        string   `json:"password" bson:"password"`
+	PublicKey       string   `json:"publicKey" bson:"publicKey"`
+	HdPath          string   `json:"hdPath" bson:"hdPath"`
+	ContractAddress string   `json:"contractAddress" bson:"contractAddress"`
+	AccountIndex    int64    `json:"accountIndex" bson:"accountIndex"`
+	Balance         string   `json:"balance" bson:"balance"`
+	ExtInfo         string   `json:"extInfo" bson:"extInfo"`
+	AddressIndex    int64    `json:"addressIndex" bson:"addressIndex"`
+	Applytime       int64    `json:"applytime" bson:"applytime"`
+	Dealstate       int64    `json:"dealstate" bson:"dealstate"`
 }
 
 type Address struct {
-	model.OwAddress
+	AppID     string                 `json:"appID" bson:"appID"`
+	WalletID  string                 `json:"walletID" bson:"walletID"`
+	AccountID string                 `json:"accountID" bson:"accountID"`
+	Alias     string                 `json:"alias" bson:"alias"`
+	Symbol    string                 `json:"symbol" bson:"symbol"`
+	AddrIndex int64                  `json:"addrIndex" bson:"addrIndex"`
+	Address   string                 `json:"address" bson:"address"`
+	Balance   string                 `json:"balance" bson:"balance"`
+	IsMemo    int64                  `json:"isMemo" bson:"isMemo"`
+	Memo      string                 `json:"memo" bson:"memo"`
+	WatchOnly int64                  `json:"watchOnly" bson:"watchOnly"`
+	PublicKey string                 `json:"publicKey" bson:"publicKey"`
+	CreatedAt int64                  `json:"createdAt" bson:"createdAt"`
+	Num       int64                  `json:"num" bson:"num"`
+	Tag       string                 `json:"tag" bson:"tag"`
+	HdPath    string                 `json:"hdPath" bson:"hdPath"`
+	IsChange  int64                  `json:"isChange" bson:"isChange"`
+	Applytime int64                  `json:"applytime" bson:"applytime"`
+	Dealstate int64                  `json:"dealstate" bson:"dealstate"`
 }
 
+
+
 type TokenContract struct {
-	model.OwContract
+	ContractID string `json:"contractID" bson:"contractID"`
+	Symbol     string `json:"symbol" bson:"symbol"` //主链标记
+	Name       string `json:"name" bson:"name"`
+	Decimals   int64  `json:"decimals" bson:"decimals"`
+	Address    string `json:"address" bson:"address"`
+	Token      string `json:"token" bson:"token"` //token标记
+	Protocol   string `json:"protocol" bson:"protocol"`
 }
 
 type Coin struct {
@@ -57,7 +116,39 @@ type KeySignature struct {
 }
 
 type Transaction struct {
-	model.OwTradeLog
+	AppID        string                 `json:"appID" bson:"appID"`
+	WalletID     string                 `json:"walletID" bson:"walletID"`
+	AccountID    string                 `json:"accountID" bson:"accountID"`
+	Sid          string                 `json:"sid" bson:"sid"`
+	Txid         string                 `json:"txid" bson:"txid"`
+	Wxid         string                 `json:"wxid" bson:"wxid"`
+	FromAddress  []string               `json:"fromAddress" bson:"fromAddress"`
+	FromAddressV []string               `json:"fromAddressV" bson:"fromAddressV"`
+	ToAddress    []string               `json:"toAddress" bson:"toAddress"`
+	ToAddressV   []string               `json:"toAddressV" bson:"toAddressV"`
+	Amount       string                 `json:"amount" bson:"amount"`
+	Fees         string                 `json:"fees" bson:"fees"`
+	Type         int64                  `json:"type" bson:"type"`
+	Symbol       string                 `json:"symbol" bson:"symbol"`
+	ContractID   string                 `json:"contractID" bson:"contractID"`
+	IsContract   int64                  `json:"isContract" bson:"isContract"`
+	Confirm      int64                  `json:"confirm" bson:"confirm"`
+	BlockHash    string                 `json:"blockHash" bson:"blockHash"`
+	BlockHeight  int64                  `json:"blockHeight" bson:"blockHeight"`
+	IsMemo       int64                  `json:"isMemo" bson:"isMemo"`
+	IsMain       int64                  `json:"isMain" bson:"isMain"`
+	Memo         string                 `json:"memo" bson:"memo"`
+	Applytime    int64                  `json:"applytime" bson:"applytime"`
+	SubmitTime   int64                  `json:"submitTime" bson:"submitTime"`
+	ConfirmTime  int64                  `json:"confirmTime" bson:"confirmTime"`
+	Decimals     int64                  `json:"decimals" bson:"decimals"`
+	Succtime     int64                  `json:"succtime" bson:"succtime"`
+	Dealstate    int64                  `json:"dealstate" bson:"dealstate"`
+	Notifystate  int64                  `json:"notifystate" bson:"notifystate"`
+	ContractID2  string                 `json:"contractID2" bson:"contractID2"`
+	ContractName string                 `json:"contractName" bson:"contractName"`
+	ContractAddr string                 `json:"contractAddr" bson:"contractAddr"`
+	Contract     map[string]interface{} `json:"contract" bson:"contract"`
 }
 
 func (wallet *Wallet) CreateAccount(alias string, symbol *Symbol, key *hdkeystore.HDKey) (*Account, error) {
@@ -82,7 +173,7 @@ func (wallet *Wallet) CreateAccount(alias string, symbol *Symbol, key *hdkeystor
 
 	account.PublicKey = childKey.GetPublicKey().OWEncode()
 	account.AccountIndex = newAccIndex
-	account.AccountID = account.GetAccountID()
+	account.AccountID = openwallet.GenAccountID(account.PublicKey)
 	account.AddressIndex = -1
 	account.WalletID = wallet.WalletID
 

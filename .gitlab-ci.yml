@@ -5,7 +5,7 @@ test-staging:
     variables:
         GIT_SUBMODULE_STRATEGY: recursive
     image: golang
-    stage: build
+    stage: test
     tags:
         - go-runner
     before_script:

@@ -1,0 +1,9 @@
+[submodule "vendor/github.com/blocktree/go-owcrypt"]
+	path = vendor/github.com/blocktree/go-owcrypt
+	url = ../../blocktree/go-owcrypt.git
+[submodule "vendor/github.com/blocktree/go-owcdrivers"]
+	path = vendor/github.com/blocktree/go-owcdrivers
+	url = ../../blocktree/go-owcdrivers.git
+[submodule "vendor/github.com/blocktree/OpenWallet"]
+	path = vendor/github.com/blocktree/OpenWallet
+	url = ../../blocktree/openwallet.git

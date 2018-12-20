@@ -7,3 +7,6 @@
 [submodule "vendor/github.com/blocktree/OpenWallet"]
 	path = vendor/github.com/blocktree/OpenWallet
 	url = ../../blocktree/openwallet.git
+[submodule "vendor/github.com/astaxie/beego"]
+	path = vendor/github.com/astaxie/beego
+	url = https://github.com/astaxie/beego.git

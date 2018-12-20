@@ -344,6 +344,7 @@ func (api *APINode) SubmitTrade(
 	params := map[string]interface{}{
 		"appID": api.config.AppID,
 		"rawTx": rawTx,
+		"coin": rawTx.Coin,
 	}
 
 	return api.node.Call(HostNodeID, "submitTrade", params, sync, func(resp owtp.Response) {

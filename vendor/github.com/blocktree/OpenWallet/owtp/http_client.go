@@ -325,8 +325,8 @@ func (c *HTTPClient) writeResponse(data DataPacket) error {
 		return fmt.Errorf("responseWriter is nil")
 	}
 	w := c.responseWriter
-	w.Header().Set("Content-type", "application/json")
-	_, err = w.Write(respBytes)
+	w.Header().Set("Content-type","application/json")
+	_,err = w.Write(respBytes)
 	if err != nil {
 		return fmt.Errorf("responseWriter is close")
 	}
@@ -357,7 +357,7 @@ func (c *HTTPClient) readPump() {
 
 	//if Debug {
 
-	//log.Debug("readPump: ", string(s))
+		//log.Debug("readPump: ", string(s))
 	//}
 
 	packet := NewDataPacket(gjson.ParseBytes(s))

@@ -16,7 +16,7 @@
 package openwallet
 
 type Blockchain struct {
-	Blocks     uint64
-	Headers    uint64
+	Blocks  uint64
+	Headers uint64
 	ScanHeight uint64
 }

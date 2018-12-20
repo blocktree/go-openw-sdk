@@ -16,8 +16,8 @@
 package common
 
 import (
-	"fmt"
 	"time"
+	"fmt"
 )
 
 func ToISO8601(t ...time.Time) string {

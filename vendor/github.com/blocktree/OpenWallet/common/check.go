@@ -15,6 +15,7 @@
 
 package common
 
+
 import (
 	"regexp"
 )
@@ -50,8 +51,8 @@ var (
 	nicknameRegexp    = regexp.MustCompile(nicknamePattern)
 	usernameRegexp    = regexp.MustCompile(usernamePattern)
 	mailRegexp        = regexp.MustCompile(mailPattern)
-	numberRegexp      = regexp.MustCompile(numberPattern)
-	realNumberRegexp  = regexp.MustCompile(realNumberPattern)
+	numberRegexp        = regexp.MustCompile(numberPattern)
+	realNumberRegexp        = regexp.MustCompile(realNumberPattern)
 )
 
 // 检验是否为合法的中国手机号, 不是那么太精细
@@ -145,6 +146,7 @@ func IsNumberString(str string) bool {
 	return numberRegexp.MatchString(str)
 }
 
+
 //IsRealNumber 是否实数值
 func IsRealNumber(b []byte) bool {
 	if len(b) == 0 { // x@x.xx
@@ -160,3 +162,4 @@ func IsRealNumberString(str string) bool {
 	}
 	return realNumberRegexp.MatchString(str)
 }
+

@@ -16,14 +16,14 @@
 package openwallet
 
 import (
-	"fmt"
 	"github.com/asdine/storm"
+	"fmt"
 )
 
 type StormDB struct {
 	*storm.DB
 	FileName string
-	Opened   bool
+	Opened bool
 }
 
 //OpenStormDB
@@ -39,7 +39,7 @@ func OpenStormDB(filename string, stormOptions ...func(*storm.Options) error) (*
 	stormDB := &StormDB{
 		FileName: filename,
 		DB:       db,
-		Opened:   true,
+		Opened: true,
 	}
 
 	return stormDB, nil
@@ -54,3 +54,4 @@ func (db *StormDB) Close() error {
 	db.Opened = false
 	return nil
 }
+

@@ -21,8 +21,6 @@ test-staging:
         - cd $GO_PROJECT_PATH
         - echo $(pwd)
         - ls
-        - ls $(pwd)/vendor/github.com/blocktree/
-        - go test openwsdk/api_node_test.go
-        - go test openwsdk/model_test.go
+        - go test ./openwsdk
     environment:
         name: staging

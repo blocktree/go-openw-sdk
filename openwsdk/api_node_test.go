@@ -32,7 +32,8 @@ func testNewAPINode() *APINode {
 		AppID:  "b4b1962d415d4d30ec71b28769fda585",
 		AppKey: "8c511cb683041f3589419440fab0a7b7710907022b0d035baea9001d529ca72f",
 		Host:   "47.52.191.89",
-		Cert:   cert,
+		//Host: "192.168.27.181:8422",
+		Cert: cert,
 	}
 
 	api := NewAPINode(config)
@@ -87,16 +88,22 @@ func TestAPINode_CreateWallet(t *testing.T) {
 	file.MkdirAll(keypath)
 
 	name := "gooaglag"
-	password := "1234qwer"
+	//password := "1234qwer"
 
 	//随机生成keystore
-	key, _, err := hdkeystore.StoreHDKey(
-		keypath,
-		name,
-		password,
-		hdkeystore.StandardScryptN,
-		hdkeystore.StandardScryptP,
-	)
+	//key, _, err := hdkeystore.StoreHDKey(
+	//	keypath,
+	//	name,
+	//	password,
+	//	hdkeystore.StandardScryptN,
+	//	hdkeystore.StandardScryptP,
+	//)
+
+	key, err := testGetLocalKey()
+	if err != nil {
+		t.Logf("GetKey error: %v\n", err)
+		return
+	}
 
 	if err != nil {
 		t.Logf("unexpected error: %v\n", err)
@@ -267,25 +274,27 @@ func testCreateTrade(
 
 func testSubmitTrade(
 	rawTx *RawTransaction,
-) (*Transaction, error) {
+) ([]*Transaction, []*FailedRawTransaction, error) {
 
 	var (
-		retTx *Transaction
-		err   error
+		retTx     []*Transaction
+		retFailed []*FailedRawTransaction
+		err       error
 	)
 
 	api := testNewAPINode()
 	api.SubmitTrade(rawTx, true,
-		func(status uint64, msg string, rawTx *Transaction) {
+		func(status uint64, msg string, successTx []*Transaction, failedRawTxs []*FailedRawTransaction) {
 			if status != owtp.StatusSuccess {
 				err = fmt.Errorf(msg)
 				return
 			}
 
-			retTx = rawTx
+			retTx = successTx
+			retFailed = failedRawTxs
 		})
 
-	return retTx, err
+	return retTx, retFailed, err
 }
 
 func TestAPINode_Send_LTC(t *testing.T) {
@@ -297,7 +306,7 @@ func TestAPINode_Send_LTC(t *testing.T) {
 
 	coin := Coin{
 		Symbol:     "LTC",
-		IsContract: 0,
+		IsContract: false,
 	}
 
 	rawTx, err := testCreateTrade(accountID, sid, coin, amount, address, feeRate)
@@ -322,13 +331,25 @@ func TestAPINode_Send_LTC(t *testing.T) {
 
 	log.Infof("signed rawTx: %+v", rawTx)
 
-	tx, err := testSubmitTrade(rawTx)
-
+	success, fail, err := testSubmitTrade(rawTx)
 	if err != nil {
 		t.Logf("SubmitTrade unexpected error: %v\n", err)
 		return
 	}
-	log.Infof("tx: %+v", tx)
+
+	log.Info("============== success ==============")
+
+	for _, tx := range success {
+		log.Infof("tx: %+v", tx)
+	}
+
+	log.Info("")
+
+	log.Info("============== fail ==============")
+
+	for _, tx := range fail {
+		log.Infof("tx: %+v", tx.Reason)
+	}
 }
 
 func TestAPINode_FindTradeLog(t *testing.T) {
@@ -365,8 +386,6 @@ func TestAPINode_GetTokenBalanceByAccount(t *testing.T) {
 
 		})
 }
-
-
 
 func TestAPINode_GetFeeRate(t *testing.T) {
 	symbol := "BTC"

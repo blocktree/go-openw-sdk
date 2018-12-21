@@ -123,7 +123,7 @@
 			"revisionTime": "2018-12-19T07:41:55Z"
 		},
 		{
-			"checksumSHA1": "ny2gurBWmZOvPuQs73Eayz+ui+k=",
+			"checksumSHA1": "8aBAAumMau2UlsbAb3xBs1aa73w=",
 			"path": "github.com/blocktree/OpenWallet/openwallet",
 			"revision": "8857229aa58e32e4bf0740345e4c9e849041252c",
 			"revisionTime": "2018-12-19T07:41:55Z"
@@ -149,14 +149,14 @@
 		{
 			"checksumSHA1": "qCX4I+U9CKxxFsqQKLud1zmjvXU=",
 			"path": "github.com/blocktree/go-owcdrivers/btcTransaction",
-			"revision": "936d77e40c743f27f1940b34b8f69949d91a14a4",
-			"revisionTime": "2018-12-12T06:58:25Z"
+			"revision": "50a924111216ab3fa9873ac2724bdf10b6da501e",
+			"revisionTime": "2018-12-19T08:43:49Z"
 		},
 		{
 			"checksumSHA1": "zNBfduGfBphytOH15V/6lzUiSFI=",
 			"path": "github.com/blocktree/go-owcdrivers/owkeychain",
-			"revision": "936d77e40c743f27f1940b34b8f69949d91a14a4",
-			"revisionTime": "2018-12-12T06:58:25Z"
+			"revision": "50a924111216ab3fa9873ac2724bdf10b6da501e",
+			"revisionTime": "2018-12-19T08:43:49Z"
 		},
 		{
 			"checksumSHA1": "JOWsvX+ruAd8mlqTlrfNHjJsn4I=",

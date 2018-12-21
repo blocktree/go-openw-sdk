@@ -338,22 +338,41 @@ func (api *APINode) CreateTrade(
 func (api *APINode) SubmitTrade(
 	rawTx *RawTransaction,
 	sync bool,
-	reqFunc func(status uint64, msg string, tx *Transaction),
+	reqFunc func(status uint64, msg string, successTx []*Transaction, failedRawTxs []*FailedRawTransaction),
 ) error {
 
 	params := map[string]interface{}{
 		"appID": api.config.AppID,
-		"rawTx": rawTx,
-		"coin": rawTx.Coin,
+		"rawTx": []*RawTransaction{
+			rawTx,
+		},
 	}
 
 	return api.node.Call(HostNodeID, "submitTrade", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
+		failedRawTxs := make([]*FailedRawTransaction, 0)
+		failedArray := data.Get("failure").Array()
+		for _, failed := range failedArray {
+			var rawTx RawTransaction
+			json.Unmarshal([]byte(failed.Get("rawTx").Raw), &rawTx)
+			failedRawTx := &FailedRawTransaction{
+				Reason: failed.Get("error").String(),
+				RawTx:  &rawTx,
+			}
+			failedRawTxs = append(failedRawTxs, failedRawTx)
+		}
 
-		var tx Transaction
-		json.Unmarshal([]byte(data.Raw), &tx)
+		var txs []*Transaction
+		successArray := data.Get("success").Array()
+		for _, a := range successArray {
+			var tx Transaction
+			err := json.Unmarshal([]byte(a.Raw), &tx)
+			if err == nil {
+				txs = append(txs, &tx)
+			}
+		}
 
-		reqFunc(resp.Status, resp.Msg, &tx)
+		reqFunc(resp.Status, resp.Msg, txs, failedRawTxs)
 	})
 }
 
@@ -442,7 +461,6 @@ func (api *APINode) GetTokenBalanceByAccount(
 	})
 }
 
-
 //GetFeeRate 获取推荐手续费率接口
 func (api *APINode) GetFeeRate(
 	symbol string,
@@ -450,8 +468,8 @@ func (api *APINode) GetFeeRate(
 	reqFunc func(status uint64, msg string, symbol, feeRate, unit string)) error {
 
 	params := map[string]interface{}{
-		"appID":      api.config.AppID,
-		"symbol":  symbol,
+		"appID":  api.config.AppID,
+		"symbol": symbol,
 	}
 
 	return api.node.Call(HostNodeID, "getFeeRate", params, sync, func(resp owtp.Response) {

@@ -300,7 +300,7 @@ func testSubmitTrade(
 func TestAPINode_Send_LTC(t *testing.T) {
 	accountID := "Aa7Chh2MdaGDejHdCJZAaX7AwvGNmMEMry2kZZTq114a"
 	sid := uuid.New().String()
-	amount := "0.01"
+	amount := "0.1"
 	address := "mkSfFCHPAaHAyx9gBokXQMGWmyRtzpk4JK"
 	feeRate := "0.001"
 

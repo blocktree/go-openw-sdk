@@ -36,10 +36,10 @@ type APINode struct {
 
 //NewAPINode 创建API节点
 func NewAPINode(config *APINodeConfig) *APINode {
-	connectCfg := make(map[string]string)
-	connectCfg["address"] = config.Host
-	connectCfg["connectType"] = owtp.HTTP
-	connectCfg["enableSignature"] = "1"
+	connectCfg := owtp.ConnectConfig{}
+	connectCfg.Address = config.Host
+	connectCfg.ConnectType = owtp.HTTP
+	//connectCfg.EnableSignature = "1"
 
 	node := owtp.NewOWTPNode(config.Cert, 0, 0)
 	node.Connect(HostNodeID, connectCfg)
@@ -479,4 +479,9 @@ func (api *APINode) GetFeeRate(
 		unit := data.Get("unit").String()
 		reqFunc(resp.Status, resp.Msg, symbol, feeRate, unit)
 	})
+}
+
+
+func (api *APINode) GetNofitfy(ctx *owtp.Context) {
+	
 }

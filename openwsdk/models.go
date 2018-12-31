@@ -6,6 +6,14 @@ import (
 	"github.com/blocktree/OpenWallet/openwallet"
 )
 
+type CallbackNode struct {
+	NodeID             string `json:"nodeID"`             //@required 节点ID
+	Address            string `json:"address"`            //@required 连接IP地址
+	ConnectType        string `json:"connectType"`        //@required 连接方式
+	EnableKeyAgreement bool   `json:"enableKeyAgreement"` //是否开启owtp协议协商密码
+	EnableSSL          bool   `json:"enableSSL"`          //是否开启链接SSL，https，wss
+}
+
 type Wallet struct {
 	AppID        string `json:"appID" bson:"appID"`
 	WalletID     string `json:"walletID" bson:"walletID"`

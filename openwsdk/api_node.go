@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/blocktree/OpenWallet/crypto"
 	"github.com/blocktree/OpenWallet/hdkeystore"
+	"github.com/blocktree/OpenWallet/log"
 	"github.com/blocktree/OpenWallet/owtp"
 	"time"
 )
@@ -13,18 +14,26 @@ const (
 	HostNodeID = "openw-server"
 )
 
+const (
+	/* 回调模式 */
+	CallbackModeCurrentConnection = 1 //当前连接模式，长连接可以用当前连接，接收推送
+	CallbackModeNewConnection     = 2 //新建连接模式，短连接可以采用建立回调服务接口接收推送
+)
+
 func init() {
 	owtp.Debug = false
 	//initAssetAdapter()
 }
 
 type APINodeConfig struct {
-	Host   string           `json:"host"`
-	AppID  string           `json:"appid"`
-	AppKey string           `json:"appkey"`
-	Cert   owtp.Certificate `json:"cert"`
-	//ConnectType     string           `json:"connectType"`
-	//EnableSignature bool             `json:"enableSignature"`
+	Host               string           `json:"host"`
+	AppID              string           `json:"appid"`
+	AppKey             string           `json:"appkey"`
+	ConnectType        string           `json:"connectType"`
+	EnableKeyAgreement bool             `json:"enableKeyAgreement"`
+	EnableSSL          bool             `json:"enableSSL"`
+	EnableSignature    bool             `json:"enableSignature"`
+	Cert               owtp.Certificate `json:"cert"`
 	//HostNodeID string           `json:"hostNodeID"`
 }
 
@@ -36,18 +45,73 @@ type APINode struct {
 
 //NewAPINode 创建API节点
 func NewAPINode(config *APINodeConfig) *APINode {
-	connectCfg := make(map[string]string)
-	connectCfg["address"] = config.Host
-	connectCfg["connectType"] = owtp.HTTP
-	connectCfg["enableSignature"] = "1"
-
-	node := owtp.NewOWTPNode(config.Cert, 0, 0)
+	connectCfg := owtp.ConnectConfig{}
+	connectCfg.Address = config.Host
+	connectCfg.ConnectType = config.ConnectType
+	connectCfg.EnableSSL = config.EnableSSL
+	connectCfg.EnableSignature = config.EnableSignature
+	node := owtp.NewNode(owtp.NodeConfig{
+		Cert: config.Cert,
+	})
 	node.Connect(HostNodeID, connectCfg)
 	api := APINode{
 		node:   node,
 		config: config,
 	}
+
+	//开启协商密码
+	if config.EnableKeyAgreement {
+		if err := node.KeyAgreement(HostNodeID, "aes"); err != nil {
+			log.Error(err)
+			return nil
+		}
+	}
+
 	return &api
+}
+
+//Subscribe 订阅
+func (api *APINode) Subscribe(subscriptions []int, callbackMode int, callbackNode CallbackNode) error {
+
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+
+	//http不能用当前连接模式
+	if callbackMode == CallbackModeCurrentConnection {
+		if api.config.ConnectType != owtp.Websocket {
+			return fmt.Errorf("%s can not use [SubscribeModeCurrentConnection]", api.config.ConnectType)
+		}
+	}
+
+	params := map[string]interface{}{
+		"subscriptions": subscriptions,
+		"callbackMode":  callbackMode,
+		"callbackNode":  callbackNode,
+	}
+
+	response, err := api.node.CallSync(callbackNode.NodeID, "subscribe", params)
+	if err != nil {
+		return err
+	}
+
+	if response.Status == owtp.StatusSuccess {
+		return nil
+	} else {
+		return fmt.Errorf("[%d]%s", response.Status, response.Msg)
+	}
+
+	return nil
+
+}
+
+//SetSubscriptionsHandler 设置订阅内容的处理器
+func (api *APINode) SetSubscriptionsHandler(handler owtp.HandlerFunc) error {
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+	api.node.HandleFunc("handleSubscriptions", handler)
+	return nil
 }
 
 //signAppDevice 生成登记节点的签名
@@ -60,7 +124,11 @@ func (api *APINode) signAppDevice(appID, nodID, appkey string, accessTime int64)
 
 //BindAppDevice 绑定通信节点
 //绑定节点ID成功，才能获得授权通信
-func (api APINode) BindAppDevice() error {
+func (api *APINode) BindAppDevice() error {
+
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
 
 	nodeID := api.config.Cert.ID()
 	accessTime := time.Now().UnixNano()
@@ -90,6 +158,10 @@ func (api APINode) BindAppDevice() error {
 //GetSymbolList 获取主链列表
 func (api *APINode) GetSymbolList(offset, limit int, sync bool, reqFunc func(status uint64, msg string, symbols []*Symbol)) error {
 
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+
 	params := map[string]interface{}{
 		"appID":  api.config.AppID,
 		"offset": offset,
@@ -115,6 +187,10 @@ func (api *APINode) GetSymbolList(offset, limit int, sync bool, reqFunc func(sta
 //CreateWallet 创建钱包
 func (api *APINode) CreateWallet(alias, walletID string, sync bool, reqFunc func(status uint64, msg string, wallet *Wallet)) error {
 
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+
 	params := map[string]interface{}{
 		"appID":    api.config.AppID,
 		"alias":    alias,
@@ -133,7 +209,9 @@ func (api *APINode) CreateWallet(alias, walletID string, sync bool, reqFunc func
 
 //FindWalletByWalletID 通过钱包ID获取钱包信息
 func (api *APINode) FindWalletByWalletID(walletID string, sync bool, reqFunc func(status uint64, msg string, wallet *Wallet)) error {
-
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
 	params := map[string]interface{}{
 		"appID":    api.config.AppID,
 		"walletID": walletID,
@@ -152,7 +230,9 @@ func (api *APINode) CreateNormalAccount(
 	accountParam *Account,
 	sync bool,
 	reqFunc func(status uint64, msg string, account *Account, addresses []*Address)) error {
-
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
 	params := map[string]interface{}{
 		"appID":        api.config.AppID,
 		"alias":        accountParam.Alias,
@@ -187,7 +267,9 @@ func (api *APINode) CreateNormalAccount(
 
 //FindAccountByAccountID 通过资产账户ID获取资产账户信息
 func (api *APINode) FindAccountByAccountID(accountID string, sync bool, reqFunc func(status uint64, msg string, account *Account)) error {
-
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
 	params := map[string]interface{}{
 		"appID":     api.config.AppID,
 		"accountID": accountID,
@@ -203,7 +285,9 @@ func (api *APINode) FindAccountByAccountID(accountID string, sync bool, reqFunc 
 
 //FindAccountByWalletID 通过钱包ID获取资产账户列表信息
 func (api *APINode) FindAccountByWalletID(walletID string, sync bool, reqFunc func(status uint64, msg string, accounts []*Account)) error {
-
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
 	params := map[string]interface{}{
 		"appID":    api.config.AppID,
 		"walletID": walletID,
@@ -233,7 +317,9 @@ func (api *APINode) CreateAddress(
 	count uint64,
 	sync bool,
 	reqFunc func(status uint64, msg string, addresses []*Address)) error {
-
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
 	params := map[string]interface{}{
 		"appID":     api.config.AppID,
 		"walletID":  walletID,
@@ -260,7 +346,9 @@ func (api *APINode) CreateAddress(
 
 //FindAddressByAddress 通获取具体交易地址信息
 func (api *APINode) FindAddressByAddress(address string, sync bool, reqFunc func(status uint64, msg string, address *Address)) error {
-
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
 	params := map[string]interface{}{
 		"appID":   api.config.AppID,
 		"address": address,
@@ -276,7 +364,9 @@ func (api *APINode) FindAddressByAddress(address string, sync bool, reqFunc func
 
 //FindAccountByWalletID 通过资产账户ID获取交易地址列表
 func (api *APINode) FindAddressByAccountID(accountID string, sync bool, reqFunc func(status uint64, msg string, addresses []*Address)) error {
-
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
 	params := map[string]interface{}{
 		"appID":     api.config.AppID,
 		"accountID": accountID,
@@ -311,7 +401,9 @@ func (api *APINode) CreateTrade(
 	sync bool,
 	reqFunc func(status uint64, msg string, rawTx *RawTransaction),
 ) error {
-
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
 	params := map[string]interface{}{
 		"appID":     api.config.AppID,
 		"accountID": accountID,
@@ -340,7 +432,9 @@ func (api *APINode) SubmitTrade(
 	sync bool,
 	reqFunc func(status uint64, msg string, successTx []*Transaction, failedRawTxs []*FailedRawTransaction),
 ) error {
-
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
 	params := map[string]interface{}{
 		"appID": api.config.AppID,
 		"rawTx": []*RawTransaction{
@@ -389,7 +483,9 @@ func (api *APINode) FindTradeLog(
 	sync bool,
 	reqFunc func(status uint64, msg string, tx []*Transaction),
 ) error {
-
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
 	params := map[string]interface{}{
 		"appID": api.config.AppID,
 	}
@@ -417,7 +513,9 @@ func (api *APINode) GetContracts(
 	offset, limit int,
 	sync bool,
 	reqFunc func(status uint64, msg string, tokenContract []*TokenContract)) error {
-
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
 	params := map[string]interface{}{
 		"appID":  api.config.AppID,
 		"symbol": symbol,
@@ -447,7 +545,9 @@ func (api *APINode) GetTokenBalanceByAccount(
 	contractID string,
 	sync bool,
 	reqFunc func(status uint64, msg string, balance string)) error {
-
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
 	params := map[string]interface{}{
 		"appID":      api.config.AppID,
 		"accountID":  accountID,
@@ -466,7 +566,9 @@ func (api *APINode) GetFeeRate(
 	symbol string,
 	sync bool,
 	reqFunc func(status uint64, msg string, symbol, feeRate, unit string)) error {
-
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
 	params := map[string]interface{}{
 		"appID":  api.config.AppID,
 		"symbol": symbol,

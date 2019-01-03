@@ -153,6 +153,7 @@ type SummaryRawTransaction struct {
 	AddressStartIndex int            `json:"addressStartIndex"` //汇总账户地址开始位置
 	AddressLimit      int            `json:"addressLimit"`      //汇总账户地址控制数量
 	Confirms          uint64         `json:"confirms"`          //汇总的未花交易大于确认数
+	//IgnoreAddresses   []string       `json:"ignoreAddresses"`   //要忽略的地址
 }
 
 //GenTransactionWxID 生成交易单的WxID，格式为 base64(sha1(tx_{txID}_{symbol}_contractID}))

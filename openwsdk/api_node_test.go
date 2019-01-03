@@ -33,7 +33,10 @@ func testNewAPINode() *APINode {
 		AppKey: "8c511cb683041f3589419440fab0a7b7710907022b0d035baea9001d529ca72f",
 		Host:   "47.52.191.89",
 		//Host: "192.168.27.181:8422",
-		Cert: cert,
+		Cert:               cert,
+		ConnectType:        owtp.HTTP,
+		EnableSignature:    true,
+		EnableKeyAgreement: true,
 	}
 
 	api := NewAPINode(config)
@@ -300,7 +303,7 @@ func testSubmitTrade(
 func TestAPINode_Send_LTC(t *testing.T) {
 	accountID := "Aa7Chh2MdaGDejHdCJZAaX7AwvGNmMEMry2kZZTq114a"
 	sid := uuid.New().String()
-	amount := "0.01"
+	amount := "0.1"
 	address := "mkSfFCHPAaHAyx9gBokXQMGWmyRtzpk4JK"
 	feeRate := "0.001"
 

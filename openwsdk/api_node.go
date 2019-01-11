@@ -7,6 +7,7 @@ import (
 	"github.com/blocktree/OpenWallet/hdkeystore"
 	"github.com/blocktree/OpenWallet/log"
 	"github.com/blocktree/OpenWallet/owtp"
+	"sync"
 	"time"
 )
 
@@ -39,8 +40,10 @@ type APINodeConfig struct {
 
 //APINode APINode通信节点
 type APINode struct {
-	node   *owtp.OWTPNode
-	config *APINodeConfig
+	mu        sync.RWMutex //读写锁
+	node      *owtp.OWTPNode
+	config    *APINodeConfig
+	observers map[OpenwNotificationObject]bool //观察者
 }
 
 //NewAPINode 创建API节点
@@ -67,11 +70,14 @@ func NewAPINode(config *APINodeConfig) *APINode {
 		}
 	}
 
+	api.node.HandleFunc("subscribeToAccount", api.subscribeToAccount)
+	api.node.HandleFunc("subscribeToTrade", api.subscribeToTrade)
+
 	return &api
 }
 
 //Subscribe 订阅
-func (api *APINode) Subscribe(subscriptions []int, callbackMode int, callbackNode CallbackNode) error {
+func (api *APINode) Subscribe(callbackMode int, callbackNode CallbackNode) error {
 
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
@@ -82,12 +88,21 @@ func (api *APINode) Subscribe(subscriptions []int, callbackMode int, callbackNod
 		if api.config.ConnectType != owtp.Websocket {
 			return fmt.Errorf("%s can not use [SubscribeModeCurrentConnection]", api.config.ConnectType)
 		}
+	} else {
+		//开启监听
+		log.Infof("%s start to listen [%s] connection...", callbackNode.Address, callbackNode.ConnectType)
+		api.node.Listen(owtp.ConnectConfig{
+			Address:     callbackNode.Address,
+			ConnectType: callbackNode.ConnectType,
+		})
+
 	}
 
 	params := map[string]interface{}{
-		"subscriptions": subscriptions,
-		"callbackMode":  callbackMode,
-		"callbackNode":  callbackNode,
+		//"subscriptions": subscriptions,
+		"appID":        api.config.AppID,
+		"callbackMode": callbackMode,
+		"callbackNode": callbackNode,
 	}
 
 	response, err := api.node.CallSync(callbackNode.NodeID, "subscribe", params)
@@ -98,19 +113,41 @@ func (api *APINode) Subscribe(subscriptions []int, callbackMode int, callbackNod
 	if response.Status == owtp.StatusSuccess {
 		return nil
 	} else {
+		//关闭临时开启的端口
+		log.Infof("%s close listener [%s] connection...", callbackNode.Address, callbackNode.ConnectType)
+		api.node.CloseListener(callbackNode.ConnectType)
 		return fmt.Errorf("[%d]%s", response.Status, response.Msg)
 	}
 
 	return nil
-
 }
 
-//SetSubscriptionsHandler 设置订阅内容的处理器
-func (api *APINode) SetSubscriptionsHandler(handler owtp.HandlerFunc) error {
-	if api == nil {
-		return fmt.Errorf("APINode is not inited")
+//AddObserver 添加观测者
+func (api *APINode) AddObserver(obj OpenwNotificationObject) error {
+	api.mu.Lock()
+
+	defer api.mu.Unlock()
+
+	if obj == nil {
+		return nil
 	}
-	api.node.HandleFunc("handleSubscriptions", handler)
+	if _, exist := api.observers[obj]; exist {
+		//已存在，不重复订阅
+		return nil
+	}
+
+	api.observers[obj] = true
+
+	return nil
+}
+
+//RemoveObserver 移除观测者
+func (api *APINode) RemoveObserver(obj OpenwNotificationObject) error {
+	api.mu.Lock()
+	defer api.mu.Unlock()
+
+	delete(api.observers, obj)
+
 	return nil
 }
 

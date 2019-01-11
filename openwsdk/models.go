@@ -30,7 +30,7 @@ type Wallet struct {
 }
 
 type Symbol struct {
-	Name     string `json:"name" bson:"name"`
+	Name     string `json:"name" bson:"name" storm:"id"`
 	Coin     string `json:"coin" bson:"coin"`
 	Curve    int64  `json:"curve" bson:"curve"`
 	Orderno  int64  `json:"orderno" bson:"orderno"`

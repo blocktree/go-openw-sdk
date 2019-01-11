@@ -89,17 +89,17 @@ var (
 
 //节点主配置 作为json解析工具
 type ConnectConfig struct {
-	Address            string `json:"address"`            //@required 连接IP地址
-	ConnectType        string `json:"connectType"`        //@required 连接方式
-	EnableSignature    bool   `json:"enableSignature"`    //是否开启owtp协议内签名，防重放
-	Account            string `json:"account"`            //mq账户名
-	Password           string `json:"password"`           //mq账户密码
-	Exchange           string `json:"exchange"`           //mq需要字段
-	WriteQueueName     string `json:"writeQueueName"`     //mq写入通道名
-	ReadQueueName      string `json:"readQueueName"`      //mq读取通道名
-	EnableSSL          bool   `json:"enableSSL"`          //是否开启链接SSL，https，wss
-	ReadBufferSize     int    `json:"readBufferSize"`     //socket读取缓存
-	WriteBufferSize    int    `json:"writeBufferSize"`    //socket写入缓存
+	Address         string `json:"address"`         //@required 连接IP地址
+	ConnectType     string `json:"connectType"`     //@required 连接方式
+	EnableSignature bool   `json:"enableSignature"` //是否开启owtp协议内签名，防重放
+	Account         string `json:"account"`         //mq账户名
+	Password        string `json:"password"`        //mq账户密码
+	Exchange        string `json:"exchange"`        //mq需要字段
+	WriteQueueName  string `json:"writeQueueName"`  //mq写入通道名
+	ReadQueueName   string `json:"readQueueName"`   //mq读取通道名
+	EnableSSL       bool   `json:"enableSSL"`       //是否开启链接SSL，https，wss
+	ReadBufferSize  int    `json:"readBufferSize"`  //socket读取缓存
+	WriteBufferSize int    `json:"writeBufferSize"` //socket写入缓存
 }
 
 //节点主配置 作为json解析工具
@@ -304,6 +304,16 @@ func (node *OWTPNode) Listening(connectType string) bool {
 	return exist
 }
 
+//CloseListener 关闭监听
+func (node *OWTPNode) CloseListener(connectType string) {
+	if l, exist := node.listeners[connectType]; exist {
+		l.Close()
+		node.mu.Lock()
+		delete(node.listeners, connectType)
+		node.mu.Unlock()
+	}
+}
+
 //Connect 建立长连接
 func (node *OWTPNode) Connect(pid string, config ConnectConfig) error {
 
@@ -325,6 +335,18 @@ func (node *OWTPNode) connect(pid string, config ConnectConfig) (Peer, error) {
 	enableSSL := config.EnableSSL
 	readBufferSize := config.ReadBufferSize
 	writeBufferSize := config.WriteBufferSize
+
+	//检查是否已经连接服务
+	peer = node.GetOnlinePeer(pid)
+	if peer != nil && peer.IsConnected() {
+		//如果地址不一致，先关闭节点
+		if addr != peer.ConnectConfig().Address || connectType != peer.ConnectConfig().ConnectType {
+			node.ClosePeer(pid)
+		} else {
+			//log.Debugf("peer[%s] has connected", peer.PID())
+			return peer, nil
+		}
+	}
 
 	if len(addr) == 0 {
 		return nil, fmt.Errorf("address must contain by config")
@@ -521,6 +543,23 @@ func (node *OWTPNode) Close() {
 	node.Stop <- struct{}{}
 
 	//node.client.close()
+}
+
+//ConnectAndCall 通过连接配置并直接请求，如果节点在线使用当前连接请求
+func (node *OWTPNode) ConnectAndCall(
+	pid string,
+	config ConnectConfig,
+	method string,
+	params interface{},
+	sync bool,
+	reqFunc RequestFunc) error {
+
+	peer, err := node.connect(pid, config) //重新连接
+	if err != nil {
+		return err
+	}
+
+	return node.Call(peer.PID(), method, params, sync, reqFunc)
 }
 
 //CallSync 同步请求

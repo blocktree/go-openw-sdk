@@ -35,7 +35,7 @@ func testNewAPINode() *APINode {
 		//Host: "192.168.27.181:8422",
 		Cert:               cert,
 		ConnectType:        owtp.HTTP,
-		EnableSignature:    true,
+		EnableSignature:    false,
 		EnableKeyAgreement: true,
 	}
 

@@ -21,6 +21,6 @@ test-staging:
         - cd $GO_PROJECT_PATH
         - echo $(pwd)
         - ls
-        - go test ./openwsdk
+        # - go test ./openwsdk
     environment:
         name: staging

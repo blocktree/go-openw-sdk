@@ -82,7 +82,7 @@ type Address struct {
 }
 
 type TokenContract struct {
-	ContractID string `json:"contractID" bson:"contractID"`
+	ContractID string `json:"contractID" bson:"contractID" storm:"id"`
 	Symbol     string `json:"symbol" bson:"symbol"` //主链标记
 	Name       string `json:"name" bson:"name"`
 	Decimals   int64  `json:"decimals" bson:"decimals"`

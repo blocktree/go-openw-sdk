@@ -619,3 +619,45 @@ func (api *APINode) GetFeeRate(
 		reqFunc(resp.Status, resp.Msg, symbol, feeRate, unit)
 	})
 }
+
+//CreateSummaryTx 创建汇总交易单
+func (api *APINode) CreateSummaryTx(
+	accountID string,
+	sumAddress string,
+	coin Coin,
+	feeRate string,
+	minTransfer string,
+	retainedBalance string,
+	addressStartIndex int,
+	addressLimit int,
+	confirms uint64,
+	sync bool,
+	reqFunc func(status uint64, msg string, rawTxs []*RawTransaction)) error {
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+	params := map[string]interface{}{
+		"appID":             api.config.AppID,
+		"accountID":         accountID,
+		"sumAddress":        sumAddress,
+		"coin":              coin,
+		"minTransfer":       minTransfer,
+		"retainedBalance":   retainedBalance,
+		"feeRate":           feeRate,
+		"addressStartIndex": addressStartIndex,
+		"addressLimit":      addressLimit,
+		"confirms":          confirms,
+	}
+
+	return api.node.Call(HostNodeID, "getFeeRate", params, sync, func(resp owtp.Response) {
+
+		data := resp.JsonData()
+		rawTxs := make([]*RawTransaction, 0)
+		for _, jsonRawTx := range data.Array() {
+			var rawTx RawTransaction
+			json.Unmarshal([]byte(jsonRawTx.Raw), &rawTx)
+			rawTxs = append(rawTxs, &rawTx)
+		}
+		reqFunc(resp.Status, resp.Msg, rawTxs)
+	})
+}

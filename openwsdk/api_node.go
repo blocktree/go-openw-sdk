@@ -400,13 +400,15 @@ func (api *APINode) FindAddressByAddress(address string, sync bool, reqFunc func
 }
 
 //FindAccountByWalletID 通过资产账户ID获取交易地址列表
-func (api *APINode) FindAddressByAccountID(accountID string, sync bool, reqFunc func(status uint64, msg string, addresses []*Address)) error {
+func (api *APINode) FindAddressByAccountID(accountID string, offset int, limit int, sync bool, reqFunc func(status uint64, msg string, addresses []*Address)) error {
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
 	}
 	params := map[string]interface{}{
 		"appID":     api.config.AppID,
 		"accountID": accountID,
+		"offset":    offset,
+		"limit":     limit,
 	}
 
 	return api.node.Call(HostNodeID, "findAddressByAccountID", params, sync, func(resp owtp.Response) {
@@ -563,7 +565,7 @@ func (api *APINode) GetContracts(
 	return api.node.Call(HostNodeID, "getContracts", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
 		tokens := make([]*TokenContract, 0)
-		array := data.Get("symbols").Array()
+		array := data.Get("contracts").Array()
 		for _, s := range array {
 			var t TokenContract
 			err := json.Unmarshal([]byte(s.Raw), &t)

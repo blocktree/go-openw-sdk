@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	owtp.Debug = true
+	owtp.Debug = false
 }
 
 func testNewAPINode() *APINode {
@@ -29,14 +29,14 @@ func testNewAPINode() *APINode {
 	cert, _ := owtp.NewCertificate(owtp.RandomPrivateKey(), "")
 
 	config := &APINodeConfig{
-		AppID:  "b4b1962d415d4d30ec71b28769fda585",
-		AppKey: "8c511cb683041f3589419440fab0a7b7710907022b0d035baea9001d529ca72f",
-		Host:   "47.52.191.89",
+		AppID:  "8df7420d3917afa0172ea9c85e07ab55",
+		AppKey: "faa14b5e2cf119cd6d38bda45b49eb02b333a1b1ff6f10703acb554011ebfb1e",
+		Host:   "120.78.83.180",
 		//Host: "192.168.27.181:8422",
 		Cert:               cert,
 		ConnectType:        owtp.HTTP,
 		EnableSignature:    false,
-		EnableKeyAgreement: true,
+		EnableKeyAgreement: false,
 	}
 
 	api := NewAPINode(config)
@@ -235,7 +235,7 @@ func TestAPINode_FindAddressByAddress(t *testing.T) {
 func TestAPINode_FindAddressByAccountID(t *testing.T) {
 	accountID := "6EPMmTGx89qEjfftMhrLVg8SHayW8HaU8BbcgDyeyYFj"
 	api := testNewAPINode()
-	api.FindAddressByAccountID(accountID, true,
+	api.FindAddressByAccountID(accountID, 0, 10, true,
 		func(status uint64, msg string, addresses []*Address) {
 
 			if status != owtp.StatusSuccess {

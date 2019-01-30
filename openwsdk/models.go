@@ -14,6 +14,23 @@ type CallbackNode struct {
 	EnableSSL          bool   `json:"enableSSL"`          //是否开启链接SSL，https，wss
 }
 
+type TrusteeshipNode struct {
+	NodeID      string `json:"nodeID"` //@required 节点ID
+	Name        string `json:"name"`
+	ConnectType string `json:"connectType"`
+}
+
+//SummarySetting 汇总设置信息
+type SummarySetting struct {
+	WalletID        string `json:"walletID"`
+	AccountID       string `json:"accountID" storm:"id"`
+	SumAddress      string `json:"sumAddress"`
+	Threshold       string `json:"threshold"`
+	MinTransfer     string `json:"minTransfer"`
+	RetainedBalance string `json:"retainedBalance"`
+	Confirms        uint64 `json:"confirms"`
+}
+
 type Wallet struct {
 	AppID        string `json:"appID" bson:"appID"`
 	WalletID     string `json:"walletID" bson:"walletID"`
@@ -93,7 +110,7 @@ type TokenContract struct {
 
 type Coin struct {
 	Symbol     string `json:"symbol"`
-	IsContract bool `json:"isContract"`
+	IsContract bool   `json:"isContract"`
 	ContractID string `json:"contractID"`
 }
 
@@ -161,6 +178,42 @@ type FailedRawTransaction struct {
 	RawTx  *RawTransaction
 	Reason string
 }
+
+
+type SummaryTask struct {
+	Wallets []*SummaryWalletTask `json:"wallets"`
+}
+
+type SummaryAccountTask struct {
+	AccountID string   `json:"accountID"`
+	Contracts []string `json:"contracts"`
+}
+
+type SummaryWalletTask struct {
+	WalletID string                `json:"walletID"`
+	Password string                `json:"password"`
+	Accounts []*SummaryAccountTask `json:"accounts"`
+}
+
+/*
+{
+	"wallets": [
+		{
+			"walletID": "1234qwer",
+			"password": "12345678",
+			"accounts": [
+				{
+					"accountID": "123",
+					"contracts":[
+						"all", //全部合约
+						"0x1234567890abcdef", //指定的合约地址
+					]
+				},
+			],
+		},
+	]
+}
+*/
 
 func (wallet *Wallet) CreateAccount(alias string, symbol *Symbol, key *hdkeystore.HDKey) (*Account, error) {
 

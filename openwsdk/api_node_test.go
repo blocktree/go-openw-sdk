@@ -12,10 +12,6 @@ import (
 	"testing"
 )
 
-func init() {
-	owtp.Debug = true
-}
-
 func testNewAPINode() *APINode {
 
 	//--------------- PRIVATE KEY ---------------

@@ -674,7 +674,7 @@ func (api *APINode) CreateSummaryTx(
 //ServeTransmitNode 启动转发服务节点
 func (api *APINode) ServeTransmitNode(port int) error {
 
-	if api.transmitNode == nil {
+	if api.transmitNode != nil {
 		return fmt.Errorf("transmit node is inited")
 	}
 

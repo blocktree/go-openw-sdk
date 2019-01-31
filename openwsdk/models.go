@@ -1,9 +1,11 @@
 package openwsdk
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/blocktree/OpenWallet/hdkeystore"
 	"github.com/blocktree/OpenWallet/openwallet"
+	"github.com/tidwall/gjson"
 )
 
 type CallbackNode struct {
@@ -14,9 +16,9 @@ type CallbackNode struct {
 	EnableSSL          bool   `json:"enableSSL"`          //是否开启链接SSL，https，wss
 }
 
-type TrusteeshipNode struct {
+type TrustNodeInfo struct {
 	NodeID      string `json:"nodeID"` //@required 节点ID
-	Name        string `json:"name"`
+	NodeName        string `json:"nodeName"`
 	ConnectType string `json:"connectType"`
 }
 
@@ -29,6 +31,20 @@ type SummarySetting struct {
 	MinTransfer     string `json:"minTransfer"`
 	RetainedBalance string `json:"retainedBalance"`
 	Confirms        uint64 `json:"confirms"`
+}
+
+
+func NewSummarySetting(result gjson.Result) *SummarySetting {
+	obj := &SummarySetting{
+		WalletID: result.Get("walletID").String(),
+		AccountID: result.Get("accountID").String(),
+		SumAddress: result.Get("sumAddress").String(),
+		Threshold: result.Get("threshold").String(),
+		MinTransfer: result.Get("minTransfer").String(),
+		RetainedBalance: result.Get("retainedBalance").String(),
+		Confirms: result.Get("confirms").Uint(),
+	}
+	return obj
 }
 
 type Wallet struct {
@@ -114,6 +130,15 @@ type Coin struct {
 	ContractID string `json:"contractID"`
 }
 
+func NewCoin(result gjson.Result) *Coin {
+	obj := &Coin{
+		Symbol: result.Get("symbol").String(),
+		IsContract: result.Get("isContract").Bool(),
+		ContractID: result.Get("contractID").String(),
+	}
+	return obj
+}
+
 type RawTransaction struct {
 	Coin       Coin                       `json:"coin"`      //@required 区块链类型标识
 	TxID       string                     `json:"txID"`      //交易单ID，广播后会生成
@@ -184,6 +209,12 @@ type SummaryTask struct {
 	Wallets []*SummaryWalletTask `json:"wallets"`
 }
 
+func NewSummaryTask(result gjson.Result) *SummaryTask {
+	var obj SummaryTask
+	json.Unmarshal([]byte(result.Raw), &obj)
+	return &obj
+}
+
 type SummaryAccountTask struct {
 	AccountID string   `json:"accountID"`
 	Contracts []string `json:"contracts"`
@@ -193,6 +224,7 @@ type SummaryWalletTask struct {
 	WalletID string                `json:"walletID"`
 	Password string                `json:"password"`
 	Accounts []*SummaryAccountTask `json:"accounts"`
+	Wallet   *Wallet
 }
 
 /*

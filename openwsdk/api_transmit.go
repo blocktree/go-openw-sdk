@@ -10,8 +10,8 @@ import (
 type TransmitNode struct {
 	node              *owtp.OWTPNode
 	config            *APINodeConfig
-	disconnectHandler func(n *TrusteeshipNode) //托管节点断开连接后的通知
-	connectHandler    func(n *TrusteeshipNode) //托管节点连接成功的通知
+	disconnectHandler func(transmitNode *TransmitNode, nodeID string)      //托管节点断开连接后的通知
+	connectHandler    func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) //托管节点连接成功的通知
 }
 
 func NewTransmitNode(config *APINodeConfig) (*TransmitNode, error) {
@@ -34,6 +34,15 @@ func NewTransmitNode(config *APINodeConfig) (*TransmitNode, error) {
 		node:   node,
 		config: config,
 	}
+
+	node.HandleFunc("newNodeJoin", t.newNodeJoin)
+
+	node.SetCloseHandler(func(n *owtp.OWTPNode, peer owtp.PeerInfo) {
+		if t.disconnectHandler != nil {
+			t.disconnectHandler(t, peer.ID)
+		}
+	})
+
 	return t, nil
 }
 
@@ -41,7 +50,7 @@ func NewTransmitNode(config *APINodeConfig) (*TransmitNode, error) {
 func (transmit *TransmitNode) Listen() {
 
 	//开启监听
-	log.Infof("Transmit node port: %s start to listen [%s] connection...", transmit.config.Host, transmit.config.ConnectType)
+	log.Infof("Transmit node port %s start to listen [%s] connection...", transmit.config.Host, transmit.config.ConnectType)
 
 	transmit.node.Listen(owtp.ConnectConfig{
 		Address:     transmit.config.Host,
@@ -55,41 +64,51 @@ func (transmit *TransmitNode) Close() {
 }
 
 //SetConnectHandler 设置托管节点断开连接后的通知
-func (transmit *TransmitNode) SetConnectHandler(h func(n *TrusteeshipNode)) {
+func (transmit *TransmitNode) SetConnectHandler(h func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo)) {
 	transmit.connectHandler = h
 }
 
 //SetDisconnectHandler 设置托管节点连接成功的通知
-func (transmit *TransmitNode) SetDisconnectHandler(h func(n *TrusteeshipNode)) {
+func (transmit *TransmitNode) SetDisconnectHandler(h func(transmitNode *TransmitNode, nodeID string)) {
 	transmit.disconnectHandler = h
 }
 
-//nodeJoin 节点加入
-func (transmit *TransmitNode) nodeJoin(ctx *owtp.Context) {
-	//:托管节点加入
-	var trustNode TrusteeshipNode
-	err := json.Unmarshal([]byte(ctx.Params().Get("nodeInfo").Raw), &trustNode)
-	if err != nil {
-		log.Errorf("new node joining failed, unexpected error: %v", err)
-		return
+func (transmit *TransmitNode) newNodeJoin(ctx *owtp.Context) {
+	if transmit.connectHandler != nil {
+		var nodeInfo TrustNodeInfo
+		err := json.Unmarshal([]byte(ctx.Params().Get("nodeInfo").Raw), &nodeInfo)
+		if err != nil {
+			ctx.Response(nil, owtp.ErrCustomError, err.Error())
+			return
+		}
+		transmit.connectHandler(transmit, &nodeInfo)
 	}
-	transmit.connectHandler(&trustNode)
+
+	ctx.Response(nil, owtp.StatusSuccess, "success")
 }
 
-//nodeLeave 节点离开
-func (transmit *TransmitNode) nodeLeave(ctx *owtp.Context) {
-	//:托管节点离开
-	var trustNode TrusteeshipNode
-	err := json.Unmarshal([]byte(ctx.Params().Get("nodeInfo").Raw), &trustNode)
-	if err != nil {
-		log.Errorf("exist node leaving failed, unexpected error: %v", err)
-		return
+//GetTrustNodeInfo 获取授信的托管节点信息
+func (transmit *TransmitNode) GetTrustNodeInfo(nodeID string,
+	sync bool, reqFunc func(status uint64, msg string, nodeInfo *TrustNodeInfo)) error {
+
+	if transmit == nil {
+		return fmt.Errorf("TransmitNode is not inited")
 	}
-	transmit.disconnectHandler(&trustNode)
+
+	params := map[string]interface{}{
+		"appID":    transmit.config.AppID,
+	}
+
+	return transmit.node.Call(nodeID, "getTrustNodeInfo", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		var nodeInfo TrustNodeInfo
+		json.Unmarshal([]byte(data.Raw), &nodeInfo)
+		reqFunc(resp.Status, resp.Msg, &nodeInfo)
+	})
 }
 
-//CreateTrusteeshipWallet 指定节点，创建种子托管钱包
-func (transmit *TransmitNode) CreateTrusteeshipWallet(nodeID, alias, password string,
+//CreateWalletViaTrustNode 指定节点，创建种子托管钱包
+func (transmit *TransmitNode) CreateWalletViaTrustNode(nodeID, alias, password string,
 	sync bool, reqFunc func(status uint64, msg string, wallet *Wallet)) error {
 
 	if transmit == nil {
@@ -102,7 +121,7 @@ func (transmit *TransmitNode) CreateTrusteeshipWallet(nodeID, alias, password st
 		"password": password,
 	}
 
-	return transmit.node.Call(nodeID, "createWallet", params, sync, func(resp owtp.Response) {
+	return transmit.node.Call(nodeID, "createWalletViaTrustNode", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
 		var wallet Wallet
 		json.Unmarshal([]byte(data.Raw), &wallet)
@@ -110,8 +129,8 @@ func (transmit *TransmitNode) CreateTrusteeshipWallet(nodeID, alias, password st
 	})
 }
 
-//CreateTrusteeshipAccount 指定节点，创建种子托管钱包
-func (transmit *TransmitNode) CreateTrusteeshipAccount(
+//CreateAccountViaTrustNode 指定节点，创建种子托管钱包
+func (transmit *TransmitNode) CreateAccountViaTrustNode(
 	nodeID, walletID, alias, password, symbol string, sync bool,
 	reqFunc func(status uint64, msg string, account *Account, addresses []*Address)) error {
 	if transmit == nil {
@@ -125,7 +144,7 @@ func (transmit *TransmitNode) CreateTrusteeshipAccount(
 		"symbol":   symbol,
 	}
 
-	return transmit.node.Call(nodeID, "createAccount", params, sync, func(resp owtp.Response) {
+	return transmit.node.Call(nodeID, "createAccountViaTrustNode", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
 		var account Account
 		json.Unmarshal([]byte(data.Get("account").Raw), &account)
@@ -144,13 +163,13 @@ func (transmit *TransmitNode) CreateTrusteeshipAccount(
 	})
 }
 
-//SendTransaction 创建转账交易订单
-func (transmit *TransmitNode) SendTransaction(
+//SendTransactionViaTrustNode 创建转账交易订单
+func (transmit *TransmitNode) SendTransactionViaTrustNode(
 	nodeID string,
 	accountID string,
 	password string,
 	sid string,
-	coin Coin,
+	contractAddress string,
 	amount string,
 	address string,
 	feeRate string,
@@ -162,18 +181,18 @@ func (transmit *TransmitNode) SendTransaction(
 		return fmt.Errorf("TransmitNode is not inited")
 	}
 	params := map[string]interface{}{
-		"appID":     transmit.config.AppID,
-		"accountID": accountID,
-		"password":  password,
-		"sid":       sid,
-		"coin":      coin,
-		"amount":    amount,
-		"address":   address,
-		"feeRate":   feeRate,
-		"memo":      memo,
+		"appID":           transmit.config.AppID,
+		"accountID":       accountID,
+		"password":        password,
+		"sid":             sid,
+		"contractAddress": contractAddress,
+		"amount":          amount,
+		"address":         address,
+		"feeRate":         feeRate,
+		"memo":            memo,
 	}
 
-	return transmit.node.Call(nodeID, "sendTransaction", params, sync, func(resp owtp.Response) {
+	return transmit.node.Call(nodeID, "sendTransactionViaTrustNode", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
 		failedRawTxs := make([]*FailedRawTransaction, 0)
 		failedArray := data.Get("failure").Array()
@@ -201,8 +220,8 @@ func (transmit *TransmitNode) SendTransaction(
 	})
 }
 
-//SetSummaryInfo 指定节点，设置汇总信息
-func (transmit *TransmitNode) SetSummaryInfo(
+//SetSummaryInfoViaTrustNode 指定节点，设置汇总信息
+func (transmit *TransmitNode) SetSummaryInfoViaTrustNode(
 	nodeID string,
 	summarySetting *SummarySetting,
 	sync bool, reqFunc func(status uint64, msg string)) error {
@@ -214,13 +233,13 @@ func (transmit *TransmitNode) SetSummaryInfo(
 		"summarySetting": summarySetting,
 	}
 
-	return transmit.node.Call(nodeID, "setSummaryInfo", params, sync, func(resp owtp.Response) {
+	return transmit.node.Call(nodeID, "setSummaryInfoViaTrustNode", params, sync, func(resp owtp.Response) {
 		reqFunc(resp.Status, resp.Msg)
 	})
 }
 
-//FindSummaryInfoByWalletID 指定节点，获取汇总设置信息
-func (transmit *TransmitNode) FindSummaryInfoByWalletID(
+//FindSummaryInfoByWalletIDViaTrustNode 指定节点，获取汇总设置信息
+func (transmit *TransmitNode) FindSummaryInfoByWalletIDViaTrustNode(
 	nodeID string,
 	walletID string,
 	sync bool, reqFunc func(status uint64, msg string, summarySettings []*SummarySetting)) error {
@@ -232,11 +251,10 @@ func (transmit *TransmitNode) FindSummaryInfoByWalletID(
 		"walletID": walletID,
 	}
 
-	return transmit.node.Call(nodeID, "findSummaryInfoByWalletID", params, sync, func(resp owtp.Response) {
+	return transmit.node.Call(nodeID, "findSummaryInfoByWalletIDViaTrustNode", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
 		var summaryInfoList []*SummarySetting
-		summaryInfoArray := data.Get("summaryInfoList").Array()
-		for _, a := range summaryInfoArray {
+		for _, a := range data.Array() {
 			var sumInfo SummarySetting
 			err := json.Unmarshal([]byte(a.Raw), &sumInfo)
 			if err == nil {
@@ -248,9 +266,10 @@ func (transmit *TransmitNode) FindSummaryInfoByWalletID(
 	})
 }
 
-//StartSummaryTask 指定节点，启动汇总任务
-func (transmit *TransmitNode) StartSummaryTask(
+//StartSummaryTaskViaTrustNode 指定节点，启动汇总任务
+func (transmit *TransmitNode) StartSummaryTaskViaTrustNode(
 	nodeID string,
+	cycleSec int,
 	summaryTask *SummaryTask,
 	sync bool, reqFunc func(status uint64, msg string)) error {
 	if transmit == nil {
@@ -258,16 +277,17 @@ func (transmit *TransmitNode) StartSummaryTask(
 	}
 	params := map[string]interface{}{
 		"appID":       transmit.config.AppID,
+		"cycleSec":    cycleSec,
 		"summaryTask": summaryTask,
 	}
 
-	return transmit.node.Call(nodeID, "startSummaryTask", params, sync, func(resp owtp.Response) {
+	return transmit.node.Call(nodeID, "startSummaryTaskViaTrustNode", params, sync, func(resp owtp.Response) {
 		reqFunc(resp.Status, resp.Msg)
 	})
 }
 
-//StopSummaryTask 指定节点，停止汇总任务
-func (transmit *TransmitNode) StopSummaryTask(
+//StopSummaryTaskViaTrustNode 指定节点，停止汇总任务
+func (transmit *TransmitNode) StopSummaryTaskViaTrustNode(
 	nodeID string,
 	sync bool, reqFunc func(status uint64, msg string)) error {
 	if transmit == nil {
@@ -277,13 +297,13 @@ func (transmit *TransmitNode) StopSummaryTask(
 		"appID": transmit.config.AppID,
 	}
 
-	return transmit.node.Call(nodeID, "stopSummaryTask", params, sync, func(resp owtp.Response) {
+	return transmit.node.Call(nodeID, "stopSummaryTaskViaTrustNode", params, sync, func(resp owtp.Response) {
 		reqFunc(resp.Status, resp.Msg)
 	})
 }
 
-//UpdateInfo 指定节点，更新主链信息和合约资料
-func (transmit *TransmitNode) UpdateInfo(
+//UpdateInfo UpdateInfoViaTrustNode，更新主链信息和合约资料
+func (transmit *TransmitNode) UpdateInfoViaTrustNode(
 	nodeID string,
 	sync bool, reqFunc func(status uint64, msg string)) error {
 	if transmit == nil {
@@ -293,7 +313,7 @@ func (transmit *TransmitNode) UpdateInfo(
 		"appID": transmit.config.AppID,
 	}
 
-	return transmit.node.Call(nodeID, "updateInfo", params, sync, func(resp owtp.Response) {
+	return transmit.node.Call(nodeID, "updateInfoViaTrustNode", params, sync, func(resp owtp.Response) {
 		reqFunc(resp.Status, resp.Msg)
 	})
 }

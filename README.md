@@ -88,6 +88,11 @@ $ xgo -h
 
 ### 使用教程
 
+#### APINode
+
+开发者通过APINode，与openw-server进行数据交互，实现OpenWallet钱包体系的管理功能。
+APINode详细使用教程可查看[api_node测试用例](./openwsdk/api_node_test.go)。
+
 ```go
 
     //随机生成一个通信证书
@@ -120,21 +125,38 @@ $ xgo -h
 
 ```
 
-通过启动转发服务，控制授信节点的托管钱包，使用于隔离的冷热钱包方案
+#### TransmitNode
+
+TransmitNode是用于与授信的钱包托管节点进行双向交互。
+钱包种子和密钥签名相关的操作会托管在授信节点上处理，满足于业务系统隔离于冷热钱包的安全方案。
+需要配置go-openw-cli使用，通过`go-openw-cli -c=节点配置 trustserver`，在授信节点上启动后台服务。
+详细可查看[api_transmit测试用例](./openwsdk/api_transmit_test.go)。
 
 ```go
 
+    //启动监听器
     err := api.ServeTransmitNode("127.0.0.1:9088")
 	if err != nil {
 		log.Errorf("ServeTransmitNode error: %v\n", err)
 		return
 	}
 
+    //转发服务处理器
 	transmitNode, err := api.TransmitNode()
 	if err != nil {
 		log.Errorf("TransmitNode error: %v\n", err)
 		return
 	}
+	
+	//节点连接服务事件处理
+	transmitNode.SetConnectHandler(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
+        log.Infof("nodeInfo: %v", nodeInfo)
+	})
+	
+	//节点断开服务事件处理
+	transmitNode.SetDisconnectHandler(func(transmitNode *TransmitNode, nodeID string) {
+        log.Infof("nodeID: %v", nodeID)
+    })
 	
 	//创建钱包
 	transmitNode.CreateWalletViaTrustNode(nodeInfo.NodeID, alias, password, true,

@@ -18,7 +18,7 @@ type CallbackNode struct {
 
 type TrustNodeInfo struct {
 	NodeID      string `json:"nodeID"` //@required 节点ID
-	NodeName        string `json:"nodeName"`
+	NodeName    string `json:"nodeName"`
 	ConnectType string `json:"connectType"`
 }
 
@@ -33,16 +33,15 @@ type SummarySetting struct {
 	Confirms        uint64 `json:"confirms"`
 }
 
-
 func NewSummarySetting(result gjson.Result) *SummarySetting {
 	obj := &SummarySetting{
-		WalletID: result.Get("walletID").String(),
-		AccountID: result.Get("accountID").String(),
-		SumAddress: result.Get("sumAddress").String(),
-		Threshold: result.Get("threshold").String(),
-		MinTransfer: result.Get("minTransfer").String(),
+		WalletID:        result.Get("walletID").String(),
+		AccountID:       result.Get("accountID").String(),
+		SumAddress:      result.Get("sumAddress").String(),
+		Threshold:       result.Get("threshold").String(),
+		MinTransfer:     result.Get("minTransfer").String(),
 		RetainedBalance: result.Get("retainedBalance").String(),
-		Confirms: result.Get("confirms").Uint(),
+		Confirms:        result.Get("confirms").Uint(),
 	}
 	return obj
 }
@@ -132,7 +131,7 @@ type Coin struct {
 
 func NewCoin(result gjson.Result) *Coin {
 	obj := &Coin{
-		Symbol: result.Get("symbol").String(),
+		Symbol:     result.Get("symbol").String(),
 		IsContract: result.Get("isContract").Bool(),
 		ContractID: result.Get("contractID").String(),
 	}
@@ -200,10 +199,9 @@ type Transaction struct {
 }
 
 type FailedRawTransaction struct {
-	RawTx  *RawTransaction
-	Reason string
+	RawTx  *RawTransaction `json:"rawTx"`
+	Reason string          `json:"error"`
 }
-
 
 type SummaryTask struct {
 	Wallets []*SummaryWalletTask `json:"wallets"`

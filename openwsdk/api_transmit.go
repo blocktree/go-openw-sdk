@@ -50,7 +50,7 @@ func NewTransmitNode(config *APINodeConfig) (*TransmitNode, error) {
 func (transmit *TransmitNode) Listen() {
 
 	//开启监听
-	log.Infof("Transmit node port %s start to listen [%s] connection...", transmit.config.Host, transmit.config.ConnectType)
+	log.Infof("Transmit node IP %s start to listen [%s] connection...", transmit.config.Host, transmit.config.ConnectType)
 
 	transmit.node.Listen(owtp.ConnectConfig{
 		Address:     transmit.config.Host,
@@ -150,14 +150,17 @@ func (transmit *TransmitNode) CreateAccountViaTrustNode(
 		json.Unmarshal([]byte(data.Get("account").Raw), &account)
 
 		var addresses []*Address
-		addressArray := data.Get("address").Array()
-		for _, a := range addressArray {
-			var addr Address
-			err := json.Unmarshal([]byte(a.Raw), &addr)
-			if err == nil {
-				addresses = append(addresses, &addr)
+		addressArray := data.Get("address")
+		if addressArray.IsArray() {
+			for _, a := range addressArray.Array() {
+				var addr Address
+				err := json.Unmarshal([]byte(a.Raw), &addr)
+				if err == nil {
+					addresses = append(addresses, &addr)
+				}
 			}
 		}
+
 
 		reqFunc(resp.Status, resp.Msg, &account, addresses)
 	})
@@ -195,26 +198,30 @@ func (transmit *TransmitNode) SendTransactionViaTrustNode(
 	return transmit.node.Call(nodeID, "sendTransactionViaTrustNode", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
 		failedRawTxs := make([]*FailedRawTransaction, 0)
-		failedArray := data.Get("failure").Array()
-		for _, failed := range failedArray {
-			var rawTx RawTransaction
-			json.Unmarshal([]byte(failed.Get("rawTx").Raw), &rawTx)
-			failedRawTx := &FailedRawTransaction{
-				Reason: failed.Get("error").String(),
-				RawTx:  &rawTx,
+		failedArray := data.Get("failure")
+		if failedArray.IsArray() {
+			for _, failed := range failedArray.Array() {
+				var failedRawTx FailedRawTransaction
+				err := json.Unmarshal([]byte(failed.Raw), &failedRawTx)
+				if err == nil {
+					failedRawTxs = append(failedRawTxs, &failedRawTx)
+				}
+
 			}
-			failedRawTxs = append(failedRawTxs, failedRawTx)
 		}
 
 		var txs []*Transaction
-		successArray := data.Get("success").Array()
-		for _, a := range successArray {
-			var tx Transaction
-			err := json.Unmarshal([]byte(a.Raw), &tx)
-			if err == nil {
-				txs = append(txs, &tx)
+		successArray := data.Get("success")
+		if successArray.IsArray() {
+			for _, a := range successArray.Array() {
+				var tx Transaction
+				err := json.Unmarshal([]byte(a.Raw), &tx)
+				if err == nil {
+					txs = append(txs, &tx)
+				}
 			}
 		}
+
 
 		reqFunc(resp.Status, resp.Msg, txs, failedRawTxs)
 	})
@@ -254,13 +261,16 @@ func (transmit *TransmitNode) FindSummaryInfoByWalletIDViaTrustNode(
 	return transmit.node.Call(nodeID, "findSummaryInfoByWalletIDViaTrustNode", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
 		var summaryInfoList []*SummarySetting
-		for _, a := range data.Array() {
-			var sumInfo SummarySetting
-			err := json.Unmarshal([]byte(a.Raw), &sumInfo)
-			if err == nil {
-				summaryInfoList = append(summaryInfoList, &sumInfo)
+		if data.IsArray() {
+			for _, a := range data.Array() {
+				var sumInfo SummarySetting
+				err := json.Unmarshal([]byte(a.Raw), &sumInfo)
+				if err == nil {
+					summaryInfoList = append(summaryInfoList, &sumInfo)
+				}
 			}
 		}
+
 
 		reqFunc(resp.Status, resp.Msg, summaryInfoList)
 	})

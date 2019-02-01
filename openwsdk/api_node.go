@@ -213,12 +213,14 @@ func (api *APINode) GetSymbolList(offset, limit int, sync bool, reqFunc func(sta
 	return api.node.Call(HostNodeID, "getSymbolList", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
 		symbols := make([]*Symbol, 0)
-		symbolArray := data.Get("symbols").Array()
-		for _, s := range symbolArray {
-			var sym Symbol
-			err := json.Unmarshal([]byte(s.Raw), &sym)
-			if err == nil {
-				symbols = append(symbols, &sym)
+		symbolArray := data.Get("symbols")
+		if symbolArray.IsArray() {
+			for _, s := range symbolArray.Array() {
+				var sym Symbol
+				err := json.Unmarshal([]byte(s.Raw), &sym)
+				if err == nil {
+					symbols = append(symbols, &sym)
+				}
 			}
 		}
 
@@ -294,12 +296,14 @@ func (api *APINode) CreateNormalAccount(
 		json.Unmarshal([]byte(data.Get("account").Raw), &account)
 
 		var addresses []*Address
-		addressArray := data.Get("address").Array()
-		for _, a := range addressArray {
-			var addr Address
-			err := json.Unmarshal([]byte(a.Raw), &addr)
-			if err == nil {
-				addresses = append(addresses, &addr)
+		addressArray := data.Get("address")
+		if addressArray.IsArray() {
+			for _, a := range addressArray.Array() {
+				var addr Address
+				err := json.Unmarshal([]byte(a.Raw), &addr)
+				if err == nil {
+					addresses = append(addresses, &addr)
+				}
 			}
 		}
 
@@ -339,15 +343,16 @@ func (api *APINode) FindAccountByWalletID(walletID string, sync bool, reqFunc fu
 		data := resp.JsonData()
 
 		var accounts []*Account
-		accountArray := data.Array()
-		for _, a := range accountArray {
-			var acc Account
-			err := json.Unmarshal([]byte(a.Raw), &acc)
-			if err == nil {
-				accounts = append(accounts, &acc)
+		accountArray := data
+		if accountArray.IsArray() {
+			for _, a := range accountArray.Array() {
+				var acc Account
+				err := json.Unmarshal([]byte(a.Raw), &acc)
+				if err == nil {
+					accounts = append(accounts, &acc)
+				}
 			}
 		}
-
 		reqFunc(resp.Status, resp.Msg, accounts)
 	})
 }
@@ -373,15 +378,17 @@ func (api *APINode) CreateAddress(
 		data := resp.JsonData()
 
 		var addresses []*Address
-		addressArray := data.Array()
-		for _, a := range addressArray {
-			var addr Address
-			err := json.Unmarshal([]byte(a.Raw), &addr)
-			if err == nil {
-				addresses = append(addresses, &addr)
+		addressArray := data
+		if addressArray.IsArray() {
+			for _, a := range addressArray.Array() {
+				var addr Address
+				err := json.Unmarshal([]byte(a.Raw), &addr)
+				if err == nil {
+					addresses = append(addresses, &addr)
+				}
 			}
-		}
 
+		}
 		reqFunc(resp.Status, resp.Msg, addresses)
 	})
 }
@@ -420,14 +427,17 @@ func (api *APINode) FindAddressByAccountID(accountID string, offset int, limit i
 		data := resp.JsonData()
 
 		var addresses []*Address
-		array := data.Array()
-		for _, a := range array {
-			var addr Address
-			err := json.Unmarshal([]byte(a.Raw), &addr)
-			if err == nil {
-				addresses = append(addresses, &addr)
+		array := data
+		if array.IsArray() {
+			for _, a := range array.Array() {
+				var addr Address
+				err := json.Unmarshal([]byte(a.Raw), &addr)
+				if err == nil {
+					addresses = append(addresses, &addr)
+				}
 			}
 		}
+
 
 		reqFunc(resp.Status, resp.Msg, addresses)
 	})
@@ -489,26 +499,35 @@ func (api *APINode) SubmitTrade(
 	return api.node.Call(HostNodeID, "submitTrade", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
 		failedRawTxs := make([]*FailedRawTransaction, 0)
-		failedArray := data.Get("failure").Array()
-		for _, failed := range failedArray {
-			var rawTx RawTransaction
-			json.Unmarshal([]byte(failed.Get("rawTx").Raw), &rawTx)
-			failedRawTx := &FailedRawTransaction{
-				Reason: failed.Get("error").String(),
-				RawTx:  &rawTx,
+		failedArray := data.Get("failure")
+		if failedArray.IsArray() {
+			for _, failed := range failedArray.Array() {
+				var rawTx RawTransaction
+				err := json.Unmarshal([]byte(failed.Get("rawTx").Raw), &rawTx)
+				if err == nil {
+					failedRawTx := &FailedRawTransaction{
+						Reason: failed.Get("error").String(),
+						RawTx:  &rawTx,
+					}
+
+					failedRawTxs = append(failedRawTxs, failedRawTx)
+				}
+
 			}
-			failedRawTxs = append(failedRawTxs, failedRawTx)
 		}
 
 		var txs []*Transaction
-		successArray := data.Get("success").Array()
-		for _, a := range successArray {
-			var tx Transaction
-			err := json.Unmarshal([]byte(a.Raw), &tx)
-			if err == nil {
-				txs = append(txs, &tx)
+		successArray := data.Get("success")
+		if successArray.IsArray() {
+			for _, a := range successArray.Array() {
+				var tx Transaction
+				err := json.Unmarshal([]byte(a.Raw), &tx)
+				if err == nil {
+					txs = append(txs, &tx)
+				}
 			}
 		}
+
 
 		reqFunc(resp.Status, resp.Msg, txs, failedRawTxs)
 	})
@@ -531,21 +550,31 @@ func (api *APINode) FindTradeLog(
 		return fmt.Errorf("APINode is not inited")
 	}
 	params := map[string]interface{}{
-		"appID": api.config.AppID,
+		"appID":     api.config.AppID,
+		"walletID":  walletID,
+		"accountID": accountID,
+		"txid":      txid,
+		"isTmp":     isTmp,
+		"orderType": orderType,
+		"offset":    offset,
+		"limit":     limit,
 	}
 
 	return api.node.Call(HostNodeID, "findTradeLog", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
 
 		var txs []*Transaction
-		array := data.Array()
-		for _, a := range array {
-			var tx Transaction
-			err := json.Unmarshal([]byte(a.Raw), &tx)
-			if err == nil {
-				txs = append(txs, &tx)
+		array := data
+		if array.IsArray() {
+			for _, a := range array.Array() {
+				var tx Transaction
+				err := json.Unmarshal([]byte(a.Raw), &tx)
+				if err == nil {
+					txs = append(txs, &tx)
+				}
 			}
 		}
+
 
 		reqFunc(resp.Status, resp.Msg, txs)
 	})
@@ -570,14 +599,17 @@ func (api *APINode) GetContracts(
 	return api.node.Call(HostNodeID, "getContracts", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
 		tokens := make([]*TokenContract, 0)
-		array := data.Get("contracts").Array()
-		for _, s := range array {
-			var t TokenContract
-			err := json.Unmarshal([]byte(s.Raw), &t)
-			if err == nil {
-				tokens = append(tokens, &t)
+		array := data.Get("contracts")
+		if array.IsArray() {
+			for _, s := range array.Array() {
+				var t TokenContract
+				err := json.Unmarshal([]byte(s.Raw), &t)
+				if err == nil {
+					tokens = append(tokens, &t)
+				}
 			}
 		}
+
 
 		reqFunc(resp.Status, resp.Msg, tokens)
 	})
@@ -662,24 +694,27 @@ func (api *APINode) CreateSummaryTx(
 
 		data := resp.JsonData()
 		rawTxs := make([]*RawTransaction, 0)
-		for _, jsonRawTx := range data.Array() {
-			var rawTx RawTransaction
-			json.Unmarshal([]byte(jsonRawTx.Raw), &rawTx)
-			rawTxs = append(rawTxs, &rawTx)
+		if data.IsArray() {
+			for _, jsonRawTx := range data.Array() {
+				var rawTx RawTransaction
+				json.Unmarshal([]byte(jsonRawTx.Raw), &rawTx)
+				rawTxs = append(rawTxs, &rawTx)
+			}
 		}
+
 		reqFunc(resp.Status, resp.Msg, rawTxs)
 	})
 }
 
 //ServeTransmitNode 启动转发服务节点
-func (api *APINode) ServeTransmitNode(port int) error {
+func (api *APINode) ServeTransmitNode(address string) error {
 
 	if api.transmitNode != nil {
 		return fmt.Errorf("transmit node is inited")
 	}
 
 	transmitNode, err := NewTransmitNode(&APINodeConfig{
-		Host:               fmt.Sprintf(":%d", port),
+		Host:               address,
 		ConnectType:        owtp.Websocket,
 		AppID:              api.config.AppID,
 		AppKey:             api.config.AppKey,

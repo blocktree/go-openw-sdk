@@ -12,10 +12,6 @@ import (
 	"testing"
 )
 
-func init() {
-	owtp.Debug = false
-}
-
 func testNewAPINode() *APINode {
 
 	//--------------- PRIVATE KEY ---------------
@@ -36,7 +32,7 @@ func testNewAPINode() *APINode {
 		Cert:               cert,
 		ConnectType:        owtp.HTTP,
 		EnableSignature:    false,
-		EnableKeyAgreement: false,
+		EnableKeyAgreement: true,
 	}
 
 	api := NewAPINode(config)
@@ -189,7 +185,7 @@ func TestAPINode_CreateAccount(t *testing.T) {
 }
 
 func TestAPINode_FindAccountByWalletID(t *testing.T) {
-	walletID := "VysrzgpsLsgDpHM2KQMYuPY57fL3BAFU34"
+	walletID := "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA"
 	api := testNewAPINode()
 	api.FindAccountByWalletID(walletID, true,
 		func(status uint64, msg string, accounts []*Account) {
@@ -233,7 +229,7 @@ func TestAPINode_FindAddressByAddress(t *testing.T) {
 }
 
 func TestAPINode_FindAddressByAccountID(t *testing.T) {
-	accountID := "6EPMmTGx89qEjfftMhrLVg8SHayW8HaU8BbcgDyeyYFj"
+	accountID := "A3Mxhqm65kTgS2ybHLenNrZzZNtLGVobDFYdpc1ge4eK"
 	api := testNewAPINode()
 	api.FindAddressByAccountID(accountID, 0, 10, true,
 		func(status uint64, msg string, addresses []*Address) {
@@ -304,7 +300,7 @@ func TestAPINode_Send_LTC(t *testing.T) {
 	accountID := "Aa7Chh2MdaGDejHdCJZAaX7AwvGNmMEMry2kZZTq114a"
 	sid := uuid.New().String()
 	amount := "0.1"
-	address := "mkSfFCHPAaHAyx9gBokXQMGWmyRtzpk4JK"
+	address := "mkdStRouBPVrDVpYmbE5VUJqhBgxJb3dSS"
 	feeRate := "0.001"
 
 	coin := Coin{
@@ -356,13 +352,15 @@ func TestAPINode_Send_LTC(t *testing.T) {
 }
 
 func TestAPINode_FindTradeLog(t *testing.T) {
-	walletID := "VysrzgpsLsgDpHM2KQMYuPY57fL3BAFU34"
-	accountID := "Aa7Chh2MdaGDejHdCJZAaX7AwvGNmMEMry2kZZTq114a"
+	walletID := "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA"
+	accountID := "A3Mxhqm65kTgS2ybHLenNrZzZNtLGVobDFYdpc1ge4eK"
 	api := testNewAPINode()
 	api.FindTradeLog(walletID, accountID, "", "",
 		0, 0, 0, 1000, true,
 		func(status uint64, msg string, tx []*Transaction) {
-
+			for i, value := range tx {
+				log.Infof("tx[%d]: %+v", i, value)
+			}
 		})
 }
 

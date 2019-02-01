@@ -95,10 +95,12 @@ $ xgo -h
 
     //配置APISDK参数
 	config := &APINodeConfig{
-		AppID:  "b4b1962d415d4d30ec71b28769fda585",
-		AppKey: "8c511cb683041f3589419440fab0a7b7710907022b0d035baea9001d529ca72f",
-		Host:   "47.52.191.89",
-		Cert:   cert,
+    		AppID:  "8df7420d3917afa0172ea9c85e07ab55",
+    		AppKey: "faa14b5e2cf119cd6d38bda45b49eb02b333a1b1ff6f10703acb554011ebfb1e",
+    		Host:   "120.78.83.180",
+    		Cert:               cert,
+    		ConnectType:        owtp.HTTP,
+    		EnableKeyAgreement: true,
 	}
 
     //创建API实例
@@ -118,4 +120,122 @@ $ xgo -h
 
 ```
 
+通过启动转发服务，控制授信节点的托管钱包，使用于隔离的冷热钱包方案
+
+```go
+
+    err := api.ServeTransmitNode("127.0.0.1:9088")
+	if err != nil {
+		log.Errorf("ServeTransmitNode error: %v\n", err)
+		return
+	}
+
+	transmitNode, err := api.TransmitNode()
+	if err != nil {
+		log.Errorf("TransmitNode error: %v\n", err)
+		return
+	}
+	
+	//创建钱包
+	transmitNode.CreateWalletViaTrustNode(nodeInfo.NodeID, alias, password, true,
+            func(status uint64, msg string, wallet *Wallet) {
+                if wallet != nil {
+                    log.Infof("wallet: %+v\n", wallet)
+                }
+            })
+
+    //创建账户
+    transmitNode.CreateAccountViaTrustNode(nodeInfo.NodeID, walletID, alias, password, symbol, true,
+        func(status uint64, msg string, account *Account, addresses []*Address) {
+            if account != nil {
+                log.Infof("account: %+v\n", account)
+                for i, a := range addresses {
+                    log.Infof("address[%d]:%+v", i, a)
+                }
+            }
+        })
+	
+	//发起转账请求
+    accountID := "A3Mxhqm65kTgS2ybHLenNrZzZNtLGVobDFYdpc1ge4eK"
+    address := "mgCzMJDyJoqa6XE3RSdNGvD5Bi5VTWudRq"
+
+    password := "12345678"
+    sid := uuid.New().String()
+    transmitNode.SendTransactionViaTrustNode(nodeInfo.NodeID, accountID, password, sid,
+        "", "0.03", address, "0.001", "",
+        true, func(status uint64, msg string, successTx []*Transaction, failedRawTxs []*FailedRawTransaction) {
+
+            log.Info("============== success ==============")
+
+            for _, tx := range successTx {
+                log.Infof("tx: %+v", tx)
+            }
+
+            log.Info("")
+
+            log.Info("============== fail ==============")
+
+            for _, tx := range failedRawTxs {
+                log.Infof("tx: %+v", tx.Reason)
+            }
+
+        })
+		
+    //配置汇总
+    setting := &SummarySetting{
+                "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA",
+                "A3Mxhqm65kTgS2ybHLenNrZzZNtLGVobDFYdpc1ge4eK",
+                "mgCzMJDyJoqa6XE3RSdNGvD5Bi5VTWudRq",
+                "1",
+                "0.01",
+                "0",
+                1,
+            }
+    
+            transmitNode.SetSummaryInfoViaTrustNode(nodeInfo.NodeID, setting, true, func(status uint64, msg string) {
+                log.Infof("msg:%+v", msg)
+            })
+    
+    //启动后台定时汇总任务
+    plain := `
+    
+    {
+        "wallets": [{
+            "walletID": "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA",
+            "password": "12345678",
+            "accounts": [{
+                "accountID": "A3Mxhqm65kTgS2ybHLenNrZzZNtLGVobDFYdpc1ge4eK"
+            }]
+        }]
+    }
+    
+    `
+    var summaryTask SummaryTask
+    err := json.Unmarshal([]byte(plain), &summaryTask)
+    if err != nil {
+        log.Error("json.Unmarshal error:", err)
+        return
+    }
+
+    testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
+
+        transmitNode.StartSummaryTaskViaTrustNode(nodeInfo.NodeID, 10, &summaryTask,
+            true, func(status uint64, msg string) {
+                log.Infof("msg:%+v", msg)
+            })
+    })
+        
+    //关闭后台定时汇总任务
+    testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
+    
+            transmitNode.StopSummaryTaskViaTrustNode(nodeInfo.NodeID, true, func(status uint64, msg string) {
+                log.Infof("msg:%+v", msg)
+            })
+        })
+    
+    //更新节点的区块链资料信息
+    transmitNode.UpdateInfoViaTrustNode(nodeInfo.NodeID, true, func(status uint64, msg string) {
+                log.Infof("msg:%+v", msg)
+            })
+```
 ---

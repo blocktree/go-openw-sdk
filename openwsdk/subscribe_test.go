@@ -1,6 +1,7 @@
 package openwsdk
 
 import (
+	"github.com/blocktree/OpenWallet/owtp"
 	"testing"
 )
 
@@ -14,22 +15,22 @@ func (s *Subscriber) OpenwNewTransactionNotify(transaction *Transaction) (bool, 
 
 func TestAPINode_Subscribe(t *testing.T) {
 
-	//var (
-	//	endRunning = make(chan bool, 1)
-	//)
-	//
-	//api := testNewAPINode()
-	//api.Subscribe(CallbackModeNewConnection, CallbackNode{
-	//	NodeID:             api.node.NodeID(),
-	//	Address:            "192.168.27.181:9322",
-	//	ConnectType:        owtp.HTTP,
-	//	EnableKeyAgreement: false,
-	//})
-	//
-	//subscriber := &Subscriber{}
-	//api.AddObserver(subscriber)
-	//
-	//<-endRunning
+	var (
+		endRunning = make(chan bool, 1)
+	)
+
+	api := testNewAPINode()
+	api.Subscribe(CallbackModeNewConnection, CallbackNode{
+		NodeID:             api.node.NodeID(),
+		Address:            "192.168.27.181:9322",
+		ConnectType:        owtp.HTTP,
+		EnableKeyAgreement: false,
+	})
+
+	subscriber := &Subscriber{}
+	api.AddObserver(subscriber)
+
+	<-endRunning
 }
 
 func TestAPINode_Listener(t *testing.T) {

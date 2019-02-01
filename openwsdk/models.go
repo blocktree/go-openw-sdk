@@ -1,9 +1,11 @@
 package openwsdk
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/blocktree/OpenWallet/hdkeystore"
 	"github.com/blocktree/OpenWallet/openwallet"
+	"github.com/tidwall/gjson"
 )
 
 type CallbackNode struct {
@@ -12,6 +14,36 @@ type CallbackNode struct {
 	ConnectType        string `json:"connectType"`        //@required 连接方式
 	EnableKeyAgreement bool   `json:"enableKeyAgreement"` //是否开启owtp协议协商密码
 	EnableSSL          bool   `json:"enableSSL"`          //是否开启链接SSL，https，wss
+}
+
+type TrustNodeInfo struct {
+	NodeID      string `json:"nodeID"` //@required 节点ID
+	NodeName    string `json:"nodeName"`
+	ConnectType string `json:"connectType"`
+}
+
+//SummarySetting 汇总设置信息
+type SummarySetting struct {
+	WalletID        string `json:"walletID"`
+	AccountID       string `json:"accountID" storm:"id"`
+	SumAddress      string `json:"sumAddress"`
+	Threshold       string `json:"threshold"`
+	MinTransfer     string `json:"minTransfer"`
+	RetainedBalance string `json:"retainedBalance"`
+	Confirms        uint64 `json:"confirms"`
+}
+
+func NewSummarySetting(result gjson.Result) *SummarySetting {
+	obj := &SummarySetting{
+		WalletID:        result.Get("walletID").String(),
+		AccountID:       result.Get("accountID").String(),
+		SumAddress:      result.Get("sumAddress").String(),
+		Threshold:       result.Get("threshold").String(),
+		MinTransfer:     result.Get("minTransfer").String(),
+		RetainedBalance: result.Get("retainedBalance").String(),
+		Confirms:        result.Get("confirms").Uint(),
+	}
+	return obj
 }
 
 type Wallet struct {
@@ -93,8 +125,17 @@ type TokenContract struct {
 
 type Coin struct {
 	Symbol     string `json:"symbol"`
-	IsContract bool `json:"isContract"`
+	IsContract bool   `json:"isContract"`
 	ContractID string `json:"contractID"`
+}
+
+func NewCoin(result gjson.Result) *Coin {
+	obj := &Coin{
+		Symbol:     result.Get("symbol").String(),
+		IsContract: result.Get("isContract").Bool(),
+		ContractID: result.Get("contractID").String(),
+	}
+	return obj
 }
 
 type RawTransaction struct {
@@ -158,9 +199,51 @@ type Transaction struct {
 }
 
 type FailedRawTransaction struct {
-	RawTx  *RawTransaction
-	Reason string
+	RawTx  *RawTransaction `json:"rawTx"`
+	Reason string          `json:"error"`
 }
+
+type SummaryTask struct {
+	Wallets []*SummaryWalletTask `json:"wallets"`
+}
+
+func NewSummaryTask(result gjson.Result) *SummaryTask {
+	var obj SummaryTask
+	json.Unmarshal([]byte(result.Raw), &obj)
+	return &obj
+}
+
+type SummaryAccountTask struct {
+	AccountID string   `json:"accountID"`
+	Contracts []string `json:"contracts"`
+}
+
+type SummaryWalletTask struct {
+	WalletID string                `json:"walletID"`
+	Password string                `json:"password"`
+	Accounts []*SummaryAccountTask `json:"accounts"`
+	Wallet   *Wallet
+}
+
+/*
+{
+	"wallets": [
+		{
+			"walletID": "1234qwer",
+			"password": "12345678",
+			"accounts": [
+				{
+					"accountID": "123",
+					"contracts":[
+						"all", //全部合约
+						"0x1234567890abcdef", //指定的合约地址
+					]
+				},
+			],
+		},
+	]
+}
+*/
 
 func (wallet *Wallet) CreateAccount(alias string, symbol *Symbol, key *hdkeystore.HDKey) (*Account, error) {
 

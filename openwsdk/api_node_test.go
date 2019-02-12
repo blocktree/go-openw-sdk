@@ -12,6 +12,12 @@ import (
 	"testing"
 )
 
+
+func init() {
+	owtp.Debug = false
+}
+
+
 func testNewAPINode() *APINode {
 
 	//--------------- PRIVATE KEY ---------------
@@ -33,6 +39,7 @@ func testNewAPINode() *APINode {
 		ConnectType:        owtp.HTTP,
 		EnableSignature:    false,
 		EnableKeyAgreement: true,
+		TimeoutSEC:         60,
 	}
 
 	api := NewAPINode(config)

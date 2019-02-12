@@ -21,11 +21,6 @@ const (
 	CallbackModeNewConnection     = 2 //新建连接模式，短连接可以采用建立回调服务接口接收推送
 )
 
-func init() {
-	owtp.Debug = false
-	//initAssetAdapter()
-}
-
 type APINodeConfig struct {
 	Host               string           `json:"host"`
 	AppID              string           `json:"appid"`
@@ -35,7 +30,7 @@ type APINodeConfig struct {
 	EnableSSL          bool             `json:"enableSSL"`
 	EnableSignature    bool             `json:"enableSignature"`
 	Cert               owtp.Certificate `json:"cert"`
-	Timeout            time.Duration    `json:"timeout"`
+	TimeoutSEC         int              `json:"timeoutSEC"`
 	//HostNodeID string           `json:"hostNodeID"`
 }
 
@@ -55,9 +50,9 @@ func NewAPINode(config *APINodeConfig) *APINode {
 	connectCfg.ConnectType = config.ConnectType
 	connectCfg.EnableSSL = config.EnableSSL
 	connectCfg.EnableSignature = config.EnableSignature
-	connectCfg.Timeout = config.Timeout
 	node := owtp.NewNode(owtp.NodeConfig{
-		Cert: config.Cert,
+		Cert:       config.Cert,
+		TimeoutSEC: config.TimeoutSEC,
 	})
 	node.Connect(HostNodeID, connectCfg)
 	api := APINode{
@@ -438,7 +433,6 @@ func (api *APINode) FindAddressByAccountID(accountID string, offset int, limit i
 			}
 		}
 
-
 		reqFunc(resp.Status, resp.Msg, addresses)
 	})
 }
@@ -528,7 +522,6 @@ func (api *APINode) SubmitTrade(
 			}
 		}
 
-
 		reqFunc(resp.Status, resp.Msg, txs, failedRawTxs)
 	})
 }
@@ -575,7 +568,6 @@ func (api *APINode) FindTradeLog(
 			}
 		}
 
-
 		reqFunc(resp.Status, resp.Msg, txs)
 	})
 }
@@ -609,7 +601,6 @@ func (api *APINode) GetContracts(
 				}
 			}
 		}
-
 
 		reqFunc(resp.Status, resp.Msg, tokens)
 	})

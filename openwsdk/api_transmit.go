@@ -10,7 +10,7 @@ import (
 type TransmitNode struct {
 	node              *owtp.OWTPNode
 	config            *APINodeConfig
-	disconnectHandler func(transmitNode *TransmitNode, nodeID string)      //托管节点断开连接后的通知
+	disconnectHandler func(transmitNode *TransmitNode, nodeID string)           //托管节点断开连接后的通知
 	connectHandler    func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) //托管节点连接成功的通知
 }
 
@@ -25,9 +25,9 @@ func NewTransmitNode(config *APINodeConfig) (*TransmitNode, error) {
 	connectCfg.EnableSSL = config.EnableSSL
 	connectCfg.EnableSignature = config.EnableSignature
 	connectCfg.ConnectType = config.ConnectType
-	connectCfg.Timeout = config.Timeout
 	node := owtp.NewNode(owtp.NodeConfig{
-		Cert: config.Cert,
+		Cert:       config.Cert,
+		TimeoutSEC: config.TimeoutSEC,
 	})
 
 	t := &TransmitNode{
@@ -96,7 +96,7 @@ func (transmit *TransmitNode) GetTrustNodeInfo(nodeID string,
 	}
 
 	params := map[string]interface{}{
-		"appID":    transmit.config.AppID,
+		"appID": transmit.config.AppID,
 	}
 
 	return transmit.node.Call(nodeID, "getTrustNodeInfo", params, sync, func(resp owtp.Response) {
@@ -161,7 +161,6 @@ func (transmit *TransmitNode) CreateAccountViaTrustNode(
 			}
 		}
 
-
 		reqFunc(resp.Status, resp.Msg, &account, addresses)
 	})
 }
@@ -222,7 +221,6 @@ func (transmit *TransmitNode) SendTransactionViaTrustNode(
 			}
 		}
 
-
 		reqFunc(resp.Status, resp.Msg, txs, failedRawTxs)
 	})
 }
@@ -270,7 +268,6 @@ func (transmit *TransmitNode) FindSummaryInfoByWalletIDViaTrustNode(
 				}
 			}
 		}
-
 
 		reqFunc(resp.Status, resp.Msg, summaryInfoList)
 	})

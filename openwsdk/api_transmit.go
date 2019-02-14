@@ -324,3 +324,41 @@ func (transmit *TransmitNode) UpdateInfoViaTrustNode(
 		reqFunc(resp.Status, resp.Msg)
 	})
 }
+
+//AppendSummaryTaskViaTrustNode 指定节点，追加汇总任务
+func (transmit *TransmitNode) AppendSummaryTaskViaTrustNode(
+	nodeID string,
+	summaryTask *SummaryTask,
+	sync bool, reqFunc func(status uint64, msg string)) error {
+	if transmit == nil {
+		return fmt.Errorf("TransmitNode is not inited")
+	}
+	params := map[string]interface{}{
+		"appID":       transmit.config.AppID,
+		"summaryTask": summaryTask,
+	}
+
+	return transmit.node.Call(nodeID, "appendSummaryTaskViaTrustNode", params, sync, func(resp owtp.Response) {
+		reqFunc(resp.Status, resp.Msg)
+	})
+}
+
+//RemoveSummaryTaskViaTrustNode 指定节点，移除汇总任务
+func (transmit *TransmitNode) RemoveSummaryTaskViaTrustNode(
+	nodeID string,
+	walletID string,
+	accountID string,
+	sync bool, reqFunc func(status uint64, msg string)) error {
+	if transmit == nil {
+		return fmt.Errorf("TransmitNode is not inited")
+	}
+	params := map[string]interface{}{
+		"appID":     transmit.config.AppID,
+		"walletID":  walletID,
+		"accountID": accountID,
+	}
+
+	return transmit.node.Call(nodeID, "removeSummaryTaskViaTrustNode", params, sync, func(resp owtp.Response) {
+		reqFunc(resp.Status, resp.Msg)
+	})
+}

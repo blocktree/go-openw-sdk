@@ -225,6 +225,12 @@ type SummaryWalletTask struct {
 	Wallet   *Wallet
 }
 
+func NewSummaryWalletTask(result gjson.Result) *SummaryWalletTask {
+	var obj SummaryWalletTask
+	json.Unmarshal([]byte(result.Raw), &obj)
+	return &obj
+}
+
 /*
 {
 	"wallets": [

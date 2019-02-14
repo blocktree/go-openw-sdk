@@ -38,7 +38,7 @@ func testNewAPINode() *APINode {
 		Cert:               cert,
 		ConnectType:        owtp.HTTP,
 		EnableSignature:    false,
-		EnableKeyAgreement: true,
+		EnableKeyAgreement: false,
 		TimeoutSEC:         60,
 	}
 
@@ -207,8 +207,8 @@ func TestAPINode_FindAccountByWalletID(t *testing.T) {
 }
 
 func TestAPINode_CreateAddress(t *testing.T) {
-	walletID := "VysrzgpsLsgDpHM2KQMYuPY57fL3BAFU34"
-	accountID := "6EPMmTGx89qEjfftMhrLVg8SHayW8HaU8BbcgDyeyYFj"
+	walletID := "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA"
+	accountID := "7ww2Gpfy8pN6HTngbMFBTEMAaVRGEpkmsiNkgAgqGQGf"
 	api := testNewAPINode()
 	api.CreateAddress(walletID, accountID, 100, true,
 		func(status uint64, msg string, addresses []*Address) {
@@ -236,7 +236,7 @@ func TestAPINode_FindAddressByAddress(t *testing.T) {
 }
 
 func TestAPINode_FindAddressByAccountID(t *testing.T) {
-	accountID := "A3Mxhqm65kTgS2ybHLenNrZzZNtLGVobDFYdpc1ge4eK"
+	accountID := "7ww2Gpfy8pN6HTngbMFBTEMAaVRGEpkmsiNkgAgqGQGf"
 	api := testNewAPINode()
 	api.FindAddressByAccountID(accountID, 0, 10, true,
 		func(status uint64, msg string, addresses []*Address) {

@@ -151,7 +151,9 @@ func TestTransmitNode_FindSummaryInfoByWalletIDViaTrustNode(t *testing.T) {
 
 func TestTransmitNode_StartSummaryTaskViaTrustNode(t *testing.T) {
 
-	plain := `
+	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
+
+		plain := `
 
 {
 	"wallets": [{
@@ -164,14 +166,12 @@ func TestTransmitNode_StartSummaryTaskViaTrustNode(t *testing.T) {
 }
 
 `
-	var summaryTask SummaryTask
-	err := json.Unmarshal([]byte(plain), &summaryTask)
-	if err != nil {
-		log.Error("json.Unmarshal error:", err)
-		return
-	}
-
-	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
+		var summaryTask SummaryTask
+		err := json.Unmarshal([]byte(plain), &summaryTask)
+		if err != nil {
+			log.Error("json.Unmarshal error:", err)
+			return
+		}
 
 		transmitNode.StartSummaryTaskViaTrustNode(nodeInfo.NodeID, 10, &summaryTask,
 			true, func(status uint64, msg string) {
@@ -195,5 +195,62 @@ func TestTransmitNode_UpdateInfoViaTrustNode(t *testing.T) {
 		transmitNode.UpdateInfoViaTrustNode(nodeInfo.NodeID, true, func(status uint64, msg string) {
 			log.Infof("msg:%+v", msg)
 		})
+	})
+}
+
+func TestTransmitNode_AppendSummaryTaskViaTrustNode(t *testing.T) {
+
+	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
+
+		setting := &SummarySetting{
+			"WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA",
+			"7ww2Gpfy8pN6HTngbMFBTEMAaVRGEpkmsiNkgAgqGQGf",
+			"0x4f544cbd23c42950a5fe7f967c3e6938955a1718",
+			"1",
+			"0.01",
+			"0",
+			1,
+		}
+
+		transmitNode.SetSummaryInfoViaTrustNode(nodeInfo.NodeID, setting, true, func(status uint64, msg string) {
+			log.Infof("msg:%+v", msg)
+		})
+
+		plain := `
+
+{
+	"wallets": [{
+		"walletID": "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA",
+		"password": "12345678",
+		"accounts": [{
+			"accountID": "7ww2Gpfy8pN6HTngbMFBTEMAaVRGEpkmsiNkgAgqGQGf"
+		}]
+	}]
+}
+
+`
+		var summaryTask SummaryTask
+		err := json.Unmarshal([]byte(plain), &summaryTask)
+		if err != nil {
+			log.Error("json.Unmarshal error:", err)
+			return
+		}
+
+		transmitNode.AppendSummaryTaskViaTrustNode(nodeInfo.NodeID, &summaryTask,
+			true, func(status uint64, msg string) {
+				log.Infof("msg:%+v", msg)
+			})
+	})
+}
+
+func TestTransmitNode_RemoveSummaryTaskViaTrustNode(t *testing.T) {
+	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
+
+		transmitNode.RemoveSummaryTaskViaTrustNode(nodeInfo.NodeID,
+			"WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA",
+			"A3Mxhqm65kTgS2ybHLenNrZzZNtLGVobDFYdpc1ge4eK",
+			true, func(status uint64, msg string) {
+				log.Infof("msg:%+v", msg)
+			})
 	})
 }

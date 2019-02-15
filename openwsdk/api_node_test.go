@@ -14,27 +14,28 @@ import (
 
 
 func init() {
-	owtp.Debug = false
+	owtp.Debug = true
 }
 
 
 func testNewAPINode() *APINode {
 
 	//--------------- PRIVATE KEY ---------------
-	//APt4potcFAqr6aSh5XdNPgWPtvExLnRvQP9KXYWfM5rR
-	//
+	//CaeQzossEasxDmDx4sS12eQC2L7zzNGVwEW2T1CKK3ZS
 	//--------------- PUBLIC KEY ---------------
-	//APt4potcFAqr6aSh5XdNPgWPtvExLnRvQP9KXYWfM5rR
+	//3Gve895o6aarxYzgLu8tKy3EXVFmFw6oFh1dbpVXmy8VtRaxa6tzpKRPc568549Q5jLpNJGbkXY5HqoQH5gvbg6o
 	//--------------- NODE ID ---------------
-	//G6s787hxsrGyfhaFss8VNaEimXo22qWdRkFQA953eziz
+	//4YBHa3d3vAceSRngPWrsm1cSPJudFQSzNAhPGschFw47
 
-	cert, _ := owtp.NewCertificate(owtp.RandomPrivateKey(), "")
+	cert, _ := owtp.NewCertificate("CaeQzossEasxDmDx4sS12eQC2L7zzNGVwEW2T1CKK3ZS", "")
 
 	config := &APINodeConfig{
-		AppID:  "8df7420d3917afa0172ea9c85e07ab55",
-		AppKey: "faa14b5e2cf119cd6d38bda45b49eb02b333a1b1ff6f10703acb554011ebfb1e",
-		Host:   "120.78.83.180",
-		//Host: "192.168.27.181:8422",
+		//AppID:  "8df7420d3917afa0172ea9c85e07ab55",
+		//AppKey: "faa14b5e2cf119cd6d38bda45b49eb02b333a1b1ff6f10703acb554011ebfb1e",
+		//Host:   "120.78.83.180",
+		AppID:  "b4b1962d415d4d30ec71b28769fda585",
+		AppKey: "8c511cb683041f3589419440fab0a7b7710907022b0d035baea9001d529ca72f",
+		Host: "192.168.27.181:8422",
 		Cert:               cert,
 		ConnectType:        owtp.HTTP,
 		EnableSignature:    false,
@@ -118,6 +119,12 @@ func TestAPINode_CreateWallet(t *testing.T) {
 
 	api.CreateWallet(name, key.KeyID, true,
 		func(status uint64, msg string, wallet *Wallet) {
+
+			if status != owtp.StatusSuccess {
+				log.Error(msg)
+				return
+			}
+
 			if wallet != nil {
 				t.Logf("wallet: %+v\n", wallet)
 			}
@@ -192,12 +199,13 @@ func TestAPINode_CreateAccount(t *testing.T) {
 }
 
 func TestAPINode_FindAccountByWalletID(t *testing.T) {
-	walletID := "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA"
+	walletID := "VysrzgpsLsgDpHM2KQMYuPY57fL3BAFU34"
 	api := testNewAPINode()
 	api.FindAccountByWalletID(walletID, true,
 		func(status uint64, msg string, accounts []*Account) {
 
 			if status != owtp.StatusSuccess {
+				t.Logf("unexpected error: %v\n", msg)
 				return
 			}
 			for i, a := range accounts {
@@ -236,7 +244,7 @@ func TestAPINode_FindAddressByAddress(t *testing.T) {
 }
 
 func TestAPINode_FindAddressByAccountID(t *testing.T) {
-	accountID := "7ww2Gpfy8pN6HTngbMFBTEMAaVRGEpkmsiNkgAgqGQGf"
+	accountID := "Aa7Chh2MdaGDejHdCJZAaX7AwvGNmMEMry2kZZTq114a"
 	api := testNewAPINode()
 	api.FindAddressByAccountID(accountID, 0, 10, true,
 		func(status uint64, msg string, addresses []*Address) {
@@ -279,7 +287,7 @@ func testCreateTrade(
 }
 
 func testSubmitTrade(
-	rawTx *RawTransaction,
+	rawTx []*RawTransaction,
 ) ([]*Transaction, []*FailedRawTransaction, error) {
 
 	var (
@@ -306,7 +314,7 @@ func testSubmitTrade(
 func TestAPINode_Send_LTC(t *testing.T) {
 	accountID := "Aa7Chh2MdaGDejHdCJZAaX7AwvGNmMEMry2kZZTq114a"
 	sid := uuid.New().String()
-	amount := "0.1"
+	amount := "0.001"
 	address := "mkdStRouBPVrDVpYmbE5VUJqhBgxJb3dSS"
 	feeRate := "0.001"
 
@@ -337,7 +345,7 @@ func TestAPINode_Send_LTC(t *testing.T) {
 
 	log.Infof("signed rawTx: %+v", rawTx)
 
-	success, fail, err := testSubmitTrade(rawTx)
+	success, fail, err := testSubmitTrade([]*RawTransaction{rawTx})
 	if err != nil {
 		t.Logf("SubmitTrade unexpected error: %v\n", err)
 		return

@@ -362,3 +362,45 @@ func (transmit *TransmitNode) RemoveSummaryTaskViaTrustNode(
 		reqFunc(resp.Status, resp.Msg)
 	})
 }
+
+//GetCurrentSummaryTaskViaTrustNode 指定节点，获取当前的执行中的汇总任务
+func (transmit *TransmitNode) GetCurrentSummaryTaskViaTrustNode(
+	nodeID string,
+	sync bool, reqFunc func(status uint64, msg string, summaryTask *SummaryTask)) error {
+	if transmit == nil {
+		return fmt.Errorf("TransmitNode is not inited")
+	}
+	params := map[string]interface{}{
+		"appID": transmit.config.AppID,
+	}
+
+	return transmit.node.Call(nodeID, "getCurrentSummaryTaskViaTrustNode", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		var summaryTask SummaryTask
+		json.Unmarshal([]byte(data.Raw), &summaryTask)
+		reqFunc(resp.Status, resp.Msg, &summaryTask)
+	})
+}
+
+//GetSummaryTaskLogViaTrustNode 指定节点，获取汇总日志列表
+func (transmit *TransmitNode) GetSummaryTaskLogViaTrustNode(
+	nodeID string,
+	offset int,
+	limit int,
+	sync bool, reqFunc func(status uint64, msg string, taskLog []*SummaryTaskLog)) error {
+	if transmit == nil {
+		return fmt.Errorf("TransmitNode is not inited")
+	}
+	params := map[string]interface{}{
+		"appID":  transmit.config.AppID,
+		"offset": offset,
+		"limit":  limit,
+	}
+
+	return transmit.node.Call(nodeID, "getSummaryTaskLogViaTrustNode", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		var taskLog []*SummaryTaskLog
+		json.Unmarshal([]byte(data.Raw), &taskLog)
+		reqFunc(resp.Status, resp.Msg, taskLog)
+	})
+}

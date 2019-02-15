@@ -8,6 +8,18 @@ import (
 	"github.com/tidwall/gjson"
 )
 
+type BlockHeader struct {
+	Hash              string `json:"hash"`
+	Confirmations     uint64 `json:"confirmations"`
+	Merkleroot        string `json:"merkleroot"`
+	Previousblockhash string `json:"previousblockhash"`
+	Height            uint64 `json:"height"`
+	Version           uint64 `json:"version"`
+	Time              uint64 `json:"time"`
+	Fork              bool   `json:"fork"`
+	Symbol            string `json:"symbol"`
+}
+
 type CallbackNode struct {
 	NodeID             string `json:"nodeID"`             //@required 节点ID
 	Address            string `json:"address"`            //@required 连接IP地址
@@ -250,6 +262,21 @@ func NewSummaryWalletTask(result gjson.Result) *SummaryWalletTask {
 	]
 }
 */
+
+type SummaryTaskLog struct {
+	Sid            string   `json:"sid" storm:"id"`
+	WalletID       string   `json:"walletID"`
+	AccountID      string   `json:"accountID"`
+	StartAddrIndex int      `json:"startAddrIndex"`
+	EndAddrIndex   int      `json:"endAddrIndex"`
+	Coin           Coin     `json:"coin"`
+	SuccessCount   int      `json:"successCount"`
+	FailCount      int      `json:"failCount"`
+	TxIDs          []string `json:"txIDs"`
+	TotalSumAmount string   `json:"sumAmount"`
+	TotalCostFees  string   `json:"sumFees"`
+	CreateTime     int64    `json:"createTime" storm:"index"`
+}
 
 func (wallet *Wallet) CreateAccount(alias string, symbol *Symbol, key *hdkeystore.HDKey) (*Account, error) {
 

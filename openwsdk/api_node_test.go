@@ -12,11 +12,9 @@ import (
 	"testing"
 )
 
-
 func init() {
-	owtp.Debug = true
+	owtp.Debug = false
 }
-
 
 func testNewAPINode() *APINode {
 
@@ -30,12 +28,12 @@ func testNewAPINode() *APINode {
 	cert, _ := owtp.NewCertificate("CaeQzossEasxDmDx4sS12eQC2L7zzNGVwEW2T1CKK3ZS", "")
 
 	config := &APINodeConfig{
-		//AppID:  "8df7420d3917afa0172ea9c85e07ab55",
-		//AppKey: "faa14b5e2cf119cd6d38bda45b49eb02b333a1b1ff6f10703acb554011ebfb1e",
-		//Host:   "120.78.83.180",
-		AppID:  "b4b1962d415d4d30ec71b28769fda585",
-		AppKey: "8c511cb683041f3589419440fab0a7b7710907022b0d035baea9001d529ca72f",
-		Host: "192.168.27.181:8422",
+		AppID:  "8df7420d3917afa0172ea9c85e07ab55",
+		AppKey: "faa14b5e2cf119cd6d38bda45b49eb02b333a1b1ff6f10703acb554011ebfb1e",
+		Host:   "120.78.83.180",
+		//AppID:  "b4b1962d415d4d30ec71b28769fda585",
+		//AppKey: "8c511cb683041f3589419440fab0a7b7710907022b0d035baea9001d529ca72f",
+		//Host: "192.168.27.181:8422",
 		Cert:               cert,
 		ConnectType:        owtp.HTTP,
 		EnableSignature:    false,
@@ -199,7 +197,7 @@ func TestAPINode_CreateAccount(t *testing.T) {
 }
 
 func TestAPINode_FindAccountByWalletID(t *testing.T) {
-	walletID := "VysrzgpsLsgDpHM2KQMYuPY57fL3BAFU34"
+	walletID := "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA"
 	api := testNewAPINode()
 	api.FindAccountByWalletID(walletID, true,
 		func(status uint64, msg string, accounts []*Account) {
@@ -209,7 +207,14 @@ func TestAPINode_FindAccountByWalletID(t *testing.T) {
 				return
 			}
 			for i, a := range accounts {
-				log.Infof("account[%d]:%+v", i, a)
+				log.Infof("account[%d] AccountID:%v", i, a.AccountID)
+				log.Infof("account[%d] Symbol:%v", i, a.Symbol)
+				log.Infof("account[%d] PublicKey:%v", i, a.PublicKey)
+				log.Infof("account[%d] HdPath:%v", i, a.HdPath)
+				log.Infof("account[%d] AccountIndex:%v", i, a.AccountIndex)
+				log.Infof("account[%d] AddressIndex:%v", i, a.AddressIndex)
+				log.Infof("account[%d] Balance:%v", i, a.Balance)
+				log.Infof("------------------------------------------")
 			}
 		})
 }
@@ -231,7 +236,7 @@ func TestAPINode_CreateAddress(t *testing.T) {
 }
 
 func TestAPINode_FindAddressByAddress(t *testing.T) {
-	addr := "mxYKaDV22uqo8rB4EQKqLQFsRbGuey34vs"
+	addr := "mgCzMJDyJoqa6XE3RSdNGvD5Bi5VTWudRq"
 	api := testNewAPINode()
 	api.FindAddressByAddress(addr, true,
 		func(status uint64, msg string, address *Address) {

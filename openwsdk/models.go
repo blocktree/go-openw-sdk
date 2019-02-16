@@ -264,18 +264,18 @@ func NewSummaryWalletTask(result gjson.Result) *SummaryWalletTask {
 */
 
 type SummaryTaskLog struct {
-	Sid            string   `json:"sid" storm:"id"`
-	WalletID       string   `json:"walletID"`
-	AccountID      string   `json:"accountID"`
-	StartAddrIndex int      `json:"startAddrIndex"`
-	EndAddrIndex   int      `json:"endAddrIndex"`
-	Coin           Coin     `json:"coin"`
-	SuccessCount   int      `json:"successCount"`
-	FailCount      int      `json:"failCount"`
-	TxIDs          []string `json:"txIDs"`
-	TotalSumAmount string   `json:"sumAmount"`
-	TotalCostFees  string   `json:"sumFees"`
-	CreateTime     int64    `json:"createTime" storm:"index"`
+	Sid            string   `json:"sid" storm:"id"`           //汇总执行批次号
+	WalletID       string   `json:"walletID"`                 //汇总钱包ID
+	AccountID      string   `json:"accountID"`                //汇总资产账户ID
+	StartAddrIndex int      `json:"startAddrIndex"`           //账户汇总起始的地址索引位
+	EndAddrIndex   int      `json:"endAddrIndex"`             //账户汇总结束的地址索引位
+	Coin           Coin     `json:"coin"`                     //汇总的币种信息
+	SuccessCount   int      `json:"successCount"`             //汇总交易发送的成功个数
+	FailCount      int      `json:"failCount"`                //汇总交易发送的失败个数
+	TxIDs          []string `json:"txIDs"`                    //汇总交易成功的txid
+	TotalSumAmount string   `json:"sumAmount"`                //这次汇总总数
+	TotalCostFees  string   `json:"sumFees"`                  //这次汇总总消费手续费
+	CreateTime     int64    `json:"createTime" storm:"index"` //汇总时间
 }
 
 func (wallet *Wallet) CreateAccount(alias string, symbol *Symbol, key *hdkeystore.HDKey) (*Account, error) {

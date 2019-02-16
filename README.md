@@ -259,5 +259,62 @@ TransmitNode是用于与授信的钱包托管节点进行双向交互。
     transmitNode.UpdateInfoViaTrustNode(nodeInfo.NodeID, true, func(status uint64, msg string) {
                 log.Infof("msg:%+v", msg)
             })
+    
+    //追加汇总任务，钱包节点会合拼新任务到现有任务列表
+    plain := `
+
+{
+"wallets": [{
+    "walletID": "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA",
+    "password": "12345678",
+    "accounts": [{
+        "accountID": "7ww2Gpfy8pN6HTngbMFBTEMAaVRGEpkmsiNkgAgqGQGf"
+    }]
+}]
+}
+
+`
+    var summaryTask SummaryTask
+    err := json.Unmarshal([]byte(plain), &summaryTask)
+    if err != nil {
+        log.Error("json.Unmarshal error:", err)
+        return
+    }
+
+    transmitNode.AppendSummaryTaskViaTrustNode(nodeInfo.NodeID, &summaryTask,
+        true, func(status uint64, msg string) {
+            log.Infof("msg:%+v", msg)
+        })
+    
+    //移除当前执行的汇总任务，根据walletID和accountID进行移除
+    transmitNode.RemoveSummaryTaskViaTrustNode(nodeInfo.NodeID,
+        "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA",
+        "A3Mxhqm65kTgS2ybHLenNrZzZNtLGVobDFYdpc1ge4eK",
+        true, func(status uint64, msg string) {
+            log.Infof("msg:%+v", msg)
+        })
+    
+    //获取当前执行中的汇总任务
+    transmitNode.GetCurrentSummaryTaskViaTrustNode(nodeInfo.NodeID,
+        true, func(status uint64, msg string, task *SummaryTask) {
+            log.Infof("msg:%+v", msg)
+            for _, w := range task.Wallets {
+                log.Infof("task wallet:%+v", w.WalletID)
+                for _, a := range w.Accounts {
+                    log.Infof("task account:%+v", a.AccountID)
+                }
+            }
+
+        })
+    
+    //获取汇总任务执行日志
+    transmitNode.GetSummaryTaskLogViaTrustNode(nodeInfo.NodeID, 0, 200,
+        true, func(status uint64, msg string, taskLog []*SummaryTaskLog) {
+            log.Infof("msg:%+v", msg)
+            for _, r := range taskLog {
+                log.Infof("taskLog: %+v", r)
+            }
+
+        })
 ```
 ---

@@ -120,10 +120,10 @@ func TestTransmitNode_SetSummaryInfoViaTrustNode(t *testing.T) {
 
 		setting := &SummarySetting{
 			"WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA",
-			"A3Mxhqm65kTgS2ybHLenNrZzZNtLGVobDFYdpc1ge4eK",
-			"mgCzMJDyJoqa6XE3RSdNGvD5Bi5VTWudRq",
-			"1",
-			"0.01",
+			"3i26MQmtuWVVnw8GnRCVopG3pi8MaYU6RqWVV2E1hwJx",
+			"mkdStRouBPVrDVpYmbE5VUJqhBgxJb3dSS",
+			"3",
+			"0.001",
 			"0",
 			1,
 		}
@@ -159,9 +159,14 @@ func TestTransmitNode_StartSummaryTaskViaTrustNode(t *testing.T) {
 	"wallets": [{
 		"walletID": "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA",
 		"password": "12345678",
-		"accounts": [{
+		"accounts": [
+		{
 			"accountID": "A3Mxhqm65kTgS2ybHLenNrZzZNtLGVobDFYdpc1ge4eK"
-		}]
+		},
+		{
+			"accountID": "3i26MQmtuWVVnw8GnRCVopG3pi8MaYU6RqWVV2E1hwJx"
+		}
+		]
 	}]
 }
 
@@ -251,6 +256,37 @@ func TestTransmitNode_RemoveSummaryTaskViaTrustNode(t *testing.T) {
 			"A3Mxhqm65kTgS2ybHLenNrZzZNtLGVobDFYdpc1ge4eK",
 			true, func(status uint64, msg string) {
 				log.Infof("msg:%+v", msg)
+			})
+	})
+}
+
+func TestTransmitNode_GetCurrentSummaryTaskViaTrustNode(t *testing.T) {
+	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
+
+		transmitNode.GetCurrentSummaryTaskViaTrustNode(nodeInfo.NodeID,
+			true, func(status uint64, msg string, task *SummaryTask) {
+				log.Infof("msg:%+v", msg)
+				for _, w := range task.Wallets {
+					log.Infof("task wallet:%+v", w.WalletID)
+					for _, a := range w.Accounts {
+						log.Infof("task account:%+v", a.AccountID)
+					}
+				}
+
+			})
+	})
+}
+
+func TestTransmitNode_GetSummaryTaskLogViaTrustNode(t *testing.T) {
+	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
+
+		transmitNode.GetSummaryTaskLogViaTrustNode(nodeInfo.NodeID, 0, 200,
+			true, func(status uint64, msg string, taskLog []*SummaryTaskLog) {
+				log.Infof("msg:%+v", msg)
+				for _, r := range taskLog {
+					log.Infof("taskLog: %+v", r)
+				}
+
 			})
 	})
 }

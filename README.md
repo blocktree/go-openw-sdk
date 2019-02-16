@@ -86,9 +86,7 @@ $ xgo -h
    
 基于OWTP协议库，封装所有与openw-server钱包服务API交互方法。用于集成到go语言开发下的应用方系统。
 
-### 使用教程
-
-#### APINode
+### APINode
 
 开发者通过APINode，与openw-server进行数据交互，实现OpenWallet钱包体系的管理功能。
 APINode详细使用教程可查看[api_node测试用例](./openwsdk/api_node_test.go)。
@@ -125,7 +123,77 @@ APINode详细使用教程可查看[api_node测试用例](./openwsdk/api_node_tes
 
 ```
 
-#### TransmitNode
+### 订阅通知
+
+```go
+
+//订阅者需要实现OpenwNotificationObject接口
+type Subscriber struct {
+}
+
+//OpenwNewTransactionNotify openw新交易单通知
+func (s *Subscriber) OpenwNewTransactionNotify(transaction *Transaction) (bool, error) {
+	log.Infof("Symbol: %+v", transaction.Symbol)
+	log.Infof("contractID: %+v", transaction.ContractID)
+	log.Infof("blockHash: %+v", transaction.BlockHash)
+	log.Infof("blockHeight: %+v", transaction.BlockHeight)
+	log.Infof("txid: %+v", transaction.Txid)
+	log.Infof("amount: %+v", transaction.Amount)
+	log.Infof("accountID: %+v", transaction.AccountID)
+	log.Infof("fees: %+v", transaction.Fees)
+	log.Infof("---------------------------------")
+	return true, nil
+}
+
+//OpenwNewBlockNotify openw新区块头通知
+func (s *Subscriber) OpenwNewBlockNotify(blockHeader *BlockHeader) (bool, error) {
+	log.Infof("Symbol: %+v", blockHeader.Symbol)
+	log.Infof("blockHash: %+v", blockHeader.Hash)
+	log.Infof("blockHeight: %+v", blockHeader.Height)
+	log.Infof("---------------------------------")
+	return true, nil
+}
+
+//运行订阅
+func RunSubscribe() {
+
+	var (
+		endRunning = make(chan bool, 1)
+	)
+	
+	//调用Subscribe进行订阅
+	
+	//订阅方法有几种
+    //SubscribeToAccount    //订阅余额更新通信
+    //SubscribeToTrade      //订阅新交易单通知
+    //SubscribeToBlock      //订阅新区块链头通知
+    
+	err := api.Subscribe(
+		[]string{
+			SubscribeToTrade,
+			//SubscribeToBlock,
+		},
+		CallbackModeNewConnection, 
+		CallbackNode{   //因为通知是异步的，需要订阅时需要提交一个回调服务节点
+			NodeID:             api.node.NodeID(),
+			Address:            "192.168.27.179:9322",
+			ConnectType:        owtp.Websocket,
+			EnableKeyAgreement: false,
+		})
+	if err != nil {
+		return
+	}
+
+    //订阅后，加入监听者队列，获得通知回调
+	subscriber := &Subscriber{}
+	api.AddObserver(subscriber)
+
+	<-endRunning
+}
+
+```
+
+### TransmitNode
 
 TransmitNode是用于与授信的钱包托管节点进行双向交互。
 钱包种子和密钥签名相关的操作会托管在授信节点上处理，满足于业务系统隔离于冷热钱包的安全方案。

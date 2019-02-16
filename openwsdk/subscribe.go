@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	SubscribeToAccount = "subscribeToAccount"
-	SubscribeToTrade = "subscribeToTrade"
-	SubscribeToBlock = "subscribeToBlock"
+	SubscribeToAccount = "subscribeToAccount" //订阅余额更新通信
+	SubscribeToTrade   = "subscribeToTrade"   //订阅新交易单通知
+	SubscribeToBlock   = "subscribeToBlock"   //订阅新区块链头通知
 )
 
 //OpenwNotificationObject openw-server的通知对象
@@ -54,7 +54,6 @@ func (api *APINode) subscribeToTrade(ctx *owtp.Context) {
 		"accepted": accepted,
 	}, owtp.StatusSuccess, msg)
 }
-
 
 //subscribeToBlock 处理新区块头通知
 func (api *APINode) subscribeToBlock(ctx *owtp.Context) {

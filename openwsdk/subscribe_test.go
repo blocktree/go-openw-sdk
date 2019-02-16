@@ -1,6 +1,7 @@
 package openwsdk
 
 import (
+	"github.com/blocktree/OpenWallet/log"
 	"github.com/blocktree/OpenWallet/owtp"
 	"testing"
 )
@@ -10,6 +11,24 @@ type Subscriber struct {
 
 //OpenwNewTransactionNotify openw新交易单通知
 func (s *Subscriber) OpenwNewTransactionNotify(transaction *Transaction) (bool, error) {
+	log.Infof("Symbol: %+v", transaction.Symbol)
+	log.Infof("contractID: %+v", transaction.ContractID)
+	log.Infof("blockHash: %+v", transaction.BlockHash)
+	log.Infof("blockHeight: %+v", transaction.BlockHeight)
+	log.Infof("txid: %+v", transaction.Txid)
+	log.Infof("amount: %+v", transaction.Amount)
+	log.Infof("accountID: %+v", transaction.AccountID)
+	log.Infof("fees: %+v", transaction.Fees)
+	log.Infof("---------------------------------")
+	return true, nil
+}
+
+//OpenwNewBlockNotify openw新区块头通知
+func (s *Subscriber) OpenwNewBlockNotify(blockHeader *BlockHeader) (bool, error) {
+	log.Infof("Symbol: %+v", blockHeader.Symbol)
+	log.Infof("blockHash: %+v", blockHeader.Hash)
+	log.Infof("blockHeight: %+v", blockHeader.Height)
+	log.Infof("---------------------------------")
 	return true, nil
 }
 
@@ -20,12 +39,22 @@ func TestAPINode_Subscribe(t *testing.T) {
 	)
 
 	api := testNewAPINode()
-	api.Subscribe(CallbackModeNewConnection, CallbackNode{
-		NodeID:             api.node.NodeID(),
-		Address:            "192.168.27.181:9322",
-		ConnectType:        owtp.HTTP,
-		EnableKeyAgreement: false,
-	})
+	log.Debug("NodeID:", api.node.NodeID())
+	err := api.Subscribe(
+		[]string{
+			SubscribeToTrade,
+			//SubscribeToBlock,
+		},
+		CallbackModeNewConnection, CallbackNode{
+			NodeID:             api.node.NodeID(),
+			Address:            "192.168.27.179:9322",
+			ConnectType:        owtp.Websocket,
+			EnableKeyAgreement: false,
+		})
+	if err != nil {
+		t.Logf("Subscribe unexpected error: %v\n", err)
+		return
+	}
 
 	subscriber := &Subscriber{}
 	api.AddObserver(subscriber)
@@ -55,7 +84,6 @@ func TestAPINode_Listener(t *testing.T) {
 	////等待推送
 	//time.Sleep(5 * time.Second)
 }
-
 
 func TestAPINode_Call(t *testing.T) {
 

@@ -8,6 +8,18 @@ import (
 	"github.com/tidwall/gjson"
 )
 
+type BlockHeader struct {
+	Hash              string `json:"hash"`
+	Confirmations     uint64 `json:"confirmations"`
+	Merkleroot        string `json:"merkleroot"`
+	Previousblockhash string `json:"previousblockhash"`
+	Height            uint64 `json:"height"`
+	Version           uint64 `json:"version"`
+	Time              uint64 `json:"time"`
+	Fork              bool   `json:"fork"`
+	Symbol            string `json:"symbol"`
+}
+
 type CallbackNode struct {
 	NodeID             string `json:"nodeID"`             //@required 节点ID
 	Address            string `json:"address"`            //@required 连接IP地址
@@ -250,6 +262,21 @@ func NewSummaryWalletTask(result gjson.Result) *SummaryWalletTask {
 	]
 }
 */
+
+type SummaryTaskLog struct {
+	Sid            string   `json:"sid" storm:"id"`           //汇总执行批次号
+	WalletID       string   `json:"walletID"`                 //汇总钱包ID
+	AccountID      string   `json:"accountID"`                //汇总资产账户ID
+	StartAddrIndex int      `json:"startAddrIndex"`           //账户汇总起始的地址索引位
+	EndAddrIndex   int      `json:"endAddrIndex"`             //账户汇总结束的地址索引位
+	Coin           Coin     `json:"coin"`                     //汇总的币种信息
+	SuccessCount   int      `json:"successCount"`             //汇总交易发送的成功个数
+	FailCount      int      `json:"failCount"`                //汇总交易发送的失败个数
+	TxIDs          []string `json:"txIDs"`                    //汇总交易成功的txid
+	TotalSumAmount string   `json:"sumAmount"`                //这次汇总总数
+	TotalCostFees  string   `json:"sumFees"`                  //这次汇总总消费手续费
+	CreateTime     int64    `json:"createTime" storm:"index"` //汇总时间
+}
 
 func (wallet *Wallet) CreateAccount(alias string, symbol *Symbol, key *hdkeystore.HDKey) (*Account, error) {
 

@@ -72,12 +72,13 @@ func NewAPINode(config *APINodeConfig) *APINode {
 
 	api.node.HandleFunc("subscribeToAccount", api.subscribeToAccount)
 	api.node.HandleFunc("subscribeToTrade", api.subscribeToTrade)
+	api.node.HandleFunc("subscribeToBlock", api.subscribeToBlock)
 
 	return &api
 }
 
 //Subscribe 订阅
-func (api *APINode) Subscribe(callbackMode int, callbackNode CallbackNode) error {
+func (api *APINode) Subscribe(subscribeMethod []string, callbackMode int, callbackNode CallbackNode) error {
 
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
@@ -100,12 +101,13 @@ func (api *APINode) Subscribe(callbackMode int, callbackNode CallbackNode) error
 
 	params := map[string]interface{}{
 		//"subscriptions": subscriptions,
-		"appID":        api.config.AppID,
-		"callbackMode": callbackMode,
-		"callbackNode": callbackNode,
+		"appID":           api.config.AppID,
+		"subscribeMethod": subscribeMethod,
+		"callbackMode":    callbackMode,
+		"callbackNode":    callbackNode,
 	}
 
-	response, err := api.node.CallSync(callbackNode.NodeID, "subscribe", params)
+	response, err := api.node.CallSync(HostNodeID, "subscribe", params)
 	if err != nil {
 		return err
 	}
@@ -476,7 +478,7 @@ func (api *APINode) CreateTrade(
 
 //SubmitTrade 广播转账交易订单
 func (api *APINode) SubmitTrade(
-	rawTx *RawTransaction,
+	rawTx []*RawTransaction,
 	sync bool,
 	reqFunc func(status uint64, msg string, successTx []*Transaction, failedRawTxs []*FailedRawTransaction),
 ) error {
@@ -485,9 +487,7 @@ func (api *APINode) SubmitTrade(
 	}
 	params := map[string]interface{}{
 		"appID": api.config.AppID,
-		"rawTx": []*RawTransaction{
-			rawTx,
-		},
+		"rawTx": rawTx,
 	}
 
 	return api.node.Call(HostNodeID, "submitTrade", params, sync, func(resp owtp.Response) {

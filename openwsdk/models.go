@@ -228,6 +228,7 @@ func NewSummaryTask(result gjson.Result) *SummaryTask {
 type SummaryAccountTask struct {
 	AccountID string   `json:"accountID"`
 	Contracts []string `json:"contracts"`
+	FeeRate   string   `json:"feeRate"`
 }
 
 type SummaryWalletTask struct {
@@ -252,6 +253,7 @@ func NewSummaryWalletTask(result gjson.Result) *SummaryWalletTask {
 			"accounts": [
 				{
 					"accountID": "123",
+					"feeRate": "0.0001"
 					"contracts":[
 						"all", //全部合约
 						"0x1234567890abcdef", //指定的合约地址

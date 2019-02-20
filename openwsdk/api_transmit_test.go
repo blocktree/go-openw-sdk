@@ -46,7 +46,7 @@ func TestTransmitNode_GetTrustNodeInfo(t *testing.T) {
 
 func TestTransmitNode_CreateWalletViaTrustNode(t *testing.T) {
 
-	alias := "openwallet"
+	alias := "openwallet222"
 	password := "12345678"
 
 	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
@@ -122,7 +122,7 @@ func TestTransmitNode_SetSummaryInfoViaTrustNode(t *testing.T) {
 			"WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA",
 			"3i26MQmtuWVVnw8GnRCVopG3pi8MaYU6RqWVV2E1hwJx",
 			"mkdStRouBPVrDVpYmbE5VUJqhBgxJb3dSS",
-			"3",
+			"30",
 			"0.001",
 			"0",
 			1,
@@ -161,10 +161,12 @@ func TestTransmitNode_StartSummaryTaskViaTrustNode(t *testing.T) {
 		"password": "12345678",
 		"accounts": [
 		{
-			"accountID": "A3Mxhqm65kTgS2ybHLenNrZzZNtLGVobDFYdpc1ge4eK"
+			"accountID": "A3Mxhqm65kTgS2ybHLenNrZzZNtLGVobDFYdpc1ge4eK",
+			"feeRate": "0.001"
 		},
 		{
-			"accountID": "3i26MQmtuWVVnw8GnRCVopG3pi8MaYU6RqWVV2E1hwJx"
+			"accountID": "3i26MQmtuWVVnw8GnRCVopG3pi8MaYU6RqWVV2E1hwJx",
+			"feeRate": "0.001"
 		}
 		]
 	}]

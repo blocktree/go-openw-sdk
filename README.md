@@ -63,23 +63,6 @@ github.com/blocktree/go-owcdrivers
 github.com/blocktree/OpenWallet
 github.com/blocktree/go-openw-server
 
-## 源码编译跨平台工具
-
-### 安装xgo（支持跨平台编译C代码）
-
-[官方github](https://github.com/karalabe/xgo)
-
-xgo的使用依赖docker。并且把要跨平台编译的项目文件加入到File sharing。
-
-```shell
-
-$ go get github.com/karalabe/xgo
-...
-$ xgo -h
-...
-
-```
-
 ---
 
 ## go-openw-sdk

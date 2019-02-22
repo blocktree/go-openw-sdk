@@ -39,14 +39,14 @@ func TestAPINode_Subscribe(t *testing.T) {
 	)
 
 	api := testNewAPINode()
-	log.Debug("NodeID:", api.node.NodeID())
+	log.Debug("NodeID:", api.NodeID())
 	err := api.Subscribe(
 		[]string{
 			SubscribeToTrade,
 			//SubscribeToBlock,
 		},
 		CallbackModeNewConnection, CallbackNode{
-			NodeID:             api.node.NodeID(),
+			NodeID:             api.NodeID(),
 			Address:            "192.168.27.179:9322",
 			ConnectType:        owtp.Websocket,
 			EnableKeyAgreement: false,

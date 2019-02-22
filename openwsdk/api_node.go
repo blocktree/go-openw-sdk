@@ -43,8 +43,9 @@ type APINode struct {
 	transmitNode *TransmitNode                    //钱包转发节点
 }
 
-//NewAPINode 创建API节点
-func NewAPINode(config *APINodeConfig) *APINode {
+
+//NewAPINodeWithError 创建API节点
+func NewAPINodeWithError(config *APINodeConfig) (*APINode, error) {
 	connectCfg := owtp.ConnectConfig{}
 	connectCfg.Address = config.Host
 	connectCfg.ConnectType = config.ConnectType
@@ -54,7 +55,10 @@ func NewAPINode(config *APINodeConfig) *APINode {
 		Cert:       config.Cert,
 		TimeoutSEC: config.TimeoutSEC,
 	})
-	node.Connect(HostNodeID, connectCfg)
+	err := node.Connect(HostNodeID, connectCfg)
+	if err != nil {
+		return nil, err
+	}
 	api := APINode{
 		node:   node,
 		config: config,
@@ -66,7 +70,7 @@ func NewAPINode(config *APINodeConfig) *APINode {
 	if config.EnableKeyAgreement {
 		if err := node.KeyAgreement(HostNodeID, "aes"); err != nil {
 			log.Error(err)
-			return nil
+			return nil, err
 		}
 	}
 
@@ -74,7 +78,24 @@ func NewAPINode(config *APINodeConfig) *APINode {
 	api.node.HandleFunc("subscribeToTrade", api.subscribeToTrade)
 	api.node.HandleFunc("subscribeToBlock", api.subscribeToBlock)
 
-	return &api
+	return &api, nil
+}
+
+//NewAPINode 创建API节点
+func NewAPINode(config *APINodeConfig) *APINode {
+	api, err := NewAPINodeWithError(config)
+	if err != nil {
+		return nil
+	}
+	return api
+}
+
+//NodeID
+func (api *APINode) NodeID() string {
+	if api == nil {
+		return ""
+	}
+	return api.node.NodeID()
 }
 
 //Subscribe 订阅

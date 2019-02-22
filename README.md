@@ -156,10 +156,11 @@ func RunSubscribe() {
 			SubscribeToTrade,
 			//SubscribeToBlock,
 		},
+		":9322",    //本地服务开启端口，用于接收通知请求
 		CallbackModeNewConnection, 
 		CallbackNode{   //因为通知是异步的，需要订阅时需要提交一个回调服务节点
 			NodeID:             api.node.NodeID(),
-			Address:            "192.168.27.179:9322",
+			Address:            "192.168.27.179:9322",      //这个回调服务对应于你开启的端口
 			ConnectType:        owtp.Websocket,
 			EnableKeyAgreement: false,
 		})

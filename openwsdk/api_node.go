@@ -43,7 +43,6 @@ type APINode struct {
 	transmitNode *TransmitNode                    //钱包转发节点
 }
 
-
 //NewAPINodeWithError 创建API节点
 func NewAPINodeWithError(config *APINodeConfig) (*APINode, error) {
 	connectCfg := owtp.ConnectConfig{}
@@ -99,7 +98,7 @@ func (api *APINode) NodeID() string {
 }
 
 //Subscribe 订阅
-func (api *APINode) Subscribe(subscribeMethod []string, callbackMode int, callbackNode CallbackNode) error {
+func (api *APINode) Subscribe(subscribeMethod []string, listenAddr string, callbackMode int, callbackNode CallbackNode) error {
 
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
@@ -112,9 +111,9 @@ func (api *APINode) Subscribe(subscribeMethod []string, callbackMode int, callba
 		}
 	} else {
 		//开启监听
-		log.Infof("%s start to listen [%s] connection...", callbackNode.Address, callbackNode.ConnectType)
+		log.Infof("%s start to listen [%s] connection...", listenAddr, callbackNode.ConnectType)
 		api.node.Listen(owtp.ConnectConfig{
-			Address:     callbackNode.Address,
+			Address:     listenAddr,
 			ConnectType: callbackNode.ConnectType,
 		})
 
@@ -137,39 +136,10 @@ func (api *APINode) Subscribe(subscribeMethod []string, callbackMode int, callba
 		return nil
 	} else {
 		//关闭临时开启的端口
-		log.Infof("%s close listener [%s] connection...", callbackNode.Address, callbackNode.ConnectType)
+		log.Infof("%s close listener [%s] connection...", listenAddr, callbackNode.ConnectType)
 		api.node.CloseListener(callbackNode.ConnectType)
 		return fmt.Errorf("[%d]%s", response.Status, response.Msg)
 	}
-
-	return nil
-}
-
-//AddObserver 添加观测者
-func (api *APINode) AddObserver(obj OpenwNotificationObject) error {
-	api.mu.Lock()
-
-	defer api.mu.Unlock()
-
-	if obj == nil {
-		return nil
-	}
-	if _, exist := api.observers[obj]; exist {
-		//已存在，不重复订阅
-		return nil
-	}
-
-	api.observers[obj] = true
-
-	return nil
-}
-
-//RemoveObserver 移除观测者
-func (api *APINode) RemoveObserver(obj OpenwNotificationObject) error {
-	api.mu.Lock()
-	defer api.mu.Unlock()
-
-	delete(api.observers, obj)
 
 	return nil
 }

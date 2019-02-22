@@ -1,6 +1,7 @@
 package openwsdk
 
 import (
+	"fmt"
 	"github.com/blocktree/OpenWallet/log"
 	"github.com/blocktree/OpenWallet/owtp"
 	"testing"
@@ -45,6 +46,7 @@ func TestAPINode_Subscribe(t *testing.T) {
 			SubscribeToTrade,
 			//SubscribeToBlock,
 		},
+		":9322",
 		CallbackModeNewConnection, CallbackNode{
 			NodeID:             api.NodeID(),
 			Address:            "192.168.27.179:9322",
@@ -87,33 +89,33 @@ func TestAPINode_Listener(t *testing.T) {
 
 func TestAPINode_Call(t *testing.T) {
 
-	//nodeID := "APINode_Listener"
-	//
-	//config := owtp.ConnectConfig{
-	//	Address:     ":9322",
-	//	ConnectType: owtp.HTTP,
-	//}
-	//wsClient := owtp.RandomOWTPNode()
-	//err := wsClient.Connect(nodeID, config)
-	//if err != nil {
-	//	t.Errorf("Connect unexcepted error: %v", err)
-	//	return
-	//}
+	nodeID := "APINode_Listener"
 
-	//params := map[string]interface{}{
-	//	"name": "chance",
-	//	"age":  18,
-	//}
+	config := owtp.ConnectConfig{
+		Address:     "192.168.27.179:9322",
+		ConnectType: owtp.Websocket,
+	}
+	wsClient := owtp.RandomOWTPNode()
+	err := wsClient.Connect(nodeID, config)
+	if err != nil {
+		t.Errorf("Connect unexcepted error: %v", err)
+		return
+	}
+
+	params := map[string]interface{}{
+		"name": "chance",
+		"age":  18,
+	}
 	//err = wsClient.Connect(wsHostNodeID, config)
-	//err := wsClient.ConnectAndCall(nodeID, config, "subscribeToAccount", params, true, func(resp owtp.Response) {
-	//
-	//	result := resp.JsonData()
-	//	symbols := result.Get("symbols")
-	//	fmt.Printf("symbols: %v\n", symbols)
-	//})
-	//
-	//if err != nil {
-	//	t.Errorf("unexcepted error: %v", err)
-	//	return
-	//}
+	err = wsClient.ConnectAndCall(nodeID, config, "subscribeToAccount", params, true, func(resp owtp.Response) {
+
+		result := resp.JsonData()
+		symbols := result.Get("symbols")
+		fmt.Printf("symbols: %v\n", symbols)
+	})
+
+	if err != nil {
+		t.Errorf("unexcepted error: %v", err)
+		return
+	}
 }

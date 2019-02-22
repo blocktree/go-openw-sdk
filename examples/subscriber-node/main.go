@@ -93,6 +93,7 @@ func main() {
 			openwsdk.SubscribeToTrade,
 			openwsdk.SubscribeToBlock,
 		},
+		":30020",
 		openwsdk.CallbackModeNewConnection, openwsdk.CallbackNode{
 			NodeID:             api.NodeID(),
 			Address:            "120.78.83.180:30020",

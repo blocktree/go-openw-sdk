@@ -2,6 +2,7 @@ package openwsdk
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/blocktree/OpenWallet/log"
 	"github.com/blocktree/OpenWallet/owtp"
 )
@@ -20,6 +21,56 @@ type OpenwNotificationObject interface {
 
 	//OpenwNewBlockNotify openw新区块头通知
 	OpenwNewBlockNotify(blockHeader *BlockHeader) (bool, error)
+}
+
+//ServeNotification 开启监听服务，接收通知
+func (api *APINode) ServeNotification(listenAddr string, connectType string) error {
+
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+
+	//开启监听
+	log.Infof("%s start to listen [%s] connection...", listenAddr, connectType)
+	return api.node.Listen(owtp.ConnectConfig{
+		Address:     listenAddr,
+		ConnectType: connectType,
+	})
+}
+
+//StopServeNotification 关闭监听通知
+func (api *APINode) StopServeNotification(connectType string) {
+	log.Infof("API Node close listener [%s] connection...", connectType)
+	api.node.CloseListener(connectType)
+}
+
+//AddObserver 添加观测者
+func (api *APINode) AddObserver(obj OpenwNotificationObject) error {
+	api.mu.Lock()
+
+	defer api.mu.Unlock()
+
+	if obj == nil {
+		return nil
+	}
+	if _, exist := api.observers[obj]; exist {
+		//已存在，不重复订阅
+		return nil
+	}
+
+	api.observers[obj] = true
+
+	return nil
+}
+
+//RemoveObserver 移除观测者
+func (api *APINode) RemoveObserver(obj OpenwNotificationObject) error {
+	api.mu.Lock()
+	defer api.mu.Unlock()
+
+	delete(api.observers, obj)
+
+	return nil
 }
 
 func (api *APINode) subscribeToAccount(ctx *owtp.Context) {

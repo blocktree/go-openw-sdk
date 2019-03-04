@@ -577,3 +577,5 @@ uint8_ow point_decompress(ECC_CURVE_PARAM *curveParam, uint8_ow *compresspoint,u
     free(tmp4);
     return 1;
 }
+
+

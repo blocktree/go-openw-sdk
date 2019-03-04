@@ -64,7 +64,9 @@ uint16_ow sm2_std_ka_responder_step1(uint8_ow *IDinitiator,         \
                                     uint8_ow *Sinner,              \
                                     uint8_ow *Souter,              \
                                     uint16_ow keylen,              \
-                                    uint8_ow *key);
+                                    uint8_ow *key,                 \
+                                    uint8_ow *random,              \
+                                    uint8_ow isElGamal);
 uint16_ow sm2_std_ka_responder_step2(uint8_ow *Sinitiator, uint8_ow *Sresponder);
 /*
  @function:(Point)outpointbuf = (Point)inputpoint1_buf+[k](Point)inputpoint2_buf

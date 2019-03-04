@@ -707,7 +707,9 @@ uint16_ow sm2_std_ka_responder_step1(uint8_ow *IDinitiator,         \
                                     uint8_ow *Sinner,              \
                                     uint8_ow *Souter,              \
                                     uint16_ow keylen,              \
-                                    uint8_ow *key)
+                                    uint8_ow *key,                 \
+                                    uint8_ow *random,              \
+                                    uint8_ow isElGamal)
 {
     uint8_ow *tmpPriResponder = NULL, *tmp1 = NULL, *tmp2 = NULL;
     uint8_ow *Zinitiator = NULL, *Zresponder = NULL;
@@ -734,9 +736,13 @@ uint16_ow sm2_std_ka_responder_step1(uint8_ow *IDinitiator,         \
     }
     
     tmpPriResponder = calloc(ECC_LEN, sizeof(uint8_ow));
-
-    bigrand_get_rand_range(tmpPriResponder, curveParam -> n, 0, 0, 0, 0);
-
+    if(isElGamal)
+    {
+        memcpy(tmpPriResponder, random, ECC_LEN);
+    }else{
+        bigrand_get_rand_range(tmpPriResponder, curveParam -> n, 0, 0, 0, 0);
+    }
+    
     sm2_std_genPubkey(tmpPriResponder, tmpPubResponder);
     
     tmp1 = calloc(ECC_LEN, sizeof(uint8_ow));

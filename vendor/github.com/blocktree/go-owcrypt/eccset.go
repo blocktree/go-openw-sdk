@@ -3,6 +3,7 @@ package owcrypt
 // #cgo CFLAGS: -I./csource/bignum
 // #cgo CFLAGS: -I./csource/hash_drv
 // #cgo CFLAGS: -I./csource/ecc_drv
+// #cgo CFLAGS: -I./csource/ecc_drv/axolotl_curve25519
 // #cgo CFLAGS: -I./csource/crypto
 // #cgo CFLAGS: -I./csource/owcrypt_core
 // #include <stdio.h>
@@ -68,8 +69,100 @@ package owcrypt
 // #include "blake256.h"
 // #include "blake512.c"
 // #include "blake512.h"
+// #include "ref10_blocks.c"
+// #include "ref10_compare.c"
+// #include "ref10_compare.h"
+// #include "ref10_crypto_additions.h"
+// #include "ref10_crypto_hash_sha512.h"
+// #include "ref10_crypto_int32.h"
+// #include "ref10_crypto_int64.h"
+// #include "ref10_crypto_sign.h"
+// #include "ref10_crypto_sign_edwards25519sha512batch.h"
+// #include "ref10_crypto_uint32.h"
+// #include "ref10_crypto_uint64.h"
+// #include "ref10_crypto_verify_32.h"
+// #include "ref10_curve_sigs.c"
+// #include "ref10_curve_sigs.h"
+// #include "ref10_elligator.c"
+// #include "ref10_fe.h"
+// #include "ref10_fe_0.c"
+// #include "ref10_fe_1.c"
+// #include "ref10_fe_add.c"
+// #include "ref10_fe_cmov.c"
+// #include "ref10_fe_copy.c"
+// #include "ref10_fe_frombytes.c"
+// #include "ref10_fe_invert.c"
+// #include "ref10_fe_isequal.c"
+// #include "ref10_fe_isnegative.c"
+// #include "ref10_fe_isnonzero.c"
+// #include "ref10_fe_isreduced.c"
+// #include "ref10_fe_mont_rhs.c"
+// #include "ref10_fe_montx_to_edy.c"
+// #include "ref10_fe_mul.c"
+// #include "ref10_fe_neg.c"
+// #include "ref10_fe_pow22523.c"
+// #include "ref10_fe_sq.c"
+// #include "ref10_fe_sq2.c"
+// #include "ref10_fe_sqrt.c"
+// #include "ref10_fe_sub.c"
+// #include "ref10_fe_tobytes.c"
+// #include "ref10_ge.h"
+// #include "ref10_ge_add.c"
+// #include "ref10_ge_double_scalarmult.c"
+// #include "ref10_ge_frombytes.c"
+// #include "ref10_ge_isneutral.c"
+// #include "ref10_ge_madd.c"
+// #include "ref10_ge_montx_to_p3.c"
+// #include "ref10_ge_msub.c"
+// #include "ref10_ge_neg.c"
+// #include "ref10_ge_p1p1_to_p2.c"
+// #include "ref10_ge_p1p1_to_p3.c"
+// #include "ref10_ge_p2_0.c"
+// #include "ref10_ge_p2_dbl.c"
+// #include "ref10_ge_p3_0.c"
+// #include "ref10_ge_p3_add.c"
+// #include "ref10_ge_p3_dbl.c"
+// #include "ref10_ge_p3_to_cached.c"
+// #include "ref10_ge_p3_to_montx.c"
+// #include "ref10_ge_p3_to_p2.c"
+// #include "ref10_ge_p3_tobytes.c"
+// #include "ref10_ge_precomp_0.c"
+// #include "ref10_ge_scalarmult.c"
+// #include "ref10_ge_scalarmult_base.c"
+// #include "ref10_ge_scalarmult_cofactor.c"
+// #include "ref10_ge_sub.c"
+// #include "ref10_ge_tobytes.c"
+// #include "ref10_gen_constants.h"
+// #include "ref10_gen_crypto_additions.h"
+// #include "ref10_gen_eddsa.c"
+// #include "ref10_gen_eddsa.h"
+// #include "ref10_gen_labelset.c"
+// #include "ref10_gen_labelset.h"
+// #include "ref10_gen_veddsa.c"
+// #include "ref10_gen_veddsa.h"
+// #include "ref10_gen_x.c"
+// #include "ref10_gen_x.h"
+// #include "ref10_hash.c"
+// #include "ref10_keygen.c"
+// #include "ref10_keygen.h"
+// #include "ref10_open.c"
+// #include "ref10_open_modified.c"
+// #include "ref10_point_isreduced.c"
+// #include "ref10_sc.h"
+// #include "ref10_sc_clamp.c"
+// #include "ref10_sc_cmov.c"
+// #include "ref10_sc_isreduced.c"
+// #include "ref10_sc_muladd.c"
+// #include "ref10_sc_neg.c"
+// #include "ref10_sc_reduce.c"
+// #include "ref10_sign.c"
+// #include "ref10_sign_modified.c"
+// #include "ref10_xeddsa.c"
+// #include "ref10_xeddsa.h"
+// #include "ref10_zeroize.c"
 import "C"
 import (
+	"errors"
 	"unsafe"
 )
 
@@ -105,6 +198,7 @@ const (
 	ECC_CURVE_SM2_STANDARD   = uint32(0xECC00002)
 	ECC_CURVE_ED25519        = uint32(0xECC00003)
 	ECC_CURVE_ED25519_EXTEND = uint32(0xECC00004)
+	ECC_CURVE_ED25519_REF10  = uint32(0xECC00005)
 
 	//签名流程中的随机数是外部传入的标志位置
 	NOUNCE_OUTSIDE_FLAG = uint32(1 << 8)
@@ -121,7 +215,7 @@ const (
 
 func GenPubkey(prikey []byte, typeChoose uint32) (pubkey []byte, ret uint16) {
 	var keylen uint16
-	if typeChoose == ECC_CURVE_ED25519 {
+	if typeChoose == ECC_CURVE_ED25519 || typeChoose == ECC_CURVE_ED25519_REF10 {
 		keylen = 32
 	} else {
 		keylen = 64
@@ -298,6 +392,53 @@ func KeyAgreement_responder_step1(IDinitiator []byte,
 	return key, tmpPubkeyResponder, Sinner, Souter, ret
 }
 
+func KeyAgreement_responder_ElGamal_step1(IDinitiator []byte,
+	IDinitiator_len uint16,
+	IDresponder []byte,
+	IDresponder_len uint16,
+	prikeyResponder []byte,
+	pubkeyResponder []byte,
+	pubkeyInitiator []byte,
+	tmpPubkeyInitiator []byte,
+	keylen uint16,
+	random []byte,
+	typeChoose uint32) (key, tmpPubkeyResponder, Sinner, Souter []byte, ret uint16) {
+	//------------------------------------------------------------//
+	key = make([]byte, keylen)
+	tmpPubkeyResponder = make([]byte, 64)
+	Sinner = make([]byte, 32)
+	Souter = make([]byte, 32)
+	idInit := (*C.uchar)(unsafe.Pointer(&IDinitiator[0]))
+	idResp := (*C.uchar)(unsafe.Pointer(&IDresponder[0]))
+	priResp := (*C.uchar)(unsafe.Pointer(&prikeyResponder[0]))
+	pubResp := (*C.uchar)(unsafe.Pointer(&pubkeyResponder[0]))
+	pubInit := (*C.uchar)(unsafe.Pointer(&pubkeyInitiator[0]))
+	tmpPubResp := (*C.uchar)(unsafe.Pointer(&tmpPubkeyResponder[0]))
+	tmpPubInit := (*C.uchar)(unsafe.Pointer(&tmpPubkeyInitiator[0]))
+	sInner := (*C.uchar)(unsafe.Pointer(&Sinner[0]))
+	sOuter := (*C.uchar)(unsafe.Pointer(&Souter[0]))
+	result := (*C.uchar)(unsafe.Pointer(&key[0]))
+	tmpPriResp := (*C.uchar)(unsafe.Pointer(&random[0]))
+
+	ret = uint16(C.ECC_key_exchange_responder_ElGamal_step1(idInit,
+		C.ushort(IDinitiator_len),
+		idResp,
+		C.ushort(IDresponder_len),
+		priResp,
+		pubResp,
+		pubInit,
+		tmpPubResp,
+		tmpPubInit,
+		sInner,
+		sOuter,
+		C.ushort(keylen),
+		result,
+		tmpPriResp,
+		C.uint(typeChoose)))
+
+	return key, tmpPubkeyResponder, Sinner, Souter, ret
+}
+
 func KeyAgreement_responder_step2(Sinitiator []byte, Sresponder []byte, typeChoose uint32) uint16 {
 	sInit := (*C.uchar)(unsafe.Pointer(&Sinitiator[0]))
 	sResp := (*C.uchar)(unsafe.Pointer(&Sresponder[0]))
@@ -310,7 +451,10 @@ func KeyAgreement_responder_step2(Sinitiator []byte, Sresponder []byte, typeChoo
 
 func Point_mulBaseG(scalar []byte, typeChoose uint32) []byte {
 	var size uint16
-	if typeChoose == ECC_CURVE_ED25519 {
+	if typeChoose == ECC_CURVE_ED25519_EXTEND {
+		typeChoose = ECC_CURVE_ED25519
+	}
+	if typeChoose == ECC_CURVE_ED25519 || typeChoose == ECC_CURVE_ED25519_REF10 {
 		size = 32
 	} else {
 		size = 64
@@ -321,7 +465,7 @@ func Point_mulBaseG(scalar []byte, typeChoose uint32) []byte {
 	k := (*C.uchar)(unsafe.Pointer(&scalar[0]))
 
 	C.ECC_point_mul_baseG(k, pointOut, C.uint(typeChoose))
-	if typeChoose == ECC_CURVE_ED25519 {
+	if typeChoose == ECC_CURVE_ED25519 || typeChoose == ECC_CURVE_ED25519_REF10 {
 		return ret
 	}
 	return PointCompress(ret[:], typeChoose)
@@ -446,4 +590,26 @@ func pbkdf2_hmac_sha512(pw []byte, salt []byte, iterations uint32, outlen uint32
 	out := (*C.uchar)(unsafe.Pointer(&ret[0]))
 	C.pbkdf2_hamc_sha512(PassWord, C.uint(len(pw)), Salt, C.uint(len(salt)), C.uint(iterations), out, C.uint(outlen))
 	return ret[:]
+}
+
+/* functions to convert between X25519 point and ED25519 point*/
+func CURVE25519_convert_X_to_Ed(x []byte) ([]byte, error) {
+	ret := make([]byte, 32)
+	x25519 := (*C.uchar)(unsafe.Pointer(&x[0]))
+	ed25519 := (*C.uchar)(unsafe.Pointer(&ret[0]))
+	if C.CURVE25519_convert_X_to_Ed(ed25519, x25519) == 1 {
+		return ret, nil
+	}
+	return nil, errors.New("Invalid x25519 point to convert!")
+}
+
+func CURVE25519_convert_Ed_to_X(ed []byte) ([]byte, error) {
+	ret := make([]byte, 32)
+	ed25519 := (*C.uchar)(unsafe.Pointer(&ed[0]))
+	x25519 := (*C.uchar)(unsafe.Pointer(&ret[0]))
+	if C.CURVE25519_convert_Ed_to_X(x25519, ed25519) == 1 {
+		return ret, nil
+	}
+	return nil, errors.New("Invalid ed25519 point to convert!")
+
 }

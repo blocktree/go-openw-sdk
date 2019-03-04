@@ -32,6 +32,7 @@
 #define  ECC_CURVE_SM2_STANDARD     0xECC00002
 #define  ECC_CURVE_ED25519          0xECC00003
 #define  ECC_CURVE_ED25519_EXTEND   0xECC00004
+#define  ECC_CURVE_ED25519_REF10    0xECC00005
 
 #define SUCCESS              0x0001
 #define FAILURE              0x0000
@@ -86,6 +87,21 @@ uint16_ow ECC_key_exchange_responder_step1(uint8_ow *IDinitiator,         \
                                           uint16_ow keylen,              \
                                           uint8_ow *key,                 \
                                           uint32_ow type);
+uint16_ow ECC_key_exchange_responder_ElGamal_step1(uint8_ow *IDinitiator,         \
+                                           uint16_ow IDinitiator_len,     \
+                                           uint8_ow *IDresponder,         \
+                                           uint16_ow IDresponder_len,     \
+                                           uint8_ow *priResponder,        \
+                                           uint8_ow *pubResponder,        \
+                                           uint8_ow *pubInitiator,        \
+                                           uint8_ow *tmpPubResponder,     \
+                                           uint8_ow *tmpPubInitiator,     \
+                                           uint8_ow *Sin,                 \
+                                           uint8_ow *Sout,                \
+                                           uint16_ow keylen,              \
+                                           uint8_ow *key,                 \
+                                           uint8_ow *random,              \
+                                           uint32_ow type);
 uint16_ow ECC_key_exchange_responder_step2(uint8_ow *Sinitiator, uint8_ow *Sresponder, uint32_ow type);
 /*
  @function:(Point)outpoint_buf = (Point)inputpoint1_buf+[k](Point)inputpoint2_buf
@@ -159,5 +175,12 @@ uint16_ow ECC_get_curve_order(uint8_ow *order, uint32_ow type);
  @paramter[out]pubkey pointer to the recover public key
  */
 uint16_ow ECC_recover_pubkey(uint8_ow *sig,uint32_ow sig_len,uint8_ow *msg,uint32_ow msg_len,uint8_ow *pubkey,uint32_ow type);
+
+
+/*
+ @functions: convert between x25519 point and ed25519 point
+ */
+uint16_ow CURVE25519_convert_X_to_Ed(uint8_ow *ed, uint8_ow *x);
+uint16_ow CURVE25519_convert_Ed_to_X(uint8_ow *x, uint8_ow *ed);
 
 #endif /* ecc_set_h */

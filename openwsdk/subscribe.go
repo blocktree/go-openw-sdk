@@ -3,8 +3,8 @@ package openwsdk
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/blocktree/OpenWallet/log"
-	"github.com/blocktree/OpenWallet/owtp"
+	"github.com/blocktree/openwallet/log"
+	"github.com/blocktree/openwallet/owtp"
 )
 
 const (

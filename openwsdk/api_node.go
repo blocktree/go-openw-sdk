@@ -3,10 +3,10 @@ package openwsdk
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/blocktree/OpenWallet/crypto"
-	"github.com/blocktree/OpenWallet/hdkeystore"
-	"github.com/blocktree/OpenWallet/log"
-	"github.com/blocktree/OpenWallet/owtp"
+	"github.com/blocktree/openwallet/crypto"
+	"github.com/blocktree/openwallet/hdkeystore"
+	"github.com/blocktree/openwallet/log"
+	"github.com/blocktree/openwallet/owtp"
 	"sync"
 	"time"
 )

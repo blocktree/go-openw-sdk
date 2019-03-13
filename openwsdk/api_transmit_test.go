@@ -2,7 +2,7 @@ package openwsdk
 
 import (
 	"encoding/json"
-	"github.com/blocktree/OpenWallet/log"
+	"github.com/blocktree/openwallet/log"
 	"github.com/google/uuid"
 	"testing"
 	"time"

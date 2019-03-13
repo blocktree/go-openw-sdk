@@ -3,7 +3,7 @@ package openwsdk
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/blocktree/OpenWallet/hdkeystore"
+	"github.com/blocktree/openwallet/hdkeystore"
 	"github.com/blocktree/go-owcdrivers/btcTransaction"
 	"github.com/blocktree/go-owcrypt"
 	"math/big"

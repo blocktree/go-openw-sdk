@@ -1,9 +1,9 @@
 package openwsdk
 
 import (
-	"github.com/blocktree/OpenWallet/common/file"
-	"github.com/blocktree/OpenWallet/hdkeystore"
-	"github.com/blocktree/OpenWallet/log"
+	"github.com/blocktree/openwallet/common/file"
+	"github.com/blocktree/openwallet/hdkeystore"
+	"github.com/blocktree/openwallet/log"
 	"github.com/blocktree/go-owcrypt"
 	"path/filepath"
 	"testing"

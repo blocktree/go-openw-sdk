@@ -381,6 +381,40 @@ func (api *APINode) CreateAddress(
 	})
 }
 
+
+//CreateBatchAddress 批量创建资产账户的地址
+func (api *APINode) CreateBatchAddress(
+	walletID string,
+	accountID string,
+	count uint64,
+	sync bool,
+	reqFunc func(status uint64, msg string, addresses []string)) error {
+
+
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+	params := map[string]interface{}{
+		"appID":     api.config.AppID,
+		"walletID":  walletID,
+		"accountID": accountID,
+		"count":     count,
+	}
+
+	return api.node.Call(HostNodeID, "createBatchAddress", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		var addresses []string
+		addressArray := data
+		if addressArray.IsArray() {
+			for _, a := range addressArray.Array() {
+				addresses = append(addresses, a.String())
+			}
+
+		}
+		reqFunc(resp.Status, resp.Msg, addresses)
+	})
+}
+
 //FindAddressByAddress 通获取具体交易地址信息
 func (api *APINode) FindAddressByAddress(address string, sync bool, reqFunc func(status uint64, msg string, address *Address)) error {
 	if api == nil {

@@ -38,7 +38,7 @@ func testNewAPINode() *APINode {
 		ConnectType:        owtp.HTTP,
 		EnableSignature:    false,
 		EnableKeyAgreement: false,
-		TimeoutSEC:         60,
+		TimeoutSEC:         120,
 	}
 
 	api := NewAPINode(config)
@@ -197,7 +197,7 @@ func TestAPINode_CreateAccount(t *testing.T) {
 }
 
 func TestAPINode_FindAccountByWalletID(t *testing.T) {
-	walletID := "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA"
+	walletID := "VysrzgpsLsgDpHM2KQMYuPY57fL3BAFU34"
 	api := testNewAPINode()
 	api.FindAccountByWalletID(walletID, true,
 		func(status uint64, msg string, accounts []*Account) {
@@ -220,11 +220,27 @@ func TestAPINode_FindAccountByWalletID(t *testing.T) {
 }
 
 func TestAPINode_CreateAddress(t *testing.T) {
-	walletID := "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA"
-	accountID := "7ww2Gpfy8pN6HTngbMFBTEMAaVRGEpkmsiNkgAgqGQGf"
+	walletID := "VysrzgpsLsgDpHM2KQMYuPY57fL3BAFU34"
+	accountID := "Aa7Chh2MdaGDejHdCJZAaX7AwvGNmMEMry2kZZTq114a"
 	api := testNewAPINode()
-	api.CreateAddress(walletID, accountID, 100, true,
+	api.CreateAddress(walletID, accountID, 2000, true,
 		func(status uint64, msg string, addresses []*Address) {
+
+			if status != owtp.StatusSuccess {
+				return
+			}
+			for i, a := range addresses {
+				log.Infof("Address[%d]:%+v", i, a)
+			}
+		})
+}
+
+func TestAPINode_CreateBatchAddress(t *testing.T) {
+	walletID := "VysrzgpsLsgDpHM2KQMYuPY57fL3BAFU34"
+	accountID := "Aa7Chh2MdaGDejHdCJZAaX7AwvGNmMEMry2kZZTq114a"
+	api := testNewAPINode()
+	api.CreateBatchAddress(walletID, accountID, 5000, true,
+		func(status uint64, msg string, addresses []string) {
 
 			if status != owtp.StatusSuccess {
 				return
@@ -249,7 +265,7 @@ func TestAPINode_FindAddressByAddress(t *testing.T) {
 }
 
 func TestAPINode_FindAddressByAccountID(t *testing.T) {
-	accountID := "A3Mxhqm65kTgS2ybHLenNrZzZNtLGVobDFYdpc1ge4eK"
+	accountID := "Aa7Chh2MdaGDejHdCJZAaX7AwvGNmMEMry2kZZTq114a"
 	api := testNewAPINode()
 	api.FindAddressByAccountID(accountID, 0, 10, true,
 		func(status uint64, msg string, addresses []*Address) {

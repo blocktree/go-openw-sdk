@@ -138,8 +138,54 @@ type Transaction struct {
 	Received    bool     `json:"received"`
 	SubmitTime  int64    `json:"submitTime"`  //@required
 	ConfirmTime int64    `json:"confirmTime"` //@required
-	Status      string   `json:"status"`      //链上状态
-	Reason      string   `json:"reason"`      //失败原因
+	Status      string   `json:"status"`      //链上状态，0：失败，1：成功
+	Reason      string   `json:"reason"`      //失败原因，失败状态码
+	ExtParam    string   `json:"extParam"`    //扩展参数，用于调用智能合约，json结构
+
+	/*
+		ExtParam 根据不同区块链协议，保存智能合约交易回执。
+		例如：ETH 智能合约交易回执
+		{
+			"gasPrice": "0.000002",  						//自定义费率
+			"gasLimit": "50000000",  						//自定义燃料上限
+			"gasUsed": "32234",  							//实际使用燃料数
+			"senderAddress": "0x1234567abcdeffdcba4321", 	//支付交易单的地址
+			"contractAddress": "0xdeffdcba43211234567abc", 	//合约地址
+			"amount": "0.001", 								//转入合约主币数量
+			"callData": "deffdcba43211234567abc", 			//调用方法的ABI编码
+			"nonce": 1,  									//地址账户交易序号
+		}
+	*/
+}
+
+//SetExtParam
+func (tx *Transaction) SetExtParam(key string, value interface{}) error {
+	var ext map[string]interface{}
+
+	if len(tx.ExtParam) == 0 {
+		ext = make(map[string]interface{})
+	} else {
+		err := json.Unmarshal([]byte(tx.ExtParam), &ext)
+		if err != nil {
+			return err
+		}
+	}
+
+	ext[key] = value
+
+	json, err := json.Marshal(ext)
+	if err != nil {
+		return err
+	}
+	tx.ExtParam = string(json)
+
+	return nil
+}
+
+//GetExtParam
+func (tx *Transaction) GetExtParam() gjson.Result {
+	//如果param没有值，使用inputs初始化
+	return gjson.ParseBytes([]byte(tx.ExtParam))
 }
 
 //SummaryRawTransaction 汇总交易

@@ -2,18 +2,18 @@ package openwsdk
 
 import (
 	"fmt"
+	"github.com/blocktree/go-owcrypt"
 	"github.com/blocktree/openwallet/common/file"
 	"github.com/blocktree/openwallet/hdkeystore"
 	"github.com/blocktree/openwallet/log"
 	"github.com/blocktree/openwallet/owtp"
-	"github.com/blocktree/go-owcrypt"
 	"github.com/google/uuid"
 	"path/filepath"
 	"testing"
 )
 
 func init() {
-	owtp.Debug = true
+	owtp.Debug = false
 }
 
 func testNewAPINode() *APINode {

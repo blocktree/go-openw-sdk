@@ -2,10 +2,10 @@ package openwsdk
 
 import (
 	"fmt"
-	"github.com/blocktree/OpenWallet/common/file"
-	"github.com/blocktree/OpenWallet/hdkeystore"
-	"github.com/blocktree/OpenWallet/log"
-	"github.com/blocktree/OpenWallet/owtp"
+	"github.com/blocktree/openwallet/common/file"
+	"github.com/blocktree/openwallet/hdkeystore"
+	"github.com/blocktree/openwallet/log"
+	"github.com/blocktree/openwallet/owtp"
 	"github.com/blocktree/go-owcrypt"
 	"github.com/google/uuid"
 	"path/filepath"

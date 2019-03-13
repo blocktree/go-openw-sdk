@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/blocktree/OpenWallet/log"
-	"github.com/blocktree/OpenWallet/owtp"
+	"github.com/blocktree/openwallet/log"
+	"github.com/blocktree/openwallet/owtp"
 	"github.com/blocktree/go-openw-sdk/openwsdk"
 )
 

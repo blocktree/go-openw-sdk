@@ -2,8 +2,8 @@ package openwsdk
 
 import (
 	"fmt"
-	"github.com/blocktree/OpenWallet/log"
-	"github.com/blocktree/OpenWallet/owtp"
+	"github.com/blocktree/openwallet/log"
+	"github.com/blocktree/openwallet/owtp"
 	"testing"
 )
 

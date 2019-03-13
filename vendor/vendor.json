@@ -4,147 +4,87 @@
 	"package": [
 		{
 			"checksumSHA1": "Tno22Oq9hhvQziAsmfp1e+Hj4FQ=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/HcashOrg/hcd/chaincfg/chainhash",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/HcashOrg/hcd/chaincfg/chainhash",
 			"path": "github.com/HcashOrg/hcd/chaincfg/chainhash",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "FXjXY4E4DEAsDr0cH5sVMVfy5MM=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/HcashOrg/hcutil/base58",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/HcashOrg/hcutil/base58",
 			"path": "github.com/HcashOrg/hcutil/base58",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "hfo9ztt90zcHCuPZNnU2HRmVCNE=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/asdine/storm",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/asdine/storm",
 			"path": "github.com/asdine/storm",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "KXHP3AdJVnDxab4J2mDknFi8SPQ=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/asdine/storm/codec",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/asdine/storm/codec",
 			"path": "github.com/asdine/storm/codec",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "8B9a1JXYnmmzo353mN/z9MgKa2M=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/asdine/storm/codec/json",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/asdine/storm/codec/json",
 			"path": "github.com/asdine/storm/codec/json",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "UohCA0ZSk6DO4wYTORS0NE58j1w=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/asdine/storm/index",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/asdine/storm/index",
 			"path": "github.com/asdine/storm/index",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "9EciDShF1A0nvE8x6FRw5Re9kzo=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/asdine/storm/internal",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/asdine/storm/internal",
 			"path": "github.com/asdine/storm/internal",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "FREFQ/Gw8M5ucIWYX+1n9krtNFU=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/asdine/storm/q",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/asdine/storm/q",
 			"path": "github.com/asdine/storm/q",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "yX3T7B4g4JawmMzGD1Rl2d52gew=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/astaxie/beego/cache",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/astaxie/beego/cache",
 			"path": "github.com/astaxie/beego/cache",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "m+xzAT4nURcPGkMePX2zklJK/lI=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/astaxie/beego/config",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/astaxie/beego/config",
 			"path": "github.com/astaxie/beego/config",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "aNA3HBmv8A9mezI/ZW92Po9I5GE=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/astaxie/beego/logs",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/astaxie/beego/logs",
 			"path": "github.com/astaxie/beego/logs",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "W7HBzu7HlF18vCfNPgax7xvHXB0=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/astaxie/beego/utils",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/astaxie/beego/utils",
 			"path": "github.com/astaxie/beego/utils",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
-		},
-		{
-			"checksumSHA1": "Hqc6waf2X5UqSy7eBi9aZZvKWxk=",
-			"path": "github.com/blocktree/OpenWallet/common",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
-		},
-		{
-			"checksumSHA1": "JvGQmeaffXUZNqdTlay6yBpqKMM=",
-			"path": "github.com/blocktree/OpenWallet/common/file",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
-		},
-		{
-			"checksumSHA1": "U/mLl25MWnajE6AMyHSZ+p3ljKU=",
-			"path": "github.com/blocktree/OpenWallet/crypto",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
-		},
-		{
-			"checksumSHA1": "TOZo7WaTVU3CI5k2mgWVg6Otp/o=",
-			"path": "github.com/blocktree/OpenWallet/crypto/sha3",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
-		},
-		{
-			"checksumSHA1": "Hk08DKT9b96gWTwgOI8a789HLGk=",
-			"path": "github.com/blocktree/OpenWallet/hdkeystore",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
-		},
-		{
-			"checksumSHA1": "V5Kr3M9JoTS61EQbyz2dYn7qo+k=",
-			"path": "github.com/blocktree/OpenWallet/log",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
-		},
-		{
-			"checksumSHA1": "oEGM7eIxGT4LZqW1/11GxBQu7mQ=",
-			"path": "github.com/blocktree/OpenWallet/openwallet",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
-		},
-		{
-			"checksumSHA1": "qv9A/x+OlE1yuwfhG84suEpO8Nw=",
-			"path": "github.com/blocktree/OpenWallet/owtp",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
-		},
-		{
-			"checksumSHA1": "1iyk9Mq9nOkIgvJFAoaZZH3I6BQ=",
-			"path": "github.com/blocktree/OpenWallet/session",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
-		},
-		{
-			"checksumSHA1": "wgrY1+NAvuuQOp+biTCpwce3/e4=",
-			"path": "github.com/blocktree/OpenWallet/timer",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "iwUsoszJLJQzuDHqIhIFQmDVCyE=",
@@ -165,81 +105,177 @@
 			"revisionTime": "2019-02-25T02:11:11Z"
 		},
 		{
-			"checksumSHA1": "mq7Np3rIjHnE06Of949JjXdU/Rk=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/btcsuite/btcd/btcec",
-			"path": "github.com/btcsuite/btcd/btcec",
+			"checksumSHA1": "SJ9pygUJH0G4gSQMOSw2tXArRQI=",
+			"path": "github.com/blocktree/openwallet/common",
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
+		},
+		{
+			"checksumSHA1": "SJ9pygUJH0G4gSQMOSw2tXArRQI=",
+			"path": "github.com/blocktree/openwallet/common",
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
+		},
+		{
+			"checksumSHA1": "0T0DXiueCRMJ53nOOu3u8uqBK2I=",
+			"path": "github.com/blocktree/openwallet/common/file",
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
+		},
+		{
+			"checksumSHA1": "0T0DXiueCRMJ53nOOu3u8uqBK2I=",
+			"path": "github.com/blocktree/openwallet/common/file",
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
+		},
+		{
+			"checksumSHA1": "WNvkDw6ZbG/Areijqw1Gr1orjNc=",
+			"path": "github.com/blocktree/openwallet/crypto",
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
+		},
+		{
+			"checksumSHA1": "WNvkDw6ZbG/Areijqw1Gr1orjNc=",
+			"path": "github.com/blocktree/openwallet/crypto",
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
+		},
+		{
+			"checksumSHA1": "tZ+0Z0w9vQXsb4ts5hj8NE46MN4=",
+			"path": "github.com/blocktree/openwallet/crypto/sha3",
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
+		},
+		{
+			"checksumSHA1": "tZ+0Z0w9vQXsb4ts5hj8NE46MN4=",
+			"path": "github.com/blocktree/openwallet/crypto/sha3",
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
+		},
+		{
+			"checksumSHA1": "Hk08DKT9b96gWTwgOI8a789HLGk=",
+			"path": "github.com/blocktree/openwallet/hdkeystore",
 			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
 			"revisionTime": "2019-03-12T10:44:31Z"
+		},
+		{
+			"checksumSHA1": "V5Kr3M9JoTS61EQbyz2dYn7qo+k=",
+			"path": "github.com/blocktree/openwallet/log",
+			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
+			"revisionTime": "2019-03-12T10:44:31Z"
+		},
+		{
+			"checksumSHA1": "oEGM7eIxGT4LZqW1/11GxBQu7mQ=",
+			"path": "github.com/blocktree/openwallet/openwallet",
+			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
+			"revisionTime": "2019-03-12T10:44:31Z"
+		},
+		{
+			"checksumSHA1": "qv9A/x+OlE1yuwfhG84suEpO8Nw=",
+			"path": "github.com/blocktree/openwallet/owtp",
+			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
+			"revisionTime": "2019-03-12T10:44:31Z"
+		},
+		{
+			"checksumSHA1": "UezfkdNT8GNP5QnQXJ+p11CecXo=",
+			"path": "github.com/blocktree/openwallet/session",
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
+		},
+		{
+			"checksumSHA1": "UezfkdNT8GNP5QnQXJ+p11CecXo=",
+			"path": "github.com/blocktree/openwallet/session",
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
+		},
+		{
+			"checksumSHA1": "+GTdyCjjXH9ycX0F0k1hgdwUl9Q=",
+			"path": "github.com/blocktree/openwallet/timer",
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
+		},
+		{
+			"checksumSHA1": "+GTdyCjjXH9ycX0F0k1hgdwUl9Q=",
+			"path": "github.com/blocktree/openwallet/timer",
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
+		},
+		{
+			"checksumSHA1": "mq7Np3rIjHnE06Of949JjXdU/Rk=",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/btcsuite/btcd/btcec",
+			"path": "github.com/btcsuite/btcd/btcec",
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "wB5yJMpoju/0eCGIFslLvXNd1WU=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/btcsuite/btcd/chaincfg",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/btcsuite/btcd/chaincfg",
 			"path": "github.com/btcsuite/btcd/chaincfg",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "GmSJfFUhbXmiqjiEMbjKs4knqzA=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/btcsuite/btcd/chaincfg/chainhash",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/btcsuite/btcd/chaincfg/chainhash",
 			"path": "github.com/btcsuite/btcd/chaincfg/chainhash",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "h40q1aaRr76gs5lulcmuPJlAuZQ=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/btcsuite/btcd/wire",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/btcsuite/btcd/wire",
 			"path": "github.com/btcsuite/btcd/wire",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "rcHsr+etM1m5c2FngwV5vRe9VXA=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/btcsuite/btcutil",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/btcsuite/btcutil",
 			"path": "github.com/btcsuite/btcutil",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "oQgLy8KmIOVov04WXH7KgU1bszc=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/btcsuite/btcutil/base58",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/btcsuite/btcutil/base58",
 			"path": "github.com/btcsuite/btcutil/base58",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "BBnsAiKyNfocRwmEav5EJpVCwzk=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/btcsuite/btcutil/bech32",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/btcsuite/btcutil/bech32",
 			"path": "github.com/btcsuite/btcutil/bech32",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "sZ3e8Oi8jQmKQX+KJHy7EIKSqYI=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/btcsuite/btcutil/hdkeychain",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/btcsuite/btcutil/hdkeychain",
 			"path": "github.com/btcsuite/btcutil/hdkeychain",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "yiPmpn3VrMIidVhbSSiKP3KLdak=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/bwmarrin/snowflake",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/bwmarrin/snowflake",
 			"path": "github.com/bwmarrin/snowflake",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "qFaKrhSla38BRAyaGz2UaZvH/Dk=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/coreos/bbolt",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/coreos/bbolt",
 			"path": "github.com/coreos/bbolt",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "Q5YN3JDk0g8zt0gZulGLn+uFC30=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/dchest/blake256",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/dchest/blake256",
 			"path": "github.com/dchest/blake256",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "uFNLkTxk8BkHTk0Jcub2lj2BX4M=",
@@ -249,94 +285,94 @@
 		},
 		{
 			"checksumSHA1": "QdSIO+gp41BqNti0ZDVdXvfDvDo=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/gorilla/websocket",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/gorilla/websocket",
 			"path": "github.com/gorilla/websocket",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "5SFRzrVflqK1ptx4jWEbnZgaVtg=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/imroc/req",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/imroc/req",
 			"path": "github.com/imroc/req",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "3mf6G9NWxo5UakHoJrzyGaoqiHc=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/mr-tron/base58/base58",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/mr-tron/base58/base58",
 			"path": "github.com/mr-tron/base58/base58",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "Se195FlZ160eaEk/uVx4KdTPSxU=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/pborman/uuid",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/pborman/uuid",
 			"path": "github.com/pborman/uuid",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "xCv4GBFyw07vZkVtKF/XrUnkHRk=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/pkg/errors",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/pkg/errors",
 			"path": "github.com/pkg/errors",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "/O004L4H91Bquw7BWHA2A69ABQs=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/shopspring/decimal",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/shopspring/decimal",
 			"path": "github.com/shopspring/decimal",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "JPPv7nnUo01Mlyqb0g+Qk5/URR4=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/streadway/amqp",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/streadway/amqp",
 			"path": "github.com/streadway/amqp",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "h4eEqs9PVKXMf+Qgr46AlGdR57E=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/tidwall/gjson",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/tidwall/gjson",
 			"path": "github.com/tidwall/gjson",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "Tk+aXpWRuTQhURlO79bd7YogcU0=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/github.com/tidwall/match",
+			"origin": "github.com/blocktree/openwallet/vendor/github.com/tidwall/match",
 			"path": "github.com/tidwall/match",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "1MGpGDQqnUoRpv7VEcQrXOBydXE=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/golang.org/x/crypto/pbkdf2",
+			"origin": "github.com/blocktree/openwallet/vendor/golang.org/x/crypto/pbkdf2",
 			"path": "golang.org/x/crypto/pbkdf2",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "TQoVgHqUD72/5ALzi9p5W3oyaug=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/golang.org/x/crypto/ripemd160",
+			"origin": "github.com/blocktree/openwallet/vendor/golang.org/x/crypto/ripemd160",
 			"path": "golang.org/x/crypto/ripemd160",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "sx1nQShs40UKtcJZNJuvYtGesaI=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/golang.org/x/crypto/scrypt",
+			"origin": "github.com/blocktree/openwallet/vendor/golang.org/x/crypto/scrypt",
 			"path": "golang.org/x/crypto/scrypt",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		},
 		{
 			"checksumSHA1": "su2QDjUzrUO0JnOH9m0cNg0QqsM=",
-			"origin": "github.com/blocktree/OpenWallet/vendor/golang.org/x/sys/unix",
+			"origin": "github.com/blocktree/openwallet/vendor/golang.org/x/sys/unix",
 			"path": "golang.org/x/sys/unix",
-			"revision": "e8b70d4ac78fd071b0dded74020c5baff0595f3e",
-			"revisionTime": "2019-03-12T10:44:31Z"
+			"revision": "efba284eec5101a7e64329640a3de8f11a323a6a",
+			"revisionTime": "2019-03-13T06:57:56Z"
 		}
 	],
 	"rootPath": "github.com/blocktree/go-openw-sdk"

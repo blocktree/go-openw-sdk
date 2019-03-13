@@ -3,8 +3,8 @@ package openwsdk
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/blocktree/OpenWallet/hdkeystore"
-	"github.com/blocktree/OpenWallet/openwallet"
+	"github.com/blocktree/openwallet/hdkeystore"
+	"github.com/blocktree/openwallet/openwallet"
 	"github.com/tidwall/gjson"
 )
 

@@ -3598,7 +3598,7 @@ void ED25519_Sign(uint8_ow *prikey, uint8_ow *message, uint16_ow message_len, ui
     pubkey = calloc(32, sizeof(uint8_ow));
     hash_ctx = calloc(1, sizeof(SHA512_CTX));
     hash_ctx1 =calloc(1,sizeof(SHA256_CTX));
-    if(type ==ECC_CURVE_ED25519_EXTEND)
+    if(type ==ECC_CURVE_ED25519)
     {
         sha256_init(hash_ctx1);
         sha256_update(hash_ctx1, prikey, 32);

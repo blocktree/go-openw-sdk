@@ -53,13 +53,19 @@ uint16_ow ECC_genPubkey(uint8_ow *prikey, uint8_ow *pubkey, uint32_ow type)
             ret = sm2_std_genPubkey(prikey, pubkey);
         }
             break;
-        case ECC_CURVE_ED25519:
+        case ECC_CURVE_ED25519_NORMAL:
         {
             ED25519_genPubkey(prikey, pubkey);
             ret = SUCCESS;
         }
             break;
-        case ECC_CURVE_ED25519_REF10:
+        case ECC_CURVE_ED25519:
+        {
+            ED25519_point_mul_base(prikey, pubkey);
+            ret = SUCCESS;
+        }
+            break;
+        case ECC_CURVE_X25519:
         {
             REF10_curve25519_keygen(pubkey, prikey);
             ret = SUCCESS;
@@ -190,18 +196,18 @@ uint16_ow ECC_sign(uint8_ow *prikey, uint8_ow *ID, uint16_ow IDlen, uint8_ow *me
             
         }
             break;
-        case ECC_CURVE_ED25519:
+        case ECC_CURVE_ED25519_NORMAL:
         {
             ED25519_Sign(prikey, message, message_len, sig, 0);
             ret = SUCCESS;
         }
             break;
-        case  ECC_CURVE_ED25519_EXTEND:
+        case  ECC_CURVE_ED25519:
         {
-            ED25519_Sign(prikey, message, message_len, sig, ECC_CURVE_ED25519_EXTEND);
+            ED25519_Sign(prikey, message, message_len, sig, ECC_CURVE_ED25519);
             ret = SUCCESS;
         }
-        case ECC_CURVE_ED25519_REF10:
+        case ECC_CURVE_X25519:
         {
             /*int REF10_curve25519_sign(unsigned char* signature_out,
              const unsigned char* curve25519_privkey,
@@ -288,12 +294,13 @@ uint16_ow ECC_verify(uint8_ow *pubkey, uint8_ow *ID, uint16_ow IDlen, uint8_ow *
             
         }
             break;
+        case ECC_CURVE_ED25519_NORMAL:
         case ECC_CURVE_ED25519:
         {
             ret = ED25519_Verify(pubkey, message, message_len, sig);
         }
             break;
-        case ECC_CURVE_ED25519_REF10:
+        case ECC_CURVE_X25519:
         {
             /*
              int REF10_curve25519_verify(const unsigned char* signature,
@@ -602,7 +609,7 @@ uint16_ow ECC_point_mul_baseG(uint8_ow *scalar, uint8_ow *point, uint32_ow type)
             ED25519_point_mul_base(scalar, point);
             return SUCCESS;
             break;
-        case ECC_CURVE_ED25519_REF10:
+        case ECC_CURVE_X25519:
             REF10_curve25519_keygen(point, scalar);
             return SUCCESS;
         default:
@@ -693,6 +700,7 @@ uint16_ow ECC_get_curve_order(uint8_ow *order, uint32_ow type)
             sm2_std_get_order(order);
         }
             break;
+        case ECC_CURVE_ED25519_NORMAL:
         case ECC_CURVE_ED25519:
         {
             ED25519_get_order(order);

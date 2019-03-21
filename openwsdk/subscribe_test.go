@@ -44,7 +44,7 @@ func TestAPINode_Subscribe(t *testing.T) {
 	err := api.Subscribe(
 		[]string{
 			SubscribeToTrade,
-			//SubscribeToBlock,
+			SubscribeToBlock,
 		},
 		":9322",
 		CallbackModeNewConnection, CallbackNode{

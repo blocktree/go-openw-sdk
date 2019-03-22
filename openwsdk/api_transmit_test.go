@@ -46,7 +46,7 @@ func TestTransmitNode_GetTrustNodeInfo(t *testing.T) {
 
 func TestTransmitNode_CreateWalletViaTrustNode(t *testing.T) {
 
-	alias := "openwallet222"
+	alias := "openwallet333"
 	password := "12345678"
 
 	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
@@ -64,8 +64,8 @@ func TestTransmitNode_CreateAccountViaTrustNode(t *testing.T) {
 
 	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
 
-		walletID := "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA"
-		alias := "openwallet_LTC_2"
+		walletID := "WAJ7dKuES2LxJzwtJUWetsfqckiCCDQ4uy"
+		alias := "openwallet_LTC_3"
 		password := "12345678"
 		symbol := "LTC"
 		//创建账户
@@ -292,3 +292,4 @@ func TestTransmitNode_GetSummaryTaskLogViaTrustNode(t *testing.T) {
 			})
 	})
 }
+

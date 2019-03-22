@@ -28,6 +28,17 @@ type CallbackNode struct {
 	EnableSSL          bool   `json:"enableSSL"`          //是否开启链接SSL，https，wss
 }
 
+func NewCallbackNode(result gjson.Result) *CallbackNode {
+	obj := &CallbackNode{
+		NodeID:             result.Get("nodeID").String(),
+		Address:            result.Get("address").String(),
+		ConnectType:        result.Get("connectType").String(),
+		EnableKeyAgreement: result.Get("enableKeyAgreement").Bool(),
+		EnableSSL:          result.Get("enableSSL").Bool(),
+	}
+	return obj
+}
+
 type TrustNodeInfo struct {
 	NodeID      string `json:"nodeID"` //@required 节点ID
 	NodeName    string `json:"nodeName"`

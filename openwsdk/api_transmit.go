@@ -12,6 +12,7 @@ type TransmitNode struct {
 	config            *APINodeConfig
 	disconnectHandler func(transmitNode *TransmitNode, nodeID string)           //托管节点断开连接后的通知
 	connectHandler    func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) //托管节点连接成功的通知
+	parent            *APINode
 }
 
 func NewTransmitNode(config *APINodeConfig) (*TransmitNode, error) {
@@ -44,6 +45,14 @@ func NewTransmitNode(config *APINodeConfig) (*TransmitNode, error) {
 	})
 
 	return t, nil
+}
+
+//APINode
+func (transmit *TransmitNode) APINode() (*APINode, error) {
+	if transmit.parent == nil {
+		return nil, fmt.Errorf("transmit node is not inited")
+	}
+	return transmit.parent, nil
 }
 
 //Listen 启动监听
@@ -404,3 +413,5 @@ func (transmit *TransmitNode) GetSummaryTaskLogViaTrustNode(
 		reqFunc(resp.Status, resp.Msg, taskLog)
 	})
 }
+
+

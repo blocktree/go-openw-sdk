@@ -89,6 +89,15 @@ func NewAPINode(config *APINodeConfig) *APINode {
 	return api
 }
 
+
+//OWTPNode
+func (api *APINode) OWTPNode() *owtp.OWTPNode {
+	if api == nil {
+		return nil
+	}
+	return api.node
+}
+
 //NodeID
 func (api *APINode) NodeID() string {
 	if api == nil {
@@ -741,6 +750,7 @@ func (api *APINode) ServeTransmitNode(address string) error {
 	if err != nil {
 		return nil
 	}
+	transmitNode.parent = api
 	api.transmitNode = transmitNode
 	api.transmitNode.Listen()
 

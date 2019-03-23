@@ -388,8 +388,8 @@ func TestAPINode_Send_LTC(t *testing.T) {
 }
 
 func TestAPINode_FindTradeLog(t *testing.T) {
-	walletID := "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA"
-	accountID := "A3Mxhqm65kTgS2ybHLenNrZzZNtLGVobDFYdpc1ge4eK"
+	walletID := "W1ixmQVGWX78MnFacrZ38i8kAivVifa2d7"
+	accountID := "5TWbofZgYZovt83g9b7JUZyyq3HxMMKBhNoVEFnumrms"
 	api := testNewAPINode()
 	api.FindTradeLog(walletID, accountID, "", "",
 		0, 0, 0, 1000, true,

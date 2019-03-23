@@ -221,6 +221,14 @@ type Transaction struct {
 	Contract     map[string]interface{} `json:"contract" bson:"contract"`
 }
 
+func (tx *Transaction) FromSID(n int) string {
+	return openwallet.GenTxInputSID(tx.Txid, tx.Symbol, tx.ContractID, uint64(n))
+}
+
+func (tx *Transaction) ToSID(n int) string {
+	return openwallet.GenTxOutPutSID(tx.Txid, tx.Symbol, tx.ContractID, uint64(n))
+}
+
 type FailedRawTransaction struct {
 	RawTx  *RawTransaction `json:"rawTx"`
 	Reason string          `json:"error"`

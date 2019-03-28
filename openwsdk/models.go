@@ -294,6 +294,7 @@ type SummaryTaskLog struct {
 	SuccessCount   int      `json:"successCount"`             //汇总交易发送的成功个数
 	FailCount      int      `json:"failCount"`                //汇总交易发送的失败个数
 	TxIDs          []string `json:"txIDs"`                    //汇总交易成功的txid
+	Sids           []string `json:"sids" storm:"id"`          //汇总交易成功批次号
 	TotalSumAmount string   `json:"sumAmount"`                //这次汇总总数
 	TotalCostFees  string   `json:"sumFees"`                  //这次汇总总消费手续费
 	CreateTime     int64    `json:"createTime" storm:"index"` //汇总时间

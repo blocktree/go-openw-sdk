@@ -89,7 +89,6 @@ func NewAPINode(config *APINodeConfig) *APINode {
 	return api
 }
 
-
 //OWTPNode
 func (api *APINode) OWTPNode() *owtp.OWTPNode {
 	if api == nil {
@@ -309,13 +308,14 @@ func (api *APINode) CreateNormalAccount(
 }
 
 //FindAccountByAccountID 通过资产账户ID获取资产账户信息
-func (api *APINode) FindAccountByAccountID(accountID string, sync bool, reqFunc func(status uint64, msg string, account *Account)) error {
+func (api *APINode) FindAccountByAccountID(accountID string, refresh int, sync bool, reqFunc func(status uint64, msg string, account *Account)) error {
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
 	}
 	params := map[string]interface{}{
 		"appID":     api.config.AppID,
 		"accountID": accountID,
+		"refresh":   refresh,
 	}
 
 	return api.node.Call(HostNodeID, "findAccountByAccountID", params, sync, func(resp owtp.Response) {
@@ -390,7 +390,6 @@ func (api *APINode) CreateAddress(
 	})
 }
 
-
 //CreateBatchAddress 批量创建资产账户的地址
 func (api *APINode) CreateBatchAddress(
 	walletID string,
@@ -398,7 +397,6 @@ func (api *APINode) CreateBatchAddress(
 	count uint64,
 	sync bool,
 	reqFunc func(status uint64, msg string, addresses []string)) error {
-
 
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
@@ -645,7 +643,7 @@ func (api *APINode) GetTokenBalanceByAccount(
 	accountID string,
 	contractID string,
 	sync bool,
-	reqFunc func(status uint64, msg string, balance string)) error {
+	reqFunc func(status uint64, msg string, balance *TokenBalance)) error {
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
 	}
@@ -657,7 +655,34 @@ func (api *APINode) GetTokenBalanceByAccount(
 
 	return api.node.Call(HostNodeID, "getTokenBalanceByAccount", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
-		balance := data.Get("balance").String()
+		balance := NewTokenBalance(data)
+		reqFunc(resp.Status, resp.Msg, balance)
+	})
+}
+
+//GetAllTokenBalanceByAccount 获取账户所有token余额接口
+func (api *APINode) GetAllTokenBalanceByAccount(
+	accountID string,
+	sync bool,
+	reqFunc func(status uint64, msg string, balance []*TokenBalance)) error {
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+	params := map[string]interface{}{
+		"appID":     api.config.AppID,
+		"accountID": accountID,
+	}
+
+	return api.node.Call(HostNodeID, "getAllTokenBalanceByAccount", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		balance := make([]*TokenBalance, 0)
+		if data.IsArray() {
+			for _, s := range data.Array() {
+				t := NewTokenBalance(s)
+				balance = append(balance, t)
+			}
+		}
+
 		reqFunc(resp.Status, resp.Msg, balance)
 	})
 }

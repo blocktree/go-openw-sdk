@@ -56,8 +56,8 @@ func testGetLocalKey() (*hdkeystore.HDKey, error) {
 	)
 
 	key, err := keystore.GetKey(
-		"VysrzgpsLsgDpHM2KQMYuPY57fL3BAFU34",
-		"gooaglag-VysrzgpsLsgDpHM2KQMYuPY57fL3BAFU34.key",
+		"WAaDbbawmypQY3XjnMjLTj43vBGvrQwB2j",
+		"TRON-WAaDbbawmypQY3XjnMjLTj43vBGvrQwB2j.key",
 		"1234qwer",
 	)
 
@@ -92,7 +92,7 @@ func TestAPINode_CreateWallet(t *testing.T) {
 
 	file.MkdirAll(keypath)
 
-	name := "gooaglag"
+	name := "TRON"
 	//password := "1234qwer"
 
 	//随机生成keystore
@@ -154,7 +154,7 @@ func TestAPINode_CreateAccount(t *testing.T) {
 	}
 
 	symbol := &Symbol{}
-	symbol.Coin = "LTC"
+	symbol.Coin = "TRX"
 	symbol.Curve = int64(owcrypt.ECC_CURVE_SECP256K1)
 
 	var findWallet *Wallet
@@ -197,7 +197,7 @@ func TestAPINode_CreateAccount(t *testing.T) {
 }
 
 func TestAPINode_FindAccountByWalletID(t *testing.T) {
-	walletID := "VysrzgpsLsgDpHM2KQMYuPY57fL3BAFU34"
+	walletID := "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA"
 	api := testNewAPINode()
 	api.FindAccountByWalletID(walletID, true,
 		func(status uint64, msg string, accounts []*Account) {
@@ -216,6 +216,27 @@ func TestAPINode_FindAccountByWalletID(t *testing.T) {
 				log.Infof("account[%d] Balance:%v", i, a.Balance)
 				log.Infof("------------------------------------------")
 			}
+		})
+}
+
+func TestAPINode_FindAccountByAccountID(t *testing.T) {
+	accountID := "3i26MQmtuWVVnw8GnRCVopG3pi8MaYU6RqWVV2E1hwJx"
+	api := testNewAPINode()
+	api.FindAccountByAccountID(accountID, 1, true,
+		func(status uint64, msg string, a *Account) {
+
+			if status != owtp.StatusSuccess {
+				t.Logf("unexpected error: %v\n", msg)
+				return
+			}
+			log.Infof("account AccountID:%v", a.AccountID)
+			log.Infof("account Symbol:%v", a.Symbol)
+			log.Infof("account PublicKey:%v", a.PublicKey)
+			log.Infof("account HdPath:%v", a.HdPath)
+			log.Infof("account AccountIndex:%v", a.AccountIndex)
+			log.Infof("account AddressIndex:%v", a.AddressIndex)
+			log.Infof("account Balance:%v", a.Balance)
+			log.Infof("------------------------------------------")
 		})
 }
 
@@ -265,7 +286,7 @@ func TestAPINode_FindAddressByAddress(t *testing.T) {
 }
 
 func TestAPINode_FindAddressByAccountID(t *testing.T) {
-	accountID := "Aa7Chh2MdaGDejHdCJZAaX7AwvGNmMEMry2kZZTq114a"
+	accountID := "EaUEnCH9mjDPeqrsfi9q3K3jkTezZCt4cee3RTpgScJ3"
 	api := testNewAPINode()
 	api.FindAddressByAccountID(accountID, 0, 10, true,
 		func(status uint64, msg string, addresses []*Address) {
@@ -388,11 +409,11 @@ func TestAPINode_Send_LTC(t *testing.T) {
 }
 
 func TestAPINode_FindTradeLog(t *testing.T) {
-	walletID := "W1ixmQVGWX78MnFacrZ38i8kAivVifa2d7"
-	accountID := "5TWbofZgYZovt83g9b7JUZyyq3HxMMKBhNoVEFnumrms"
+	walletID := "WAaDbbawmypQY3XjnMjLTj43vBGvrQwB2j"
+	accountID := "EaUEnCH9mjDPeqrsfi9q3K3jkTezZCt4cee3RTpgScJ3"
 	api := testNewAPINode()
 	api.FindTradeLog(walletID, accountID, "", "",
-		0, 0, 0, 1000, true,
+		0, 0, 0, 200, true,
 		func(status uint64, msg string, tx []*Transaction) {
 			for i, value := range tx {
 				log.Infof("tx[%d]: %+v", i, value)
@@ -413,14 +434,23 @@ func TestAPINode_GetContracts(t *testing.T) {
 }
 
 func TestAPINode_GetTokenBalanceByAccount(t *testing.T) {
-	accountID := "Aa7Chh2MdaGDejHdCJZAaX7AwvGNmMEMry2kZZTq114a"
-	contractID := "rsD1RPmcpo33cnqobvX0hBi7Lex0mmN4RwXt1bLV6fs="
+	accountID := "EaUEnCH9mjDPeqrsfi9q3K3jkTezZCt4cee3RTpgScJ3"
+	contractID := "jKyfOtbSvdY57WhDZXJj885A4bs0np5eRdYcwS3ip2I="
 	api := testNewAPINode()
 	api.GetTokenBalanceByAccount(accountID, contractID, true,
-		func(status uint64, msg string, balance string) {
+		func(status uint64, msg string, balance *TokenBalance) {
+			log.Infof("balance: %+v", balance)
+		})
+}
 
-			log.Infof("balance: %s", balance)
-
+func TestAPINode_GetAllTokenBalanceByAccount(t *testing.T) {
+	accountID := "EaUEnCH9mjDPeqrsfi9q3K3jkTezZCt4cee3RTpgScJ3"
+	api := testNewAPINode()
+	api.GetAllTokenBalanceByAccount(accountID, true,
+		func(status uint64, msg string, balance []*TokenBalance) {
+			for _, b := range balance {
+				log.Infof("balance: %+v", b)
+			}
 		})
 }
 
@@ -433,4 +463,118 @@ func TestAPINode_GetFeeRate(t *testing.T) {
 			log.Infof("balance: %s %s/%s", feeRate, symbol, unit)
 
 		})
+}
+
+
+func TestAPINode_Send_TRC10(t *testing.T) {
+	accountID := "EaUEnCH9mjDPeqrsfi9q3K3jkTezZCt4cee3RTpgScJ3"
+	sid := uuid.New().String()
+	amount := "5"
+	address := "TBwVUW7Qa2jb2z2q3RMVpg8yLaBsGFvueG"
+	feeRate := ""
+
+	coin := Coin{
+		Symbol:     "TRX",
+		IsContract: true,
+		ContractID: "jKyfOtbSvdY57WhDZXJj885A4bs0np5eRdYcwS3ip2I=",
+	}
+
+	rawTx, err := testCreateTrade(accountID, sid, coin, amount, address, feeRate)
+	if err != nil {
+		t.Logf("CreateTrade unexpected error: %v\n", err)
+		return
+	}
+	log.Infof("rawTx: %+v", rawTx)
+
+	key, err := testGetLocalKey()
+	if err != nil {
+		t.Logf("GetKey error: %v\n", err)
+		return
+	}
+
+	//签名交易单
+	err = SignRawTransaction(rawTx, key)
+	if err != nil {
+		t.Logf("SignRawTransaction unexpected error: %v\n", err)
+		return
+	}
+
+	log.Infof("signed rawTx: %+v", rawTx)
+
+	success, fail, err := testSubmitTrade([]*RawTransaction{rawTx})
+	if err != nil {
+		t.Logf("SubmitTrade unexpected error: %v\n", err)
+		return
+	}
+
+	log.Info("============== success ==============")
+
+	for _, tx := range success {
+		log.Infof("tx: %+v", tx)
+	}
+
+	log.Info("")
+
+	log.Info("============== fail ==============")
+
+	for _, tx := range fail {
+		log.Infof("tx: %+v", tx.Reason)
+	}
+}
+
+
+func TestAPINode_Send_TRC20(t *testing.T) {
+	accountID := "EaUEnCH9mjDPeqrsfi9q3K3jkTezZCt4cee3RTpgScJ3"
+	sid := uuid.New().String()
+	amount := "5"
+	address := "TBwVUW7Qa2jb2z2q3RMVpg8yLaBsGFvueG"
+	feeRate := ""
+
+	coin := Coin{
+		Symbol:     "TRX",
+		IsContract: true,
+		ContractID: "BEGDiEC5toNC8dyG7G40/vSPHk1FGv6JcCmyf16QOa0=",
+	}
+
+	rawTx, err := testCreateTrade(accountID, sid, coin, amount, address, feeRate)
+	if err != nil {
+		t.Logf("CreateTrade unexpected error: %v\n", err)
+		return
+	}
+	log.Infof("rawTx: %+v", rawTx)
+
+	key, err := testGetLocalKey()
+	if err != nil {
+		t.Logf("GetKey error: %v\n", err)
+		return
+	}
+
+	//签名交易单
+	err = SignRawTransaction(rawTx, key)
+	if err != nil {
+		t.Logf("SignRawTransaction unexpected error: %v\n", err)
+		return
+	}
+
+	log.Infof("signed rawTx: %+v", rawTx)
+
+	success, fail, err := testSubmitTrade([]*RawTransaction{rawTx})
+	if err != nil {
+		t.Logf("SubmitTrade unexpected error: %v\n", err)
+		return
+	}
+
+	log.Info("============== success ==============")
+
+	for _, tx := range success {
+		log.Infof("tx: %+v", tx)
+	}
+
+	log.Info("")
+
+	log.Info("============== fail ==============")
+
+	for _, tx := range fail {
+		log.Infof("tx: %+v", tx.Reason)
+	}
 }

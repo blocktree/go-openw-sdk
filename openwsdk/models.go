@@ -294,7 +294,7 @@ type SummaryTaskLog struct {
 	SuccessCount   int      `json:"successCount"`             //汇总交易发送的成功个数
 	FailCount      int      `json:"failCount"`                //汇总交易发送的失败个数
 	TxIDs          []string `json:"txIDs"`                    //汇总交易成功的txid
-	Sids           []string `json:"sids"`          //汇总交易成功批次号
+	Sids           []string `json:"sids"`                     //汇总交易成功批次号
 	TotalSumAmount string   `json:"sumAmount"`                //这次汇总总数
 	TotalCostFees  string   `json:"sumFees"`                  //这次汇总总消费手续费
 	CreateTime     int64    `json:"createTime" storm:"index"` //汇总时间
@@ -328,4 +328,30 @@ func (wallet *Wallet) CreateAccount(alias string, symbol *Symbol, key *hdkeystor
 
 	return account, nil
 
+}
+
+type Balance struct {
+	Symbol    string
+	AccountID string
+	Address   string
+	Balance   string
+}
+
+type TokenBalance struct {
+	ContractID string
+	Token      string
+	Balance    Balance
+}
+
+func NewTokenBalance(result gjson.Result) *TokenBalance {
+	b := TokenBalance{
+		ContractID: result.Get("contractID").String(),
+		Token:      result.Get("token").String(),
+		Balance: Balance{
+			//Symbol:    symbol,
+			AccountID: result.Get("accountID").String(),
+			Balance:   result.Get("balance").String(),
+		},
+	}
+	return &b
 }

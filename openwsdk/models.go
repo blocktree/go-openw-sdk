@@ -340,6 +340,7 @@ type Balance struct {
 type TokenBalance struct {
 	ContractID string
 	Token      string
+	Address    string
 	Balance    Balance
 }
 
@@ -347,6 +348,7 @@ func NewTokenBalance(result gjson.Result) *TokenBalance {
 	b := TokenBalance{
 		ContractID: result.Get("contractID").String(),
 		Token:      result.Get("token").String(),
+		Address:    result.Get("contractAddress").String(),
 		Balance: Balance{
 			//Symbol:    symbol,
 			AccountID: result.Get("accountID").String(),

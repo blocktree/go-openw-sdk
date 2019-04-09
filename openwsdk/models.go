@@ -245,9 +245,10 @@ func NewSummaryTask(result gjson.Result) *SummaryTask {
 }
 
 type SummaryAccountTask struct {
-	AccountID string   `json:"accountID"`
-	Contracts []string `json:"contracts"`
-	FeeRate   string   `json:"feeRate"`
+	AccountID      string          `json:"accountID"`
+	Contracts      []string        `json:"contracts"`
+	FeeRate        string          `json:"feeRate"`
+	SummarySetting *SummarySetting `json:"summarySetting"`
 }
 
 type SummaryWalletTask struct {

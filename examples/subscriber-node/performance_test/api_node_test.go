@@ -76,7 +76,7 @@ func TestAPINode(t *testing.T) {
 	// 线程数
 	numThreads := 20
 	// 每个线程请求次数（总请求数=numThreads*numCalls）
-	numCalls := 10
+	numCalls := 20
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 

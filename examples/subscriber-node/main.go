@@ -1,9 +1,11 @@
 package main
 
 import (
+	"github.com/astaxie/beego/config"
+	"github.com/blocktree/go-openw-sdk/openwsdk"
 	"github.com/blocktree/openwallet/log"
 	"github.com/blocktree/openwallet/owtp"
-	"github.com/blocktree/go-openw-sdk/openwsdk"
+	"path/filepath"
 )
 
 type Subscriber struct {
@@ -38,23 +40,24 @@ func (s *Subscriber) OpenwNewBlockNotify(blockHeader *openwsdk.BlockHeader) (boo
 
 func testNewAPINode() (*openwsdk.APINode, error) {
 
-	//--------------- PRIVATE KEY ---------------
-	//CaeQzossEasxDmDx4sS12eQC2L7zzNGVwEW2T1CKK3ZS
-	//--------------- PUBLIC KEY ---------------
-	//3Gve895o6aarxYzgLu8tKy3EXVFmFw6oFh1dbpVXmy8VtRaxa6tzpKRPc568549Q5jLpNJGbkXY5HqoQH5gvbg6o
-	//--------------- NODE ID ---------------
-	//4YBHa3d3vAceSRngPWrsm1cSPJudFQSzNAhPGschFw47
+	confFile := filepath.Join("conf", "node.ini")
 
-	//cert, _ := owtp.NewCertificate("CaeQzossEasxDmDx4sS12eQC2L7zzNGVwEW2T1CKK3ZS")
+	c, err := config.NewConfig("ini", confFile)
+	if err != nil {
+		log.Error("NewConfig error:", err)
+		return nil, nil
+	}
+
+	AppID := c.String("AppID")
+	AppKey := c.String("AppKey")
+	Host := c.String("Host")
+
 	cert, _ := owtp.NewCertificate(owtp.RandomPrivateKey())
 
 	config := &openwsdk.APINodeConfig{
-		AppID:  "8df7420d3917afa0172ea9c85e07ab55",
-		AppKey: "faa14b5e2cf119cd6d38bda45b49eb02b333a1b1ff6f10703acb554011ebfb1e",
-		Host:   "120.78.83.180",
-		//AppID:  "b4b1962d415d4d30ec71b28769fda585",
-		//AppKey: "8c511cb683041f3589419440fab0a7b7710907022b0d035baea9001d529ca72f",
-		//Host: "192.168.27.181:8422",
+		AppID:              AppID,
+		AppKey:             AppKey,
+		Host:               Host,
 		Cert:               cert,
 		ConnectType:        owtp.HTTP,
 		EnableSignature:    false,

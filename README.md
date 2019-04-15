@@ -41,9 +41,9 @@ APINode详细使用教程可查看[api_node测试用例](./openwsdk/api_node_tes
 
     //配置APISDK参数
 	config := &APINodeConfig{
-    		AppID:  "8df7420d3917afa0172ea9c85e07ab55",
-    		AppKey: "faa14b5e2cf119cd6d38bda45b49eb02b333a1b1ff6f10703acb554011ebfb1e",
-    		Host:   "120.78.83.180",
+    		AppID:  "1234abcd",
+    		AppKey: "abcd1234",
+    		Host:   "api.openwallet.cn",
     		Cert:               cert,
     		ConnectType:        owtp.HTTP,
     		EnableKeyAgreement: true,

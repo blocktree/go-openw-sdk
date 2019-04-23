@@ -1,16 +1,10 @@
 package openwsdk
 
-////注册钱包管理工具
+//注册钱包管理工具
 //func initAssetAdapter() {
 //	//注册钱包管理工具
 //	log.Debug("Wallet Manager Load Successfully.")
-//	assets.RegAssets(ethereum.Symbol, ethereum.NewWalletManager())
-//	assets.RegAssets(bitcoin.Symbol, bitcoin.NewWalletManager())
-//	assets.RegAssets(litecoin.Symbol, litecoin.NewWalletManager())
-//	assets.RegAssets(qtum.Symbol, qtum.NewWalletManager())
-//	assets.RegAssets(nebulasio.Symbol, nebulasio.NewWalletManager())
-//	assets.RegAssets(bitcoincash.Symbol, bitcoincash.NewWalletManager())
-//	assets.RegAssets(ontology.Symbol, ontology.NewWalletManager())
+//	openw.RegAssets(ethereum.Symbol, ethereum.NewWalletManager())
 //}
 //
 //// GetAssetsAdapter 获取资产控制器

@@ -7,10 +7,8 @@ import (
 	"github.com/blocktree/openwallet/hdkeystore"
 )
 
-
 //SignRawTransaction 签名交易单
 func SignRawTransaction(rawTx *RawTransaction, key *hdkeystore.HDKey) error {
-
 	keySignatures := rawTx.Signatures[rawTx.AccountID]
 	if keySignatures != nil {
 		for _, keySignature := range keySignatures {

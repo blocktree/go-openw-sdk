@@ -245,10 +245,16 @@ func NewSummaryTask(result gjson.Result) *SummaryTask {
 }
 
 type SummaryAccountTask struct {
-	AccountID      string          `json:"accountID"`
-	Contracts      []string        `json:"contracts"`
-	FeeRate        string          `json:"feeRate"`
-	SummarySetting *SummarySetting `json:"summarySetting"`
+	AccountID          string                          `json:"accountID"`
+	Contracts          map[string]*SummaryContractTask `json:"contracts"`
+	FeeRate            string                          `json:"feeRate"`
+	OnlyContracts      bool                            `json:"onlyContracts"`
+	FeesSupportAccount *FeesSupportAccount             `json:"feesSupportAccount"`
+	*SummarySetting
+}
+
+type SummaryContractTask struct {
+	*SummarySetting
 }
 
 type SummaryWalletTask struct {
@@ -357,4 +363,10 @@ func NewTokenBalance(result gjson.Result) *TokenBalance {
 		},
 	}
 	return &b
+}
+
+// FeesSupportAccount 主币余额不足时，可选择一个账户提供手续费
+type FeesSupportAccount struct {
+	AccountID         string `json:"accountID"`
+	LowBalanceWarning string `json:"lowBalanceWarning"`
 }

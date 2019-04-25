@@ -1,6 +1,7 @@
 package openwsdk
 
 import (
+	"encoding/json"
 	"github.com/blocktree/openwallet/common/file"
 	"github.com/blocktree/openwallet/hdkeystore"
 	"github.com/blocktree/openwallet/log"
@@ -48,4 +49,54 @@ func TestWallet_CreateAccount(t *testing.T) {
 		return
 	}
 	log.Infof("account:%+v", account)
+}
+
+func TestSummaryTaskUnmarshal(t *testing.T) {
+	plain := `
+
+{
+	"wallets": [{
+		"walletID": "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA",
+		"password": "12345678",
+		"accounts": [
+		{
+			"accountID": "A3Mxhqm65kTgS2ybHLenNrZzZNtLGVobDFYdpc1ge4eK",
+			"threshold": "1000",              
+			"minTransfer": "1000",            
+			"retainedBalance": "0",           
+			"confirms": 1,                  
+			"feeRate": "0.0001",            
+        	"onlyContracts": false,         
+          	"contracts": {                          
+   				"all": {                            
+        			"threshold": "1000",             
+          			"minTransfer": "1000",            
+           			"retainedBalance": "0"            
+          		},         
+          		"3qoe2ll2=": {                      
+					"threshold": "1000",      
+      				"minTransfer": "1000",
+					"retainedBalance": "0"
+               	}
+			},
+			"feesSupportAccount": {         
+				"accountID": "12323",       
+				"lowBalanceWarning": "0.1"  
+			}
+		},
+		{
+			"accountID": "3i26MQmtuWVVnw8GnRCVopG3pi8MaYU6RqWVV2E1hwJx",
+			"feeRate": "0.001"
+		}
+		]
+	}]
+}
+
+`
+	var summaryTask SummaryTask
+	err := json.Unmarshal([]byte(plain), &summaryTask)
+	if err != nil {
+		log.Error("json.Unmarshal error:", err)
+		return
+	}
 }

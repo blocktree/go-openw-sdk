@@ -721,23 +721,25 @@ func (api *APINode) CreateSummaryTx(
 	addressLimit int,
 	confirms uint64,
 	sid string,
+	feesSupportAccount *FeesSupportAccount,
 	sync bool,
 	reqFunc func(status uint64, msg string, rawTxs []*RawTransaction)) error {
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
 	}
 	params := map[string]interface{}{
-		"appID":             api.config.AppID,
-		"accountID":         accountID,
-		"address":           sumAddress,
-		"coin":              coin,
-		"minTransfer":       minTransfer,
-		"retainedBalance":   retainedBalance,
-		"feeRate":           feeRate,
-		"addressStartIndex": addressStartIndex,
-		"addressLimit":      addressLimit,
-		"confirms":          confirms,
-		"sid":               sid,
+		"appID":              api.config.AppID,
+		"accountID":          accountID,
+		"address":            sumAddress,
+		"coin":               coin,
+		"minTransfer":        minTransfer,
+		"retainedBalance":    retainedBalance,
+		"feeRate":            feeRate,
+		"addressStartIndex":  addressStartIndex,
+		"addressLimit":       addressLimit,
+		"confirms":           confirms,
+		"sid":                sid,
+		"feesSupportAccount": feesSupportAccount,
 	}
 
 	return api.node.Call(HostNodeID, "createSummaryTx", params, sync, func(resp owtp.Response) {

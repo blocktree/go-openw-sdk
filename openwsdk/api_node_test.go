@@ -583,3 +583,7 @@ func TestAPINode_Send_TRC20(t *testing.T) {
 		log.Infof("tx: %+v", tx.Reason)
 	}
 }
+
+func TestAPINode_CreateSummaryTx(t *testing.T) {
+
+}

@@ -172,6 +172,12 @@ type RawTransaction struct {
 	Signatures map[string][]*KeySignature `json:"sigParts"`  //拥有者accountID: []未花签名
 	Required   uint64                     `json:"reqSigs"`   //必要签名
 	Fees       string                     `json:"fees"`      //手续费
+	ErrorMsg   *ErrorMsg                  `json:"errorMsg"`
+}
+
+type ErrorMsg struct {
+	Code uint64 `json:"code"`
+	Err  string `json:"err"`
 }
 
 type KeySignature struct {
@@ -369,4 +375,6 @@ func NewTokenBalance(result gjson.Result) *TokenBalance {
 type FeesSupportAccount struct {
 	AccountID         string `json:"accountID"`
 	LowBalanceWarning string `json:"lowBalanceWarning"`
+	FixSupportAmount  string `json:"fixSupportAmount"`
+	FeesScale         string `json:"feesScale"`
 }

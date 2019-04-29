@@ -373,8 +373,9 @@ func NewTokenBalance(result gjson.Result) *TokenBalance {
 
 // FeesSupportAccount 主币余额不足时，可选择一个账户提供手续费
 type FeesSupportAccount struct {
-	AccountID         string `json:"accountID"`
-	LowBalanceWarning string `json:"lowBalanceWarning"`
+	AccountID         string `json:"accountID"`         //手续费账户ID
+	LowBalanceWarning string `json:"lowBalanceWarning"` //余额过低报警值
+	LowBalanceStop    string `json:"lowBalanceStop"`    //余额过低停止手续费支持
 	FixSupportAmount  string `json:"fixSupportAmount"`
 	FeesScale         string `json:"feesScale"`
 }

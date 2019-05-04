@@ -7,6 +7,12 @@ import (
 	"github.com/blocktree/openwallet/owtp"
 )
 
+const (
+	/* 汇总任务操作类型 */
+	SummaryTaskOperateTypeReset = 0 //重置
+	SummaryTaskOperateTypeAdd   = 1 //追加
+)
+
 type TransmitNode struct {
 	node              *owtp.OWTPNode
 	config            *APINodeConfig
@@ -282,11 +288,16 @@ func (transmit *TransmitNode) FindSummaryInfoByWalletIDViaTrustNode(
 	})
 }
 
-//StartSummaryTaskViaTrustNode 指定节点，启动汇总任务
+// StartSummaryTaskViaTrustNode 指定节点，启动汇总任务
+// nodeID 节点ID
+// cycleSec 任务周期间隔
+// summaryTask 汇总任务
+// operateType 操作类型：0：重置，1：追加
 func (transmit *TransmitNode) StartSummaryTaskViaTrustNode(
 	nodeID string,
 	cycleSec int,
 	summaryTask *SummaryTask,
+	operateType int,
 	sync bool, reqFunc func(status uint64, msg string)) error {
 	if transmit == nil {
 		return fmt.Errorf("TransmitNode is not inited")
@@ -295,6 +306,7 @@ func (transmit *TransmitNode) StartSummaryTaskViaTrustNode(
 		"appID":       transmit.config.AppID,
 		"cycleSec":    cycleSec,
 		"summaryTask": summaryTask,
+		"operateType": operateType,
 	}
 
 	return transmit.node.Call(nodeID, "startSummaryTaskViaTrustNode", params, sync, func(resp owtp.Response) {
@@ -413,5 +425,3 @@ func (transmit *TransmitNode) GetSummaryTaskLogViaTrustNode(
 		reqFunc(resp.Status, resp.Msg, taskLog)
 	})
 }
-
-

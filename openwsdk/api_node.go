@@ -566,6 +566,7 @@ func (api *APINode) FindTradeLog(
 	address string,
 	isTmp int,
 	orderType int,
+	sortBy int64,
 	offset int,
 	limit int,
 	sync bool,
@@ -581,6 +582,7 @@ func (api *APINode) FindTradeLog(
 		"txid":      txid,
 		"isTmp":     isTmp,
 		"orderType": orderType,
+		"sortBy":    sortBy,
 		"offset":    offset,
 		"limit":     limit,
 	}

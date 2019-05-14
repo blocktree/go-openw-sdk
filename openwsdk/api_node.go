@@ -562,6 +562,8 @@ func (api *APINode) SubmitTrade(
 func (api *APINode) FindTradeLog(
 	walletID string,
 	accountID string,
+	symbol string,
+	blockHeightStart int64,
 	txid string,
 	address string,
 	isTmp int,
@@ -576,15 +578,17 @@ func (api *APINode) FindTradeLog(
 		return fmt.Errorf("APINode is not inited")
 	}
 	params := map[string]interface{}{
-		"appID":     api.config.AppID,
-		"walletID":  walletID,
-		"accountID": accountID,
-		"txid":      txid,
-		"isTmp":     isTmp,
-		"orderType": orderType,
-		"sortBy":    sortBy,
-		"offset":    offset,
-		"limit":     limit,
+		"appID":            api.config.AppID,
+		"walletID":         walletID,
+		"accountID":        accountID,
+		"symbol":           symbol,
+		"blockHeightStart": blockHeightStart,
+		"txid":             txid,
+		"isTmp":            isTmp,
+		"orderType":        orderType,
+		"sortBy":           sortBy,
+		"offset":           offset,
+		"limit":            limit,
 	}
 
 	return api.node.Call(HostNodeID, "findTradeLog", params, sync, func(resp owtp.Response) {

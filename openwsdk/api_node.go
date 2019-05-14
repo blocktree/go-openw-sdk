@@ -558,15 +558,44 @@ func (api *APINode) SubmitTrade(
 	})
 }
 
+// new
+func (api *APINode) FindTradeLogByParams(
+	params map[string]interface{},
+	offset int,
+	limit int,
+	sync bool,
+	reqFunc func(status uint64, msg string, tx []*Transaction)) error {
+	return api.node.Call(HostNodeID, "findTradeLog", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		var txs []*Transaction
+		array := data
+		if array.IsArray() {
+			for _, a := range array.Array() {
+				var tx Transaction
+				err := json.Unmarshal([]byte(a.Raw), &tx)
+				if err == nil {
+					txs = append(txs, &tx)
+				}
+			}
+		}
+		reqFunc(resp.Status, resp.Msg, txs)
+	})
+
+}
+
 //FindTradeLog 获取转账交易订单日志
 func (api *APINode) FindTradeLog(
 	walletID string,
 	accountID string,
+	symbol string, // 主链币
 	txid string,
 	address string,
 	isTmp int,
 	orderType int,
-	sortBy int64,
+	start_height int64,
+	end_height int64,
+	height int64,
+	isDesc bool, // 是否倒序, 默认是
 	offset int,
 	limit int,
 	sync bool,
@@ -575,16 +604,24 @@ func (api *APINode) FindTradeLog(
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
 	}
+	sortby := -1
+	if isDesc {
+		sortby = 1
+	}
 	params := map[string]interface{}{
-		"appID":     api.config.AppID,
-		"walletID":  walletID,
-		"accountID": accountID,
-		"txid":      txid,
-		"isTmp":     isTmp,
-		"orderType": orderType,
-		"sortby":    sortBy,
-		"offset":    offset,
-		"limit":     limit,
+		"appID":        api.config.AppID,
+		"walletID":     walletID,
+		"accountID":    accountID,
+		"symbol":       symbol,
+		"txid":         txid,
+		"isTmp":        isTmp,
+		"orderType":    orderType,
+		"sortby":       sortby,
+		"start_height": start_height,
+		"end_height":   end_height,
+		"blockHeight":  height,
+		"offset":       offset,
+		"limit":        limit,
 	}
 
 	return api.node.Call(HostNodeID, "findTradeLog", params, sync, func(resp owtp.Response) {

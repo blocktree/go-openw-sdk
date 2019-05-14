@@ -582,7 +582,7 @@ func (api *APINode) FindTradeLog(
 		"txid":      txid,
 		"isTmp":     isTmp,
 		"orderType": orderType,
-		"sortBy":    sortBy,
+		"sortby":    sortBy,
 		"offset":    offset,
 		"limit":     limit,
 	}

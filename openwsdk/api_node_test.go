@@ -414,16 +414,16 @@ func TestAPINode_Send_LTC(t *testing.T) {
 }
 
 func TestAPINode_FindTradeLog(t *testing.T) {
-	walletID := "WAaDbbawmypQY3XjnMjLTj43vBGvrQwB2j"
-	accountID := "EaUEnCH9mjDPeqrsfi9q3K3jkTezZCt4cee3RTpgScJ3"
-	api := testNewAPINode()
-	api.FindTradeLog(walletID, accountID, "", "",
-		0, 0, 0, 200, true,
-		func(status uint64, msg string, tx []*Transaction) {
-			for i, value := range tx {
-				log.Infof("tx[%d]: %+v", i, value)
-			}
-		})
+	//walletID := "WAaDbbawmypQY3XjnMjLTj43vBGvrQwB2j"
+	//accountID := "EaUEnCH9mjDPeqrsfi9q3K3jkTezZCt4cee3RTpgScJ3"
+	//api := testNewAPINode()
+	//api.FindTradeLog(walletID, accountID, "", "",
+	//	0, 0, 0, 200, true,
+	//	func(status uint64, msg string, tx []*Transaction) {
+	//		for i, value := range tx {
+	//			log.Infof("tx[%d]: %+v", i, value)
+	//		}
+	//	})
 }
 
 func TestAPINode_GetContracts(t *testing.T) {

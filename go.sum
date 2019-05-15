@@ -22,6 +22,7 @@ github.com/blocktree/go-owcdrivers v1.0.0/go.mod h1:AzbIxzzRcSszV/XwOiu83QqKuGTu
 github.com/blocktree/go-owcdrivers v1.0.4 h1:ojdUJiOD40fxuW1UrLU79RNTObtdFCMx0miwdW3T72o=
 github.com/blocktree/go-owcdrivers v1.0.4/go.mod h1:HS5S8MYW1hdN6hEmwgqu/kWyFPkxvjGN9Le0zAGmFZM=
 github.com/blocktree/go-owcdrivers v1.0.5/go.mod h1:HS5S8MYW1hdN6hEmwgqu/kWyFPkxvjGN9Le0zAGmFZM=
+github.com/blocktree/go-owcdrivers v1.0.8 h1:HW9+lJXXLsAGOXoHA97DlvNJTw42tVvsGS3p0lBn6Hw=
 github.com/blocktree/go-owcdrivers v1.0.8/go.mod h1:TKevypdvkQD4ItBGscwMJqWWMOhDo9vXwnV1wacNs9w=
 github.com/blocktree/go-owcrypt v1.0.0 h1:u3B59ZjmZ6vB8NrIicUvKKiiDY2oeJCInWsEq1swwSY=
 github.com/blocktree/go-owcrypt v1.0.0/go.mod h1:5FCinL/4XVEqbmAFTOUgfMJVNJEw6WzVy624qsxzZC8=
@@ -70,6 +71,8 @@ github.com/docker/go-units v0.3.3/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDD
 github.com/edsrzf/mmap-go v0.0.0-20170320065105-0bce6a688712/go.mod h1:YO35OhQPt3KJa3ryjFM5Bs14WD66h8eGKpfaBNrHW5M=
 github.com/elazarl/go-bindata-assetfs v1.0.0/go.mod h1:v+YaWX3bdea5J/mo8dSETolEo7R71Vk1u8bnjau5yw4=
 github.com/ethereum/go-ethereum v1.8.24/go.mod h1:PwpWDrCLZrV+tfrhqqF6kPknbISMHaJv9Ln3kPCZLwY=
+github.com/fatih/structs v1.1.0 h1:Q7juDM0QtcnhCpeyLGQKyg4TOIghuNXrkL32pHAUMxo=
+github.com/fatih/structs v1.1.0/go.mod h1:9NiDSp5zOcgEDl+j00MP/WkGVPOlPRLejGD8Ga6PJ7M=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/go-redis/redis v6.14.2+incompatible/go.mod h1:NAIEuMOZ/fxfXJIrKDQDz8wamY7mA7PouImQ2Jvg6kA=

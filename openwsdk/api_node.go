@@ -564,7 +564,9 @@ func (api *APINode) FindTradeLogByParams(
 	offset int,
 	limit int,
 	sync bool,
-	reqFunc func(status uint64, msg string, tx []*Transaction)) error {
+	reqFunc func(status uint64, msg string, tx []*Transaction),
+) error {
+	params["appID"] = api.config.AppID
 	return api.node.Call(HostNodeID, "findTradeLog", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
 		var txs []*Transaction

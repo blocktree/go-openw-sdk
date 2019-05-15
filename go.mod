@@ -8,8 +8,11 @@ require (
 	github.com/blocktree/go-owcrypt v1.0.1
 	github.com/blocktree/openwallet v1.4.1
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/fatih/structs v1.1.0 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/tidwall/gjson v1.2.1
+	github.com/tidwall/match v1.0.1 // indirect
+	github.com/tidwall/pretty v0.0.0-20190325153808-1166b9ac2b65 // indirect
 	golang.org/x/net v0.0.0-20190213061140-3a22650c66bd // indirect
 )
 

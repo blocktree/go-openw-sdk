@@ -22,6 +22,7 @@ github.com/blocktree/go-owcdrivers v1.0.0/go.mod h1:AzbIxzzRcSszV/XwOiu83QqKuGTu
 github.com/blocktree/go-owcdrivers v1.0.4 h1:ojdUJiOD40fxuW1UrLU79RNTObtdFCMx0miwdW3T72o=
 github.com/blocktree/go-owcdrivers v1.0.4/go.mod h1:HS5S8MYW1hdN6hEmwgqu/kWyFPkxvjGN9Le0zAGmFZM=
 github.com/blocktree/go-owcdrivers v1.0.5/go.mod h1:HS5S8MYW1hdN6hEmwgqu/kWyFPkxvjGN9Le0zAGmFZM=
+github.com/blocktree/go-owcdrivers v1.0.8 h1:HW9+lJXXLsAGOXoHA97DlvNJTw42tVvsGS3p0lBn6Hw=
 github.com/blocktree/go-owcdrivers v1.0.8/go.mod h1:TKevypdvkQD4ItBGscwMJqWWMOhDo9vXwnV1wacNs9w=
 github.com/blocktree/go-owcrypt v1.0.0 h1:u3B59ZjmZ6vB8NrIicUvKKiiDY2oeJCInWsEq1swwSY=
 github.com/blocktree/go-owcrypt v1.0.0/go.mod h1:5FCinL/4XVEqbmAFTOUgfMJVNJEw6WzVy624qsxzZC8=

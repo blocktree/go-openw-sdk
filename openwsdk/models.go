@@ -379,3 +379,10 @@ type FeesSupportAccount struct {
 	FixSupportAmount  string `json:"fixSupportAmount"`
 	FeesScale         string `json:"feesScale"`
 }
+
+// support feeRate
+type SupportFeeRate struct {
+	FeeRate string
+	Symbol  string
+	Unit    string
+}

@@ -587,3 +587,12 @@ func TestAPINode_Send_TRC20(t *testing.T) {
 func TestAPINode_CreateSummaryTx(t *testing.T) {
 
 }
+
+func TestAPINode_GetFeeRateList(t *testing.T) {
+	api := testNewAPINode()
+	api.GetFeeRateList(true, func(status uint64, msg string, feeRates []SupportFeeRate) {
+		for _, feeRate := range feeRates {
+			log.Infof("feeRate: %+v", feeRate)
+		}
+	})
+}

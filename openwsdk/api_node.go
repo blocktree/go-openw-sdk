@@ -750,6 +750,35 @@ func (api *APINode) GetFeeRate(
 	})
 }
 
+//
+func (api *APINode) GetFeeRateList(
+	sync bool,
+	reqFunc func(status uint64, msg string, feeRates []SupportFeeRate),
+) error {
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+	params := map[string]interface{}{
+		"appID":  api.config.AppID,
+		"symbol": "",
+	}
+	return api.node.Call(HostNodeID, "getFeeRateList", params, sync, func(resp owtp.Response) {
+		out := make([]SupportFeeRate, 0)
+		data := resp.JsonData()
+		if data.IsArray() {
+			for _, d := range data.Array() {
+				out = append(out, SupportFeeRate{
+					FeeRate: d.Get("feeRate").String(),
+					Symbol:  d.Get("symbol").String(),
+					Unit:    d.Get("unit").String(),
+				})
+			}
+		}
+		reqFunc(resp.Status, resp.Msg, out)
+	})
+}
+
+
 //CreateSummaryTx 创建汇总交易单
 func (api *APINode) CreateSummaryTx(
 	accountID string,

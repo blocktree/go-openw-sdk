@@ -256,6 +256,7 @@ type SummaryAccountTask struct {
 	FeeRate            string                          `json:"feeRate"`
 	OnlyContracts      bool                            `json:"onlyContracts"`
 	FeesSupportAccount *FeesSupportAccount             `json:"feesSupportAccount"`
+	SwitchSymbol       string                          `json:"switchSymbol"`
 	*SummarySetting
 }
 

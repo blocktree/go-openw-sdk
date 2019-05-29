@@ -34,6 +34,8 @@ github.com/blocktree/go-owcrypt v1.0.0 h1:u3B59ZjmZ6vB8NrIicUvKKiiDY2oeJCInWsEq1
 github.com/blocktree/go-owcrypt v1.0.0/go.mod h1:5FCinL/4XVEqbmAFTOUgfMJVNJEw6WzVy624qsxzZC8=
 github.com/blocktree/go-owcrypt v1.0.1 h1:hTqRN7mH2L0mVzHcL9jE0YM7B4oUFiDvksLEpam7oU8=
 github.com/blocktree/go-owcrypt v1.0.1/go.mod h1:5FCinL/4XVEqbmAFTOUgfMJVNJEw6WzVy624qsxzZC8=
+github.com/blocktree/ontology-adapter v1.0.8 h1:Lej35ZPPgjS6nP5CEumIUskRNASMZswgrByYSxrWPe0=
+github.com/blocktree/ontology-adapter v1.0.8/go.mod h1:NA7qQB0g/85ty9XGLt+I0YeuV7ErnWhTTXC1MH/jCS8=
 github.com/blocktree/openwallet v1.4.0 h1:QK1yCBQAePF/p2hMOWi09y/SJitaxZWicOGGMnTeXXA=
 github.com/blocktree/openwallet v1.4.0/go.mod h1:wVvKtOBgi2MIviiGyeX2uedTo53X7HjtMzfps5G3BWg=
 github.com/blocktree/openwallet v1.4.1 h1:Erju/SLK3qjU9OZ4JEsrUBD6wfvC0PBC+28rhy+BLM4=
@@ -80,8 +82,10 @@ github.com/edsrzf/mmap-go v0.0.0-20170320065105-0bce6a688712/go.mod h1:YO35OhQPt
 github.com/elazarl/go-bindata-assetfs v1.0.0/go.mod h1:v+YaWX3bdea5J/mo8dSETolEo7R71Vk1u8bnjau5yw4=
 github.com/eoscanada/eos-go v0.8.10/go.mod h1:RKrm2XzZEZWxSMTRqH5QOyJ1fb/qKEjs2ix1aQl0sk4=
 github.com/ethereum/go-ethereum v1.8.24/go.mod h1:PwpWDrCLZrV+tfrhqqF6kPknbISMHaJv9Ln3kPCZLwY=
+github.com/ethereum/go-ethereum v1.8.25/go.mod h1:PwpWDrCLZrV+tfrhqqF6kPknbISMHaJv9Ln3kPCZLwY=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
+github.com/go-playground/locales v0.12.1/go.mod h1:IUMDtCfWo/w/mtMfIE/IG2K+Ey3ygWanZIBtBW0W2TM=
 github.com/go-redis/redis v6.14.2+incompatible/go.mod h1:NAIEuMOZ/fxfXJIrKDQDz8wamY7mA7PouImQ2Jvg6kA=
 github.com/go-redis/redis v6.15.2+incompatible/go.mod h1:NAIEuMOZ/fxfXJIrKDQDz8wamY7mA7PouImQ2Jvg6kA=
 github.com/go-sql-driver/mysql v1.4.1/go.mod h1:zAC/RDZ24gD3HViQzih4MyKcchzm+sOG5ZlKdlhCg5w=

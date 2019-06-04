@@ -17,7 +17,6 @@ func init() {
 	owtp.Debug = false
 }
 
-
 func testNewAPINode() *APINode {
 
 	confFile := filepath.Join("conf", "node.ini")
@@ -36,13 +35,14 @@ func testNewAPINode() *APINode {
 	cert, _ := owtp.NewCertificate(PrivateKey)
 
 	config := &APINodeConfig{
-		AppID:  AppID,
-		AppKey: AppKey,
-		Host:   Host,
+		AppID:              AppID,
+		AppKey:             AppKey,
+		Host:               Host,
 		Cert:               cert,
 		ConnectType:        owtp.HTTP,
 		EnableSignature:    false,
-		EnableKeyAgreement: false,
+		EnableKeyAgreement: true,
+		EnableSSL:          true,
 		TimeoutSEC:         120,
 	}
 
@@ -449,9 +449,9 @@ func TestAPINode_GetTokenBalanceByAccount(t *testing.T) {
 }
 
 func TestAPINode_GetAllTokenBalanceByAccount(t *testing.T) {
-	accountID := "EaUEnCH9mjDPeqrsfi9q3K3jkTezZCt4cee3RTpgScJ3"
+	accountID := "7u7CQNdkaJXVszoj528Bink88aWgfay3rDxb1rsmDywA"
 	api := testNewAPINode()
-	api.GetAllTokenBalanceByAccount(accountID, true,
+	api.GetAllTokenBalanceByAccount(accountID, "ETH", true,
 		func(status uint64, msg string, balance []*TokenBalance) {
 			for _, b := range balance {
 				log.Infof("balance: %+v", b)
@@ -469,7 +469,6 @@ func TestAPINode_GetFeeRate(t *testing.T) {
 
 		})
 }
-
 
 func TestAPINode_Send_TRC10(t *testing.T) {
 	accountID := "EaUEnCH9mjDPeqrsfi9q3K3jkTezZCt4cee3RTpgScJ3"
@@ -526,7 +525,6 @@ func TestAPINode_Send_TRC10(t *testing.T) {
 		log.Infof("tx: %+v", tx.Reason)
 	}
 }
-
 
 func TestAPINode_Send_TRC20(t *testing.T) {
 	accountID := "EaUEnCH9mjDPeqrsfi9q3K3jkTezZCt4cee3RTpgScJ3"

@@ -704,6 +704,7 @@ func (api *APINode) GetTokenBalanceByAccount(
 //GetAllTokenBalanceByAccount 获取账户所有token余额接口
 func (api *APINode) GetAllTokenBalanceByAccount(
 	accountID string,
+	symbol string,
 	sync bool,
 	reqFunc func(status uint64, msg string, balance []*TokenBalance)) error {
 	if api == nil {
@@ -712,6 +713,7 @@ func (api *APINode) GetAllTokenBalanceByAccount(
 	params := map[string]interface{}{
 		"appID":     api.config.AppID,
 		"accountID": accountID,
+		"symbol":    symbol,
 	}
 
 	return api.node.Call(HostNodeID, "getAllTokenBalanceByAccount", params, sync, func(resp owtp.Response) {
@@ -777,7 +779,6 @@ func (api *APINode) GetFeeRateList(
 		reqFunc(resp.Status, resp.Msg, out)
 	})
 }
-
 
 //CreateSummaryTx 创建汇总交易单
 func (api *APINode) CreateSummaryTx(

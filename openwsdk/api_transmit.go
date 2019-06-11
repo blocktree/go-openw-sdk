@@ -61,6 +61,14 @@ func (transmit *TransmitNode) APINode() (*APINode, error) {
 	return transmit.parent, nil
 }
 
+//OWTPNode
+func (transmit *TransmitNode) OWTPNode() (*owtp.OWTPNode, error) {
+	if transmit.node == nil {
+		return nil, fmt.Errorf("transmit node is not inited")
+	}
+	return transmit.node, nil
+}
+
 //Listen 启动监听
 func (transmit *TransmitNode) Listen() {
 
@@ -110,6 +118,10 @@ func (transmit *TransmitNode) GetTrustNodeInfo(nodeID string,
 		return fmt.Errorf("TransmitNode is not inited")
 	}
 
+	if p := transmit.node.GetOnlinePeer(nodeID); p == nil {
+		return fmt.Errorf("Node ID: %s is not connected ", nodeID)
+	}
+
 	params := map[string]interface{}{
 		"appID": transmit.config.AppID,
 	}
@@ -128,6 +140,10 @@ func (transmit *TransmitNode) CreateWalletViaTrustNode(nodeID, alias, password s
 
 	if transmit == nil {
 		return fmt.Errorf("TransmitNode is not inited")
+	}
+
+	if p := transmit.node.GetOnlinePeer(nodeID); p == nil {
+		return fmt.Errorf("Node ID: %s is not connected ", nodeID)
 	}
 
 	params := map[string]interface{}{
@@ -151,6 +167,11 @@ func (transmit *TransmitNode) CreateAccountViaTrustNode(
 	if transmit == nil {
 		return fmt.Errorf("TransmitNode is not inited")
 	}
+
+	if p := transmit.node.GetOnlinePeer(nodeID); p == nil {
+		return fmt.Errorf("Node ID: %s is not connected ", nodeID)
+	}
+
 	params := map[string]interface{}{
 		"appID":    transmit.config.AppID,
 		"alias":    alias,
@@ -197,6 +218,11 @@ func (transmit *TransmitNode) SendTransactionViaTrustNode(
 	if transmit == nil {
 		return fmt.Errorf("TransmitNode is not inited")
 	}
+
+	if p := transmit.node.GetOnlinePeer(nodeID); p == nil {
+		return fmt.Errorf("Node ID: %s is not connected ", nodeID)
+	}
+
 	params := map[string]interface{}{
 		"appID":           transmit.config.AppID,
 		"accountID":       accountID,
@@ -248,6 +274,11 @@ func (transmit *TransmitNode) SetSummaryInfoViaTrustNode(
 	if transmit == nil {
 		return fmt.Errorf("TransmitNode is not inited")
 	}
+
+	if p := transmit.node.GetOnlinePeer(nodeID); p == nil {
+		return fmt.Errorf("Node ID: %s is not connected ", nodeID)
+	}
+
 	params := map[string]interface{}{
 		"appID":          transmit.config.AppID,
 		"summarySetting": summarySetting,
@@ -266,6 +297,11 @@ func (transmit *TransmitNode) FindSummaryInfoByWalletIDViaTrustNode(
 	if transmit == nil {
 		return fmt.Errorf("TransmitNode is not inited")
 	}
+
+	if p := transmit.node.GetOnlinePeer(nodeID); p == nil {
+		return fmt.Errorf("Node ID: %s is not connected ", nodeID)
+	}
+
 	params := map[string]interface{}{
 		"appID":    transmit.config.AppID,
 		"walletID": walletID,
@@ -302,6 +338,11 @@ func (transmit *TransmitNode) StartSummaryTaskViaTrustNode(
 	if transmit == nil {
 		return fmt.Errorf("TransmitNode is not inited")
 	}
+
+	if p := transmit.node.GetOnlinePeer(nodeID); p == nil {
+		return fmt.Errorf("Node ID: %s is not connected ", nodeID)
+	}
+
 	params := map[string]interface{}{
 		"appID":       transmit.config.AppID,
 		"cycleSec":    cycleSec,
@@ -321,6 +362,11 @@ func (transmit *TransmitNode) StopSummaryTaskViaTrustNode(
 	if transmit == nil {
 		return fmt.Errorf("TransmitNode is not inited")
 	}
+
+	if p := transmit.node.GetOnlinePeer(nodeID); p == nil {
+		return fmt.Errorf("Node ID: %s is not connected ", nodeID)
+	}
+
 	params := map[string]interface{}{
 		"appID": transmit.config.AppID,
 	}
@@ -337,6 +383,11 @@ func (transmit *TransmitNode) UpdateInfoViaTrustNode(
 	if transmit == nil {
 		return fmt.Errorf("TransmitNode is not inited")
 	}
+
+	if p := transmit.node.GetOnlinePeer(nodeID); p == nil {
+		return fmt.Errorf("Node ID: %s is not connected ", nodeID)
+	}
+
 	params := map[string]interface{}{
 		"appID": transmit.config.AppID,
 	}
@@ -354,6 +405,11 @@ func (transmit *TransmitNode) AppendSummaryTaskViaTrustNode(
 	if transmit == nil {
 		return fmt.Errorf("TransmitNode is not inited")
 	}
+
+	if p := transmit.node.GetOnlinePeer(nodeID); p == nil {
+		return fmt.Errorf("Node ID: %s is not connected ", nodeID)
+	}
+
 	params := map[string]interface{}{
 		"appID":       transmit.config.AppID,
 		"summaryTask": summaryTask,
@@ -373,6 +429,11 @@ func (transmit *TransmitNode) RemoveSummaryTaskViaTrustNode(
 	if transmit == nil {
 		return fmt.Errorf("TransmitNode is not inited")
 	}
+
+	if p := transmit.node.GetOnlinePeer(nodeID); p == nil {
+		return fmt.Errorf("Node ID: %s is not connected ", nodeID)
+	}
+
 	params := map[string]interface{}{
 		"appID":     transmit.config.AppID,
 		"walletID":  walletID,
@@ -391,6 +452,11 @@ func (transmit *TransmitNode) GetCurrentSummaryTaskViaTrustNode(
 	if transmit == nil {
 		return fmt.Errorf("TransmitNode is not inited")
 	}
+
+	if p := transmit.node.GetOnlinePeer(nodeID); p == nil {
+		return fmt.Errorf("Node ID: %s is not connected ", nodeID)
+	}
+
 	params := map[string]interface{}{
 		"appID": transmit.config.AppID,
 	}
@@ -412,6 +478,11 @@ func (transmit *TransmitNode) GetSummaryTaskLogViaTrustNode(
 	if transmit == nil {
 		return fmt.Errorf("TransmitNode is not inited")
 	}
+
+	if p := transmit.node.GetOnlinePeer(nodeID); p == nil {
+		return fmt.Errorf("Node ID: %s is not connected ", nodeID)
+	}
+
 	params := map[string]interface{}{
 		"appID":  transmit.config.AppID,
 		"offset": offset,

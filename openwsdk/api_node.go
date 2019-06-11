@@ -793,6 +793,7 @@ func (api *APINode) CreateSummaryTx(
 	confirms uint64,
 	sid string,
 	feesSupportAccount *FeesSupportAccount,
+	memo string,
 	sync bool,
 	reqFunc func(status uint64, msg string, rawTxs []*RawTransaction)) error {
 	if api == nil {
@@ -811,6 +812,7 @@ func (api *APINode) CreateSummaryTx(
 		"confirms":           confirms,
 		"sid":                sid,
 		"feesSupportAccount": feesSupportAccount,
+		"memo":               memo,
 	}
 
 	return api.node.Call(HostNodeID, "createSummaryTx", params, sync, func(resp owtp.Response) {

@@ -257,6 +257,7 @@ type SummaryAccountTask struct {
 	OnlyContracts      bool                            `json:"onlyContracts"`
 	FeesSupportAccount *FeesSupportAccount             `json:"feesSupportAccount"`
 	SwitchSymbol       string                          `json:"switchSymbol"`
+	Memo               string                          `json:"memo"`
 	*SummarySetting
 }
 
@@ -379,7 +380,7 @@ type FeesSupportAccount struct {
 	LowBalanceStop    string `json:"lowBalanceStop"`    //余额过低停止手续费支持
 	FixSupportAmount  string `json:"fixSupportAmount"`
 	FeesScale         string `json:"feesScale"`
-	IsTokenContract   bool   `json:"isTokenContract"`    //手续费是否合约代币
+	IsTokenContract   bool   `json:"isTokenContract"` //手续费是否合约代币
 	ContractAddress   string `json:"contractAddress"` //合约地址
 }
 

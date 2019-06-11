@@ -42,7 +42,7 @@ func testNewAPINode() *APINode {
 		ConnectType:        owtp.HTTP,
 		EnableSignature:    false,
 		EnableKeyAgreement: true,
-		EnableSSL:          true,
+		EnableSSL:          false,
 		TimeoutSEC:         120,
 	}
 

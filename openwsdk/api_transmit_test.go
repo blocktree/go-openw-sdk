@@ -8,24 +8,26 @@ import (
 	"time"
 )
 
-func testServeTransmitNode(f func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo)) {
+func testServeTransmitNode(f func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo)) *TransmitNode {
 
 	api := testNewAPINode()
 	err := api.ServeTransmitNode("127.0.0.1:9088")
 	if err != nil {
 		log.Errorf("ServeTransmitNode error: %v\n", err)
-		return
+		return nil
 	}
 
 	tn, err := api.TransmitNode()
 	if err != nil {
 		log.Errorf("TransmitNode error: %v\n", err)
-		return
+		return nil
 	}
 
 	tn.SetConnectHandler(f)
 
 	time.Sleep(15 * time.Second)
+
+	return tn
 }
 
 func TestAPINode_ServeTransmitNode(t *testing.T) {
@@ -44,6 +46,23 @@ func TestTransmitNode_GetTrustNodeInfo(t *testing.T) {
 	})
 }
 
+func TestTransmitNode_GetTrustNodeInfoDirectCall(t *testing.T) {
+	tn := testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
+
+	})
+
+
+	nodeID := "4YBHa3d3vAceSRngPWrsm1cSPJudFQSzNAhPGschFw47"
+
+	err := tn.GetTrustNodeInfo(nodeID, true,
+		func(status uint64, msg string, nodeInfo *TrustNodeInfo) {
+			log.Infof("nodeInfo: %v", nodeInfo)
+		})
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
 func TestTransmitNode_CreateWalletViaTrustNode(t *testing.T) {
 
 	alias := "openwallet333"
@@ -51,12 +70,33 @@ func TestTransmitNode_CreateWalletViaTrustNode(t *testing.T) {
 
 	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
 		//创建钱包
-		transmitNode.CreateWalletViaTrustNode(nodeInfo.NodeID, alias, password, true,
+		err := transmitNode.CreateWalletViaTrustNode(nodeInfo.NodeID, alias, password, true,
 			func(status uint64, msg string, wallet *Wallet) {
 				if wallet != nil {
 					log.Infof("wallet: %+v\n", wallet)
 				}
 			})
+		if err != nil {
+			t.Errorf("CreateWalletViaTrustNode unexpected error: %v", err)
+		}
+
+		walletID := "WAJ7dKuES2LxJzwtJUWetsfqckiCCDQ4uy"
+		alias := "openwallet_LTC_3"
+		password := "12345678"
+		symbol := "LTC"
+		//创建账户
+		err = transmitNode.CreateAccountViaTrustNode(nodeInfo.NodeID, walletID, alias, password, symbol, true,
+			func(status uint64, msg string, account *Account, addresses []*Address) {
+				if account != nil {
+					log.Infof("account: %+v\n", account)
+					for i, a := range addresses {
+						log.Infof("address[%d]:%+v", i, a)
+					}
+				}
+			})
+		if err != nil {
+			t.Errorf("CreateAccountViaTrustNode unexpected error: %v", err)
+		}
 	})
 }
 

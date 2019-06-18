@@ -25,7 +25,7 @@ func testServeTransmitNode(f func(transmitNode *TransmitNode, nodeInfo *TrustNod
 
 	tn.SetConnectHandler(f)
 
-	time.Sleep(15 * time.Second)
+	time.Sleep(30 * time.Second)
 
 	return tn
 }
@@ -65,14 +65,18 @@ func TestTransmitNode_GetTrustNodeInfoDirectCall(t *testing.T) {
 
 func TestTransmitNode_CreateWalletViaTrustNode(t *testing.T) {
 
-	alias := "openwallet333"
+	alias := "openwallet"
 	password := "12345678"
 
 	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
+
+		var newwallet *Wallet
+
 		//创建钱包
 		err := transmitNode.CreateWalletViaTrustNode(nodeInfo.NodeID, alias, password, true,
 			func(status uint64, msg string, wallet *Wallet) {
 				if wallet != nil {
+					newwallet = wallet
 					log.Infof("wallet: %+v\n", wallet)
 				}
 			})
@@ -80,10 +84,10 @@ func TestTransmitNode_CreateWalletViaTrustNode(t *testing.T) {
 			t.Errorf("CreateWalletViaTrustNode unexpected error: %v", err)
 		}
 
-		walletID := "WAJ7dKuES2LxJzwtJUWetsfqckiCCDQ4uy"
-		alias := "openwallet_LTC_3"
+		walletID := newwallet.WalletID
+		alias := "openwallet_VSYS"
 		password := "12345678"
-		symbol := "LTC"
+		symbol := "VSYS"
 		//创建账户
 		err = transmitNode.CreateAccountViaTrustNode(nodeInfo.NodeID, walletID, alias, password, symbol, true,
 			func(status uint64, msg string, account *Account, addresses []*Address) {

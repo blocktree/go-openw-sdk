@@ -877,3 +877,29 @@ func (api *APINode) TransmitNode() (*TransmitNode, error) {
 	}
 	return api.transmitNode, nil
 }
+
+//GetSymbolBlockList 获取币种最大高度
+func (api *APINode) GetSymbolBlockList(
+	symbol string,
+	sync bool,
+	reqFunc func(status uint64, msg string, blockHeaders []*BlockHeader)) error {
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+	params := map[string]interface{}{
+		"appID":  api.config.AppID,
+		"symbol": symbol,
+	}
+
+	return api.node.Call(HostNodeID, "getSymbolBlockList", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		headers := make([]*BlockHeader, 0)
+		if data.IsArray() {
+			for _, d := range data.Array() {
+				headers = append(headers, NewBlockHeader(d))
+			}
+		}
+
+ 		reqFunc(resp.Status, resp.Msg, headers)
+	})
+}

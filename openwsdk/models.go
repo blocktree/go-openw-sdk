@@ -27,10 +27,10 @@ func NewBlockHeader(result gjson.Result) *BlockHeader {
 		Merkleroot:        result.Get("merkleroot").String(),
 		Previousblockhash: result.Get("previousblockhash").String(),
 		Height:            result.Get("height").Uint(),
-		Version:           result.Get("height").Uint(),
-		Time:              result.Get("height").Uint(),
-		Fork:              result.Get("height").Bool(),
-		Symbol:            result.Get("height").String(),
+		Version:           result.Get("version").Uint(),
+		Time:              result.Get("time").Uint(),
+		Fork:              result.Get("fork").Bool(),
+		Symbol:            result.Get("symbol").String(),
 	}
 	return obj
 }

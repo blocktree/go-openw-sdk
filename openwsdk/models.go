@@ -20,6 +20,21 @@ type BlockHeader struct {
 	Symbol            string `json:"symbol"`
 }
 
+func NewBlockHeader(result gjson.Result) *BlockHeader {
+	obj := &BlockHeader{
+		Hash:              result.Get("hash").String(),
+		Confirmations:     result.Get("confirmations").Uint(),
+		Merkleroot:        result.Get("merkleroot").String(),
+		Previousblockhash: result.Get("previousblockhash").String(),
+		Height:            result.Get("height").Uint(),
+		Version:           result.Get("height").Uint(),
+		Time:              result.Get("height").Uint(),
+		Fork:              result.Get("height").Bool(),
+		Symbol:            result.Get("height").String(),
+	}
+	return obj
+}
+
 type CallbackNode struct {
 	NodeID             string `json:"nodeID"`             //@required 节点ID
 	Address            string `json:"address"`            //@required 连接IP地址

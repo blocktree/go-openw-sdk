@@ -41,7 +41,7 @@ func testNewAPINode() *APINode {
 		Cert:               cert,
 		ConnectType:        owtp.HTTP,
 		EnableSignature:    false,
-		EnableKeyAgreement: true,
+		EnableKeyAgreement: false,
 		EnableSSL:          true,
 		TimeoutSEC:         120,
 	}
@@ -593,4 +593,15 @@ func TestAPINode_GetFeeRateList(t *testing.T) {
 			log.Infof("feeRate: %+v", feeRate)
 		}
 	})
+}
+
+func TestAPINode_GetSymbolBlockList(t *testing.T) {
+	symbol := "BTC"
+	api := testNewAPINode()
+	api.GetSymbolBlockList(symbol, true,
+		func(status uint64, msg string, blockHeaders []*BlockHeader) {
+			for _, header := range blockHeaders {
+				log.Infof("blockHeader: %+v", header)
+			}
+		})
 }

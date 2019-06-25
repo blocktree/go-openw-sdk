@@ -132,8 +132,8 @@ func TestTransmitNode_SendTransactionViaTrustNode(t *testing.T) {
 		//accountID := "3i26MQmtuWVVnw8GnRCVopG3pi8MaYU6RqWVV2E1hwJx"
 		//address := "mgCzMJDyJoqa6XE3RSdNGvD5Bi5VTWudRq"
 
-		accountID := "3i26MQmtuWVVnw8GnRCVopG3pi8MaYU6RqWVV2E1hwJx"
-		address := "mgCzMJDyJoqa6XE3RSdNGvD5Bi5VTWudRq"
+		accountID := "PgHCcfMbcw1zXRNZo23NFjRdBmcN5tzrb1j5McRLJbG"
+		address := "LcaFc1pmJBsS7MQyMvZaboppuuvGFubD49"
 
 		password := "12345678"
 		sid := uuid.New().String()

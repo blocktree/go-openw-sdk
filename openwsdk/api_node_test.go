@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	owtp.Debug = true
+	owtp.Debug = false
 }
 
 func testNewAPINode() *APINode {
@@ -41,7 +41,7 @@ func testNewAPINode() *APINode {
 		Cert:               cert,
 		ConnectType:        owtp.HTTP,
 		EnableSignature:    false,
-		EnableKeyAgreement: false,
+		EnableKeyAgreement: true,
 		EnableSSL:          true,
 		TimeoutSEC:         120,
 	}
@@ -60,9 +60,14 @@ func testGetLocalKey() (*hdkeystore.HDKey, error) {
 		hdkeystore.StandardScryptP,
 	)
 
+	//key, err := keystore.GetKey(
+	//	"WAaDbbawmypQY3XjnMjLTj43vBGvrQwB2j",
+	//	"TRON-WAaDbbawmypQY3XjnMjLTj43vBGvrQwB2j.key",
+	//	"1234qwer",
+	//)
 	key, err := keystore.GetKey(
-		"WAaDbbawmypQY3XjnMjLTj43vBGvrQwB2j",
-		"TRON-WAaDbbawmypQY3XjnMjLTj43vBGvrQwB2j.key",
+		"WLN3hJo3NcsbWpsbBjezbJWoy7unZfcaGT",
+		"newwallet-WLN3hJo3NcsbWpsbBjezbJWoy7unZfcaGT",
 		"1234qwer",
 	)
 
@@ -81,7 +86,7 @@ func TestAPINode_BindAppDevice(t *testing.T) {
 
 func TestAPINode_GetSymbolList(t *testing.T) {
 	api := testNewAPINode()
-	api.GetSymbolList(0, 1000, true, func(status uint64, msg string, symbols []*Symbol) {
+	api.GetSymbolList(0, 1000, 0, true, func(status uint64, msg string, symbols []*Symbol) {
 
 		for _, s := range symbols {
 			fmt.Printf("symbol: %+v\n", s)
@@ -97,7 +102,7 @@ func TestAPINode_CreateWallet(t *testing.T) {
 
 	file.MkdirAll(keypath)
 
-	name := "TRON"
+	name := "newwallet"
 	//password := "1234qwer"
 
 	//随机生成keystore
@@ -135,7 +140,7 @@ func TestAPINode_CreateWallet(t *testing.T) {
 }
 
 func TestAPINode_FindWalletByWalletID(t *testing.T) {
-	walletID := "VysrzgpsLsgDpHM2KQMYuPY57fL3BAFU34"
+	walletID := "WLN3hJo3NcsbWpsbBjezbJWoy7unZfcaGT"
 	api := testNewAPINode()
 	api.FindWalletByWalletID(walletID, true,
 		func(status uint64, msg string, wallet *Wallet) {
@@ -428,7 +433,7 @@ func TestAPINode_FindTradeLog(t *testing.T) {
 
 func TestAPINode_GetContracts(t *testing.T) {
 	api := testNewAPINode()
-	api.GetContracts("ETH", 0, 1000, true,
+	api.GetContracts("", 0, 1000, true,
 		func(status uint64, msg string, tokens []*TokenContract) {
 
 			for _, s := range tokens {

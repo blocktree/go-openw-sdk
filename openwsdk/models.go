@@ -240,6 +240,7 @@ type Transaction struct {
 	ContractName string                 `json:"contractName" bson:"contractName"`
 	ContractAddr string                 `json:"contractAddr" bson:"contractAddr"`
 	Contract     map[string]interface{} `json:"contract" bson:"contract"`
+	Success      string                 `json:"success"`
 }
 
 func (tx *Transaction) FromSID(n int) string {

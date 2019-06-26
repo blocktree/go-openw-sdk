@@ -240,6 +240,7 @@ type Transaction struct {
 	ContractName string                 `json:"contractName" bson:"contractName"`
 	ContractAddr string                 `json:"contractAddr" bson:"contractAddr"`
 	Contract     map[string]interface{} `json:"contract" bson:"contract"`
+	Success      string                 `json:"success"` //用于判断交易单链上的真实状态，0：失败，1：成功
 }
 
 func (tx *Transaction) FromSID(n int) string {

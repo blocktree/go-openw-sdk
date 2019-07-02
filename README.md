@@ -192,8 +192,8 @@ TransmitNode是用于与授信的钱包托管节点进行双向交互。
 	//发起转账请求
     accountID := "A3Mxhqm65kTgS2ybHLenNrZzZNtLGVobDFYdpc1ge4eK"
     address := "mgCzMJDyJoqa6XE3RSdNGvD5Bi5VTWudRq"
-
-    password := "12345678"
+    //可以不传密码，但需要cli的节点执行trustserver时结束钱包
+    password := "12345678"  
     sid := uuid.New().String()
     transmitNode.SendTransactionViaTrustNode(nodeInfo.NodeID, accountID, password, sid,
         "", "0.03", address, "0.001", "",
@@ -272,7 +272,7 @@ TransmitNode是用于与授信的钱包托管节点进行双向交互。
                 log.Infof("msg:%+v", msg)
             })
     
-    //追加汇总任务，钱包节点会合拼新任务到现有任务列表
+    //追加汇总任务，钱包节点会合拼新任务到现有任务列表，可以不传密码，但需要cli的节点执行trustserver时结束钱包
     plain := `
 
 {
@@ -325,6 +325,16 @@ TransmitNode是用于与授信的钱包托管节点进行双向交互。
             log.Infof("msg:%+v", msg)
             for _, r := range taskLog {
                 log.Infof("taskLog: %+v", r)
+            }
+
+        })
+    
+    //获取节点本地创建的钱包
+    transmitNode.GetLocalWalletListViaTrustNode(nodeInfo.NodeID, 0, 200,
+        true, func(status uint64, msg string, wallets []*Wallet) {
+            log.Infof("msg:%+v", msg)
+            for _, r := range wallets {
+                log.Infof("wallet: %+v", r)
             }
 
         })

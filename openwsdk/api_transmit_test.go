@@ -108,10 +108,10 @@ func TestTransmitNode_CreateAccountViaTrustNode(t *testing.T) {
 
 	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
 
-		walletID := "WAJ7dKuES2LxJzwtJUWetsfqckiCCDQ4uy"
-		alias := "openwallet_LTC_3"
-		password := "12345678"
-		symbol := "LTC"
+		walletID := "WFXtudgu9Q5ktpcfDPC8gVEbHF1t1QWiVV"
+		alias := "openwallet_NAS"
+		password := ""
+		symbol := "NAS"
 		//创建账户
 		transmitNode.CreateAccountViaTrustNode(nodeInfo.NodeID, walletID, alias, password, symbol, true,
 			func(status uint64, msg string, account *Account, addresses []*Address) {
@@ -132,14 +132,14 @@ func TestTransmitNode_SendTransactionViaTrustNode(t *testing.T) {
 		//accountID := "3i26MQmtuWVVnw8GnRCVopG3pi8MaYU6RqWVV2E1hwJx"
 		//address := "mgCzMJDyJoqa6XE3RSdNGvD5Bi5VTWudRq"
 
-		accountID := "PgHCcfMbcw1zXRNZo23NFjRdBmcN5tzrb1j5McRLJbG"
-		address := "LcaFc1pmJBsS7MQyMvZaboppuuvGFubD49"
+		accountID := "xV88bvU2DCn9frHJ1BzHbEk6xHuUx9GE7froBmZhtuV"
+		address := "n1EcdDJUMPYN6vr7J8aCuDw3ajn5WeVMHv6"
 
-		password := "12345678"
+		password := ""
 		sid := uuid.New().String()
 		log.Infof("sid: %s", sid)
 		transmitNode.SendTransactionViaTrustNode(nodeInfo.NodeID, accountID, password, sid,
-			"", "0.03", address, "", "",
+			"", "0.002", address, "", "",
 			true, func(status uint64, msg string, successTx []*Transaction, failedRawTxs []*FailedRawTransaction) {
 				log.Infof("status: %d, msg: %s", status, msg)
 				log.Info("============== success ==============")
@@ -199,22 +199,56 @@ func TestTransmitNode_StartSummaryTaskViaTrustNode(t *testing.T) {
 	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
 
 		plain := `
-
 {
-	"wallets": [{
-		"walletID": "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA",
-		"password": "12345678",
-		"accounts": [
-		{
-			"accountID": "A3Mxhqm65kTgS2ybHLenNrZzZNtLGVobDFYdpc1ge4eK",
-			"feeRate": "0.001"
-		},
-		{
-			"accountID": "3i26MQmtuWVVnw8GnRCVopG3pi8MaYU6RqWVV2E1hwJx",
-			"feeRate": "0.001"
-		}
-		]
-	}]
+    "wallets": [
+        {
+            "walletID": "WFXtudgu9Q5ktpcfDPC8gVEbHF1t1QWiVV",
+            "accounts": [ 
+                {
+                    "accountID": "9XXLQfJAC55S2PugGqoyhi7FLZeGrfgJSMN7JePj75Sf",               
+                    "threshold": "0.1",              
+                    "minTransfer": "0",           
+                    "retainedBalance": "0",           
+                    "confirms": 0,                    
+                    "onlyContracts": false,          
+                    "contracts": {                            
+                        "all": {                              
+                            "threshold": "10",              
+                            "minTransfer": "0",            
+                            "retainedBalance": "0"           
+                        }     
+                    },
+                    "feesSupportAccount": {          
+                        "accountID": "6QvockspNbzxumH9soSL7PCerrsRsrfbqzC17Xs4Txhn",        
+                        "lowBalanceWarning": "0.05",  
+                        "lowBalanceStop": "0.001",     
+                        "feesScale": "1"            
+                    }
+                },
+                {
+                    "accountID": "BBxgBEn7AoRhNqsS7vjD625B5SafFFdY1QMX7Zq8M9jn",               
+                    "threshold": "0.1",              
+                    "minTransfer": "0",           
+                    "retainedBalance": "0",           
+                    "confirms": 0,                    
+                    "onlyContracts": false,          
+                    "contracts": {                            
+                        "all": {                              
+                            "threshold": "10",              
+                            "minTransfer": "0",            
+                            "retainedBalance": "0"           
+                        }     
+                    },
+                    "feesSupportAccount": {          
+                        "accountID": "6QvockspNbzxumH9soSL7PCerrsRsrfbqzC17Xs4Txhn",        
+                        "lowBalanceWarning": "0.05",  
+                        "lowBalanceStop": "0.001",     
+                        "feesScale": "1"            
+                    }
+                }
+            ]
+        }
+    ]
 }
 
 `
@@ -225,7 +259,7 @@ func TestTransmitNode_StartSummaryTaskViaTrustNode(t *testing.T) {
 			return
 		}
 
-		transmitNode.StartSummaryTaskViaTrustNode(nodeInfo.NodeID, 10, &summaryTask, SummaryTaskOperateTypeReset,
+		transmitNode.StartSummaryTaskViaTrustNode(nodeInfo.NodeID, 120, &summaryTask, SummaryTaskOperateTypeReset,
 			true, func(status uint64, msg string) {
 				log.Infof("status: %d, msg: %+v", status, msg)
 			})
@@ -332,6 +366,20 @@ func TestTransmitNode_GetSummaryTaskLogViaTrustNode(t *testing.T) {
 				log.Infof("msg:%+v", msg)
 				for _, r := range taskLog {
 					log.Infof("taskLog: %+v", r)
+				}
+
+			})
+	})
+}
+
+func TestTransmitNode_GetLocalWalletListViaTrustNode(t *testing.T) {
+	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
+
+		transmitNode.GetLocalWalletListViaTrustNode(nodeInfo.NodeID,
+			true, func(status uint64, msg string, wallets []*Wallet) {
+				log.Infof("msg:%+v", msg)
+				for _, r := range wallets {
+					log.Infof("wallet: %+v", r)
 				}
 
 			})

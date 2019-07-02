@@ -496,3 +496,28 @@ func (transmit *TransmitNode) GetSummaryTaskLogViaTrustNode(
 		reqFunc(resp.Status, resp.Msg, taskLog)
 	})
 }
+
+
+//GetLocalWalletListViaTrustNode 指定节点，获取该节点创建的钱包
+func (transmit *TransmitNode) GetLocalWalletListViaTrustNode(
+	nodeID string,
+	sync bool, reqFunc func(status uint64, msg string, wallets []*Wallet)) error {
+	if transmit == nil {
+		return fmt.Errorf("TransmitNode is not inited")
+	}
+
+	if p := transmit.node.GetOnlinePeer(nodeID); p == nil {
+		return fmt.Errorf("Node ID: %s is not connected ", nodeID)
+	}
+
+	params := map[string]interface{}{
+		"appID":  transmit.config.AppID,
+	}
+
+	return transmit.node.Call(nodeID, "getLocalWalletListViaTrustNode", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		var list []*Wallet
+		json.Unmarshal([]byte(data.Raw), &list)
+		reqFunc(resp.Status, resp.Msg, list)
+	})
+}

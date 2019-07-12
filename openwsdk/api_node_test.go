@@ -230,7 +230,7 @@ func TestAPINode_FindAccountByWalletID(t *testing.T) {
 }
 
 func TestAPINode_FindAccountByAccountID(t *testing.T) {
-	accountID := "3i26MQmtuWVVnw8GnRCVopG3pi8MaYU6RqWVV2E1hwJx"
+	accountID := "6QvockspNbzxumH9soSL7PCerrsRsrfbqzC17Xs4Txhn"
 	api := testNewAPINode()
 	api.FindAccountByAccountID(accountID, 1, true,
 		func(status uint64, msg string, a *Account) {
@@ -296,7 +296,7 @@ func TestAPINode_FindAddressByAddress(t *testing.T) {
 }
 
 func TestAPINode_FindAddressByAccountID(t *testing.T) {
-	accountID := "EaUEnCH9mjDPeqrsfi9q3K3jkTezZCt4cee3RTpgScJ3"
+	accountID := "6QvockspNbzxumH9soSL7PCerrsRsrfbqzC17Xs4Txhn"
 	api := testNewAPINode()
 	api.FindAddressByAccountID(accountID, 0, 10, true,
 		func(status uint64, msg string, addresses []*Address) {

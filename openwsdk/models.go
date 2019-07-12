@@ -109,46 +109,50 @@ type Symbol struct {
 }
 
 type Account struct {
-	AppID           string   `json:"appID" bson:"appID"`
-	WalletID        string   `json:"walletID" bson:"walletID"`
-	AccountID       string   `json:"accountID" bson:"accountID"`
-	Alias           string   `json:"alias" bson:"alias"`
-	Symbol          string   `json:"symbol" bson:"symbol"`
-	OtherOwnerKeys  []string `json:"otherOwnerKeys" bson:"otherOwnerKeys"`
-	ReqSigs         int64    `json:"reqSigs" bson:"reqSigs"`
-	IsTrust         int64    `json:"isTrust" bson:"isTrust"`
-	Password        string   `json:"password" bson:"password"`
-	PublicKey       string   `json:"publicKey" bson:"publicKey"`
-	HdPath          string   `json:"hdPath" bson:"hdPath"`
-	ContractAddress string   `json:"contractAddress" bson:"contractAddress"`
-	AccountIndex    int64    `json:"accountIndex" bson:"accountIndex"`
-	Balance         string   `json:"balance" bson:"balance"`
-	ExtInfo         string   `json:"extInfo" bson:"extInfo"`
-	AddressIndex    int64    `json:"addressIndex" bson:"addressIndex"`
-	Applytime       int64    `json:"applytime" bson:"applytime"`
-	Dealstate       int64    `json:"dealstate" bson:"dealstate"`
+	AppID            string   `json:"appID" bson:"appID"`
+	WalletID         string   `json:"walletID" bson:"walletID"`
+	AccountID        string   `json:"accountID" bson:"accountID"`
+	Alias            string   `json:"alias" bson:"alias"`
+	Symbol           string   `json:"symbol" bson:"symbol"`
+	OtherOwnerKeys   []string `json:"otherOwnerKeys" bson:"otherOwnerKeys"`
+	ReqSigs          int64    `json:"reqSigs" bson:"reqSigs"`
+	IsTrust          int64    `json:"isTrust" bson:"isTrust"`
+	Password         string   `json:"password" bson:"password"`
+	PublicKey        string   `json:"publicKey" bson:"publicKey"`
+	HdPath           string   `json:"hdPath" bson:"hdPath"`
+	ContractAddress  string   `json:"contractAddress" bson:"contractAddress"`
+	AccountIndex     int64    `json:"accountIndex" bson:"accountIndex"`
+	Balance          string   `json:"balance" bson:"balance"`
+	ConfirmBalance   string   `json:"confirmBalance" bson:"confirmBalance"`
+	UnconfirmBalance string   `json:"unconfirmBalance" bson:"unconfirmBalance"`
+	ExtInfo          string   `json:"extInfo" bson:"extInfo"`
+	AddressIndex     int64    `json:"addressIndex" bson:"addressIndex"`
+	Applytime        int64    `json:"applytime" bson:"applytime"`
+	Dealstate        int64    `json:"dealstate" bson:"dealstate"`
 }
 
 type Address struct {
-	AppID     string `json:"appID" bson:"appID"`
-	WalletID  string `json:"walletID" bson:"walletID"`
-	AccountID string `json:"accountID" bson:"accountID"`
-	Alias     string `json:"alias" bson:"alias"`
-	Symbol    string `json:"symbol" bson:"symbol"`
-	AddrIndex int64  `json:"addrIndex" bson:"addrIndex"`
-	Address   string `json:"address" bson:"address"`
-	Balance   string `json:"balance" bson:"balance"`
-	IsMemo    int64  `json:"isMemo" bson:"isMemo"`
-	Memo      string `json:"memo" bson:"memo"`
-	WatchOnly int64  `json:"watchOnly" bson:"watchOnly"`
-	PublicKey string `json:"publicKey" bson:"publicKey"`
-	CreatedAt int64  `json:"createdAt" bson:"createdAt"`
-	Num       int64  `json:"num" bson:"num"`
-	Tag       string `json:"tag" bson:"tag"`
-	HdPath    string `json:"hdPath" bson:"hdPath"`
-	IsChange  int64  `json:"isChange" bson:"isChange"`
-	Applytime int64  `json:"applytime" bson:"applytime"`
-	Dealstate int64  `json:"dealstate" bson:"dealstate"`
+	AppID            string `json:"appID" bson:"appID"`
+	WalletID         string `json:"walletID" bson:"walletID"`
+	AccountID        string `json:"accountID" bson:"accountID"`
+	Alias            string `json:"alias" bson:"alias"`
+	Symbol           string `json:"symbol" bson:"symbol"`
+	AddrIndex        int64  `json:"addrIndex" bson:"addrIndex"`
+	Address          string `json:"address" bson:"address"`
+	Balance          string `json:"balance" bson:"balance"`
+	ConfirmBalance   string `json:"confirmBalance" bson:"confirmBalance"`
+	UnconfirmBalance string `json:"unconfirmBalance" bson:"unconfirmBalance"`
+	IsMemo           int64  `json:"isMemo" bson:"isMemo"`
+	Memo             string `json:"memo" bson:"memo"`
+	WatchOnly        int64  `json:"watchOnly" bson:"watchOnly"`
+	PublicKey        string `json:"publicKey" bson:"publicKey"`
+	CreatedAt        int64  `json:"createdAt" bson:"createdAt"`
+	Num              int64  `json:"num" bson:"num"`
+	Tag              string `json:"tag" bson:"tag"`
+	HdPath           string `json:"hdPath" bson:"hdPath"`
+	IsChange         int64  `json:"isChange" bson:"isChange"`
+	Applytime        int64  `json:"applytime" bson:"applytime"`
+	Dealstate        int64  `json:"dealstate" bson:"dealstate"`
 }
 
 type TokenContract struct {

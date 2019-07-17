@@ -244,7 +244,9 @@ type Transaction struct {
 	ContractName string                 `json:"contractName" bson:"contractName"`
 	ContractAddr string                 `json:"contractAddr" bson:"contractAddr"`
 	Contract     map[string]interface{} `json:"contract" bson:"contract"`
-	Success      string                 `json:"success"` //用于判断交易单链上的真实状态，0：失败，1：成功
+	Success      string                 `json:"success"`  //用于判断交易单链上的真实状态，0：失败，1：成功
+	TxType       int64                  `json:"txType"`   //0:转账, 1:合约调用(发生于主链), >100: 自定义
+	TxAction     string                 `json:"txAction"` //执行事件, 例如：合约的Transfer事
 }
 
 func (tx *Transaction) FromSID(n int) string {

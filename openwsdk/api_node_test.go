@@ -419,10 +419,10 @@ func TestAPINode_Send_LTC(t *testing.T) {
 }
 
 func TestAPINode_FindTradeLog(t *testing.T) {
-	walletID := "W3LxqTNAcXFqW7HGcTuERRLXKdNWu17Ccx"
-	accountID := "PgHCcfMbcw1zXRNZo23NFjRdBmcN5tzrb1j5McRLJbG"
+	walletID := "WFXtudgu9Q5ktpcfDPC8gVEbHF1t1QWiVV"
+	accountID := "9XXLQfJAC55S2PugGqoyhi7FLZeGrfgJSMN7JePj75Sf"
 	api := testNewAPINode()
-	api.FindTradeLog(walletID, accountID, "", "", "",
+	api.FindTradeLog(walletID, accountID, "WICC", "c9534afcc6402df52d3d66aa29f34bb875f4d387e0fcac78db17f50384c532ba", "",
 		0, 0, 0, 0, 0, false, 0, 200, true,
 		func(status uint64, msg string, tx []*Transaction) {
 			for i, value := range tx {
@@ -444,8 +444,8 @@ func TestAPINode_GetContracts(t *testing.T) {
 }
 
 func TestAPINode_GetTokenBalanceByAccount(t *testing.T) {
-	accountID := "EaUEnCH9mjDPeqrsfi9q3K3jkTezZCt4cee3RTpgScJ3"
-	contractID := "jKyfOtbSvdY57WhDZXJj885A4bs0np5eRdYcwS3ip2I="
+	accountID := "AUXVkMijFjSh1jCsMV2exNj58qzJX7BN27ANnDfBTcTS"
+	contractID := "vxfK989y7Mg9TcH0xrCFNSQFj/lN5WaGoEbto5WqIVc="
 	api := testNewAPINode()
 	api.GetTokenBalanceByAccount(accountID, contractID, true,
 		func(status uint64, msg string, balance *TokenBalance) {

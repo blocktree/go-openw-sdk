@@ -194,16 +194,16 @@ func (api *APINode) BindAppDevice() error {
 }
 
 //GetSymbolList 获取主链列表
-func (api *APINode) GetSymbolList(offset, limit, hasRole int,  sync bool, reqFunc func(status uint64, msg string, symbols []*Symbol)) error {
+func (api *APINode) GetSymbolList(offset, limit, hasRole int, sync bool, reqFunc func(status uint64, msg string, symbols []*Symbol)) error {
 
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
 	}
 
 	params := map[string]interface{}{
-		"appID":  api.config.AppID,
-		"offset": offset,
-		"limit":  limit,
+		"appID":   api.config.AppID,
+		"offset":  offset,
+		"limit":   limit,
 		"hasRole": hasRole,
 	}
 
@@ -731,6 +731,37 @@ func (api *APINode) GetAllTokenBalanceByAccount(
 	})
 }
 
+//GetAllTokenBalanceByAddress 获取地址的token余额接口
+func (api *APINode) GetAllTokenBalanceByAddress(
+	accountID string,
+	address string,
+	symbol string,
+	sync bool,
+	reqFunc func(status uint64, msg string, balance []*TokenBalance)) error {
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+	params := map[string]interface{}{
+		"appID":     api.config.AppID,
+		"accountID": accountID,
+		"address":   address,
+		"symbol":    symbol,
+	}
+
+	return api.node.Call(HostNodeID, "getAllTokenBalanceByAddress", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		balance := make([]*TokenBalance, 0)
+		if data.IsArray() {
+			for _, s := range data.Array() {
+				t := NewTokenBalance(s)
+				balance = append(balance, t)
+			}
+		}
+
+		reqFunc(resp.Status, resp.Msg, balance)
+	})
+}
+
 //GetFeeRate 获取推荐手续费率接口
 func (api *APINode) GetFeeRate(
 	symbol string,
@@ -901,6 +932,6 @@ func (api *APINode) GetSymbolBlockList(
 			}
 		}
 
- 		reqFunc(resp.Status, resp.Msg, headers)
+		reqFunc(resp.Status, resp.Msg, headers)
 	})
 }

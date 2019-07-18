@@ -610,3 +610,15 @@ func TestAPINode_GetSymbolBlockList(t *testing.T) {
 			}
 		})
 }
+
+func TestAPINode_GetAllTokenBalanceByAddress(t *testing.T) {
+	accountID := "BBxgBEn7AoRhNqsS7vjD625B5SafFFdY1QMX7Zq8M9jn"
+	address := "WhWV4XcD7UJzt2bAcVe48PN1Cxwh8HAyoi"
+	api := testNewAPINode()
+	api.GetAllTokenBalanceByAddress(accountID, address, "WICC", true,
+		func(status uint64, msg string, balance []*TokenBalance) {
+			for _, b := range balance {
+				log.Infof("balance: %+v", b)
+			}
+		})
+}

@@ -935,3 +935,43 @@ func (api *APINode) GetSymbolBlockList(
 		reqFunc(resp.Status, resp.Msg, headers)
 	})
 }
+
+// ImportAccount 导入第三方资产账户
+func (api *APINode) ImportAccount(
+	accountParam *Account,
+	sync bool,
+	reqFunc func(status uint64, msg string, account *Account, addresses []*Address)) error {
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+	params := map[string]interface{}{
+		"appID":        api.config.AppID,
+		"alias":        accountParam.Alias,
+		"walletID":     accountParam.WalletID,
+		"accountID":     accountParam.AccountID,
+		"symbol":       accountParam.Symbol,
+		"publicKey":    accountParam.PublicKey,
+		"accountIndex": accountParam.AccountIndex,
+		"hdPath":       accountParam.HdPath,
+	}
+
+	return api.node.Call(HostNodeID, "importAccount", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		var account Account
+		json.Unmarshal([]byte(data.Get("account").Raw), &account)
+
+		var addresses []*Address
+		addressArray := data.Get("address")
+		if addressArray.IsArray() {
+			for _, a := range addressArray.Array() {
+				var addr Address
+				err := json.Unmarshal([]byte(a.Raw), &addr)
+				if err == nil {
+					addresses = append(addresses, &addr)
+				}
+			}
+		}
+
+		reqFunc(resp.Status, resp.Msg, &account, addresses)
+	})
+}

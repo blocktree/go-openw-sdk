@@ -100,12 +100,13 @@ type Wallet struct {
 }
 
 type Symbol struct {
-	Name     string `json:"name" bson:"name" storm:"id"`
-	Coin     string `json:"coin" bson:"coin"`
-	Curve    int64  `json:"curve" bson:"curve"`
-	Orderno  int64  `json:"orderno" bson:"orderno"`
-	Confirm  int64  `json:"confirm" bson:"confirm"`
-	Decimals int64  `json:"decimals" bson:"decimals"`
+	Name        string `json:"name" bson:"name" storm:"id"`
+	Coin        string `json:"coin" bson:"coin"`
+	Curve       int64  `json:"curve" bson:"curve"`
+	Orderno     int64  `json:"orderno" bson:"orderno"`
+	Confirm     int64  `json:"confirm" bson:"confirm"`
+	Decimals    int64  `json:"decimals" bson:"decimals"`
+	BalanceMode uint64 `json:"balanceMode" bson:"balanceMode"`
 }
 
 type Account struct {
@@ -244,9 +245,10 @@ type Transaction struct {
 	ContractName string                 `json:"contractName" bson:"contractName"`
 	ContractAddr string                 `json:"contractAddr" bson:"contractAddr"`
 	Contract     map[string]interface{} `json:"contract" bson:"contract"`
-	Success      string                 `json:"success"`  //用于判断交易单链上的真实状态，0：失败，1：成功
-	TxType       int64                  `json:"txType"`   //0:转账, 1:合约调用(发生于主链), >100: 自定义
-	TxAction     string                 `json:"txAction"` //执行事件, 例如：合约的Transfer事
+	Success      string                 `json:"success"`                        //用于判断交易单链上的真实状态，0：失败，1：成功
+	TxType       int64                  `json:"txType"`                         //0:转账, 1:合约调用(发生于主链), >100: 自定义
+	TxAction     string                 `json:"txAction"`                       //执行事件, 例如：合约的Transfer事
+	BalanceMode  uint64                 `json:"balanceMode" bson:"balanceMode"` //余额模型 0.地址 1.账户
 }
 
 func (tx *Transaction) FromSID(n int) string {

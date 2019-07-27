@@ -207,7 +207,7 @@ func TestAPINode_CreateAccount(t *testing.T) {
 }
 
 func TestAPINode_FindAccountByWalletID(t *testing.T) {
-	walletID := "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA"
+	walletID := "WLN3hJo3NcsbWpsbBjezbJWoy7unZfcaGT"
 	api := testNewAPINode()
 	api.FindAccountByWalletID(walletID, true,
 		func(status uint64, msg string, accounts []*Account) {
@@ -621,4 +621,31 @@ func TestAPINode_GetAllTokenBalanceByAddress(t *testing.T) {
 				log.Infof("balance: %+v", b)
 			}
 		})
+}
+
+func TestAPINode_ImportAccount(t *testing.T) {
+	account := &Account{
+		WalletID:     "WLN3hJo3NcsbWpsbBjezbJWoy7unZfcaGT",
+		AccountID:    "msa1qea6z8mzfspa3v894975r4gpgs7yfa6fptcmzgc2mnxlca5mtxpqw9fxcn",
+		Alias:        "mainnetXVG",
+		PublicKey:    "027a785253aef82a116072d622a57ee46cb8501fbfaf76dfe95ed1f1f91b3eed88",
+		Symbol:       "XVG",
+		AccountIndex: 2,
+		HdPath:       "m/44'/88'/2'",
+	}
+	api := testNewAPINode()
+	api.ImportAccount(account, true, func(status uint64, msg string, account *Account, addresses []*Address) {
+		if status != owtp.StatusSuccess {
+			t.Errorf(msg)
+			return
+		}
+
+		if account != nil {
+			log.Infof("account: %+v\n", account)
+		}
+
+		for i, a := range addresses {
+			log.Infof("Address[%d]:%+v", i, a)
+		}
+	})
 }

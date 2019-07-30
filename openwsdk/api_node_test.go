@@ -86,7 +86,7 @@ func TestAPINode_BindAppDevice(t *testing.T) {
 
 func TestAPINode_GetSymbolList(t *testing.T) {
 	api := testNewAPINode()
-	api.GetSymbolList(0, 1000, 0, true, func(status uint64, msg string, symbols []*Symbol) {
+	api.GetSymbolList(0, 1000, 0, true, func(status uint64, msg string, total int, symbols []*Symbol) {
 
 		for _, s := range symbols {
 			fmt.Printf("symbol: %+v\n", s)

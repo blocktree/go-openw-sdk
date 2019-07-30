@@ -980,13 +980,14 @@ func (api *APINode) ImportAccount(
 
 // BindDevice 绑定设备ID
 func (api *APINode) BindDevice(
-	deviceID, appKey string,
+	deviceID string,
 	sync bool,
 	reqFunc func(status uint64, msg string)) error {
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
 	}
 	appID := api.config.AppID
+	appKey := api.config.AppKey
 	accessTime := time.Now().UnixNano() / 1e6
 	t := strconv.FormatInt(accessTime, 10)
 	sigStr := appID + "." + deviceID + "." + t + "." + appKey

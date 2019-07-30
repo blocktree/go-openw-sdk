@@ -7,6 +7,7 @@ import (
 	"github.com/blocktree/openwallet/hdkeystore"
 	"github.com/blocktree/openwallet/log"
 	"github.com/blocktree/openwallet/owtp"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -194,7 +195,7 @@ func (api *APINode) BindAppDevice() error {
 }
 
 //GetSymbolList 获取主链列表
-func (api *APINode) GetSymbolList(offset, limit, hasRole int, sync bool, reqFunc func(status uint64, msg string, symbols []*Symbol)) error {
+func (api *APINode) GetSymbolList(offset, limit, hasRole int, sync bool, reqFunc func(status uint64, msg string, total int, symbols []*Symbol)) error {
 
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
@@ -211,6 +212,7 @@ func (api *APINode) GetSymbolList(offset, limit, hasRole int, sync bool, reqFunc
 		data := resp.JsonData()
 		symbols := make([]*Symbol, 0)
 		symbolArray := data.Get("symbols")
+		total := data.Get("total").Int()
 		if symbolArray.IsArray() {
 			for _, s := range symbolArray.Array() {
 				var sym Symbol
@@ -221,7 +223,7 @@ func (api *APINode) GetSymbolList(offset, limit, hasRole int, sync bool, reqFunc
 			}
 		}
 
-		reqFunc(resp.Status, resp.Msg, symbols)
+		reqFunc(resp.Status, resp.Msg, int(total), symbols)
 	})
 }
 
@@ -948,7 +950,7 @@ func (api *APINode) ImportAccount(
 		"appID":        api.config.AppID,
 		"alias":        accountParam.Alias,
 		"walletID":     accountParam.WalletID,
-		"accountID":     accountParam.AccountID,
+		"accountID":    accountParam.AccountID,
 		"symbol":       accountParam.Symbol,
 		"publicKey":    accountParam.PublicKey,
 		"accountIndex": accountParam.AccountIndex,
@@ -973,5 +975,28 @@ func (api *APINode) ImportAccount(
 		}
 
 		reqFunc(resp.Status, resp.Msg, &account, addresses)
+	})
+}
+
+// BindDevice 绑定设备ID
+func (api *APINode) BindDevice(
+	deviceID, appKey string,
+	sync bool,
+	reqFunc func(status uint64, msg string)) error {
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+	appID := api.config.AppID
+	accessTime := time.Now().UnixNano() / 1e6
+	t := strconv.FormatInt(accessTime, 10)
+	sigStr := appID + "." + deviceID + "." + t + "." + appKey
+	params := map[string]interface{}{
+		"appID":      appID,
+		"deviceID":   deviceID,
+		"accessTime": accessTime,
+		"sign":       crypto.GetMD5(sigStr),
+	}
+	return api.node.Call(HostNodeID, "bindAppDevice", params, sync, func(resp owtp.Response) {
+		reqFunc(resp.Status, resp.Msg)
 	})
 }

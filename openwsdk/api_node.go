@@ -228,7 +228,7 @@ func (api *APINode) GetSymbolList(offset, limit, hasRole int, sync bool, reqFunc
 }
 
 //CreateWallet 创建钱包
-func (api *APINode) CreateWallet(alias, walletID string, sync bool, reqFunc func(status uint64, msg string, wallet *Wallet)) error {
+func (api *APINode) CreateWallet(wallet *Wallet, sync bool, reqFunc func(status uint64, msg string, wallet *Wallet)) error {
 
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
@@ -236,10 +236,17 @@ func (api *APINode) CreateWallet(alias, walletID string, sync bool, reqFunc func
 
 	params := map[string]interface{}{
 		"appID":    api.config.AppID,
-		"alias":    alias,
-		"walletID": walletID,
+		"alias":    wallet.Alias,
+		"walletID": wallet.WalletID,
 		"rootPath": hdkeystore.OpenwCoinTypePath,
 		"isTrust":  0,
+	}
+
+	if len(wallet.RootPath) > 0 {
+		params["rootPath"] = wallet.RootPath
+	}
+	if len(wallet.AuthKey) > 0 {
+		params["authKey"] = wallet.AuthKey
 	}
 
 	return api.node.Call(HostNodeID, "createWallet", params, sync, func(resp owtp.Response) {

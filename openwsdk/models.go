@@ -107,6 +107,7 @@ type Symbol struct {
 	Confirm     int64  `json:"confirm" bson:"confirm"`
 	Decimals    int64  `json:"decimals" bson:"decimals"`
 	BalanceMode uint64 `json:"balanceMode" bson:"balanceMode"`
+	Icon        string `json:"icon"`
 }
 
 type Account struct {

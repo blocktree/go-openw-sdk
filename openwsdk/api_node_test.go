@@ -10,6 +10,7 @@ import (
 	"github.com/blocktree/openwallet/owtp"
 	"github.com/google/uuid"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -41,7 +42,7 @@ func testNewAPINode() *APINode {
 		Cert:               cert,
 		ConnectType:        owtp.HTTP,
 		EnableSignature:    false,
-		EnableKeyAgreement: true,
+		EnableKeyAgreement: false,
 		EnableSSL:          true,
 		TimeoutSEC:         120,
 	}
@@ -87,11 +88,13 @@ func TestAPINode_BindAppDevice(t *testing.T) {
 func TestAPINode_GetSymbolList(t *testing.T) {
 	api := testNewAPINode()
 	api.GetSymbolList(0, 1000, 0, true, func(status uint64, msg string, total int, symbols []*Symbol) {
-
+		symbolStrArray := make([]string, 0)
 		for _, s := range symbols {
 			fmt.Printf("symbol: %+v\n", s)
+			symbolStrArray = append(symbolStrArray, s.Coin)
 		}
-
+		allSymbols := strings.Join(symbolStrArray, ", ")
+		log.Infof("all symbols: %s", allSymbols)
 	})
 }
 
@@ -124,8 +127,11 @@ func TestAPINode_CreateWallet(t *testing.T) {
 		t.Logf("unexpected error: %v\n", err)
 		return
 	}
-
-	api.CreateWallet(name, key.KeyID, true,
+	wallet := &Wallet{
+		Alias:name,
+		WalletID:key.KeyID,
+	}
+	api.CreateWallet(wallet, true,
 		func(status uint64, msg string, wallet *Wallet) {
 
 			if status != owtp.StatusSuccess {
@@ -626,12 +632,12 @@ func TestAPINode_GetAllTokenBalanceByAddress(t *testing.T) {
 func TestAPINode_ImportAccount(t *testing.T) {
 	account := &Account{
 		WalletID:     "WLN3hJo3NcsbWpsbBjezbJWoy7unZfcaGT",
-		AccountID:    "msa1qea6z8mzfspa3v894975r4gpgs7yfa6fptcmzgc2mnxlca5mtxpqw9fxcn",
+		AccountID:    "msa1qea6z8mzfspa3v894975r4gpgs7yfa6fptcmzgc2mnxlca5mtxpqw9fxc2",
 		Alias:        "mainnetXVG",
-		PublicKey:    "027a785253aef82a116072d622a57ee46cb8501fbfaf76dfe95ed1f1f91b3eed88",
+		PublicKey:    "027a785253aef82a116072d622a57ee46cb8501fbfaf76dfe95ed1f1f91b3eed8f",
 		Symbol:       "XVG",
-		AccountIndex: 2,
-		HdPath:       "m/44'/88'/2'",
+		AccountIndex: 3,
+		HdPath:       "m/44'/88'/3'",
 	}
 	api := testNewAPINode()
 	api.ImportAccount(account, true, func(status uint64, msg string, account *Account, addresses []*Address) {

@@ -100,14 +100,16 @@ type Wallet struct {
 }
 
 type Symbol struct {
-	Name        string `json:"name" bson:"name" storm:"id"`
-	Coin        string `json:"coin" bson:"coin"`
-	Curve       int64  `json:"curve" bson:"curve"`
-	Orderno     int64  `json:"orderno" bson:"orderno"`
-	Confirm     int64  `json:"confirm" bson:"confirm"`
-	Decimals    int64  `json:"decimals" bson:"decimals"`
-	BalanceMode uint64 `json:"balanceMode" bson:"balanceMode"`
-	Icon        string `json:"icon"`
+	Name         string `json:"name" bson:"name" storm:"id"`
+	Coin         string `json:"coin" bson:"coin"`
+	Curve        int64  `json:"curve" bson:"curve"`
+	Orderno      int64  `json:"orderno" bson:"orderno"`
+	Confirm      int64  `json:"confirm" bson:"confirm"`
+	Decimals     int64  `json:"decimals" bson:"decimals"`
+	BalanceMode  uint64 `json:"balanceMode" bson:"balanceMode"`
+	Icon         string `json:"icon"`
+	SupportMemo  uint64 `json:"supportMemo"`  //交易是否支持memo, 0: false, 1: true
+	OnlyContract uint64 `json:"onlyContract"` //支持合约代币, 0: false, 1: true
 }
 
 type Account struct {

@@ -373,10 +373,26 @@ func (wallet *Wallet) CreateAccount(alias string, symbol *Symbol, key *hdkeystor
 }
 
 type Balance struct {
-	Symbol    string
-	AccountID string
-	Address   string
-	Balance   string
+	Symbol           string `json:"symbol" bson:"symbol"`
+	AccountID        string `json:"accountID" bson:"accountID"`
+	Address          string `json:"address" bson:"address"`
+	BalanceType      int64  `json:"type" bson:"type"`
+	Balance          string `json:"balance" bson:"balance"`
+	ConfirmBalance   string `json:"confirmBalance" bson:"confirmBalance"`
+	UnconfirmBalance string `json:"unconfirmBalance" bson:"unconfirmBalance"`
+}
+
+func NewBalance(result gjson.Result) *Balance {
+	b := Balance{
+		Symbol:           result.Get("symbol").String(),
+		AccountID:        result.Get("accountID").String(),
+		Address:          result.Get("address").String(),
+		BalanceType:      result.Get("type").Int(),
+		Balance:          result.Get("balance").String(),
+		ConfirmBalance:   result.Get("confirmBalance").String(),
+		UnconfirmBalance: result.Get("unconfirmBalance").String(),
+	}
+	return &b
 }
 
 type TokenBalance struct {
@@ -384,10 +400,12 @@ type TokenBalance struct {
 	Token      string
 	Address    string
 	Balance    Balance
+	IsContract int64
 }
 
 func NewTokenBalance(result gjson.Result) *TokenBalance {
 	b := TokenBalance{
+		IsContract: result.Get("isContract").Int(),
 		ContractID: result.Get("contractID").String(),
 		Token:      result.Get("token").String(),
 		Address:    result.Get("contractAddress").String(),

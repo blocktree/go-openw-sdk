@@ -21,6 +21,9 @@ type OpenwNotificationObject interface {
 
 	//OpenwNewBlockNotify openw新区块头通知
 	OpenwNewBlockNotify(blockHeader *BlockHeader) (bool, error)
+
+	//OpenwBalanceUpdateNotify openw余额更新
+	OpenwBalanceUpdateNotify(balance *Balance, tokenBalance *TokenBalance) (bool, error)
 }
 
 //ServeNotification 开启监听服务，接收通知
@@ -74,8 +77,27 @@ func (api *APINode) RemoveObserver(obj OpenwNotificationObject) error {
 }
 
 func (api *APINode) subscribeToAccount(ctx *owtp.Context) {
-	log.Info("params:", ctx.Params())
-	ctx.Response(nil, owtp.StatusSuccess, "subscribeToAccount is not implemented")
+	data := ctx.Params()
+
+	var msg string
+	var accepted bool
+	balance := NewBalance(data)
+	tokenBalance := NewTokenBalance(data.Get("tokenBalance"))
+	for o, _ := range api.observers {
+		accepted, err := o.OpenwBalanceUpdateNotify(balance, tokenBalance)
+		if err != nil {
+			msg = err.Error()
+			accepted = false
+		}
+		if accepted == false {
+			break
+		}
+	}
+
+	ctx.Response(map[string]interface{}{
+		"accepted": accepted,
+	}, owtp.StatusSuccess, msg)
+
 }
 
 //subscribeToTrade 处理新交易记录通知

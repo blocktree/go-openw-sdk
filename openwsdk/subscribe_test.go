@@ -33,6 +33,16 @@ func (s *Subscriber) OpenwNewBlockNotify(blockHeader *BlockHeader) (bool, error)
 	return true, nil
 }
 
+//OpenwBalanceUpdateNotify openw余额更新
+func (s *Subscriber) OpenwBalanceUpdateNotify(balance *Balance, tokenBalance *TokenBalance) (bool, error) {
+	log.Infof("Symbol: %+v", balance.Symbol)
+	log.Infof("Balance: %+v", balance.Balance)
+	log.Infof("Token: %+v", tokenBalance.Token)
+	log.Infof("Balance: %+v", tokenBalance.Balance)
+	log.Infof("---------------------------------")
+	return true, nil
+}
+
 func TestAPINode_Subscribe(t *testing.T) {
 
 	var (

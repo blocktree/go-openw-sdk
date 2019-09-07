@@ -79,12 +79,15 @@ func (api *APINode) RemoveObserver(obj OpenwNotificationObject) error {
 func (api *APINode) subscribeToAccount(ctx *owtp.Context) {
 	data := ctx.Params()
 
-	var msg string
-	var accepted bool
+	var (
+		msg string
+		accepted bool
+		err error
+	)
 	balance := NewBalance(data)
 	tokenBalance := NewTokenBalance(data.Get("tokenBalance"))
 	for o, _ := range api.observers {
-		accepted, err := o.OpenwBalanceUpdateNotify(balance, tokenBalance)
+		accepted, err = o.OpenwBalanceUpdateNotify(balance, tokenBalance)
 		if err != nil {
 			msg = err.Error()
 			accepted = false

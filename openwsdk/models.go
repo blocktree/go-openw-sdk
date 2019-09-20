@@ -69,6 +69,7 @@ type SummarySetting struct {
 	MinTransfer     string `json:"minTransfer"`
 	RetainedBalance string `json:"retainedBalance"`
 	Confirms        uint64 `json:"confirms"`
+	AddressLimit    uint64 `json:"addressLimit"`
 }
 
 func NewSummarySetting(result gjson.Result) *SummarySetting {

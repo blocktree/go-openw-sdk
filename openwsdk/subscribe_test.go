@@ -62,6 +62,7 @@ func TestAPINode_Subscribe(t *testing.T) {
 			Address:            "192.168.27.179:9322",
 			ConnectType:        owtp.Websocket,
 			EnableKeyAgreement: false,
+			EnableSSL:true,
 		})
 	if err != nil {
 		t.Logf("Subscribe unexpected error: %v\n", err)
@@ -102,8 +103,10 @@ func TestAPINode_Call(t *testing.T) {
 	nodeID := "APINode_Listener"
 
 	config := owtp.ConnectConfig{
-		Address:     "192.168.27.179:9322",
-		ConnectType: owtp.Websocket,
+		//Address:     "192.168.27.179:9322",
+		Address: "dblinkcallback.dblinkclub.com",
+		ConnectType: owtp.HTTP,
+		EnableSSL:true,
 	}
 	wsClient := owtp.RandomOWTPNode()
 	err := wsClient.Connect(nodeID, config)

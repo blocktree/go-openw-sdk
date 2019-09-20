@@ -15,7 +15,7 @@ import (
 )
 
 func init() {
-	owtp.Debug = false
+	owtp.Debug = true
 }
 
 func testNewAPINode() *APINode {
@@ -68,7 +68,7 @@ func testGetLocalKey() (*hdkeystore.HDKey, error) {
 	//)
 	key, err := keystore.GetKey(
 		"WLN3hJo3NcsbWpsbBjezbJWoy7unZfcaGT",
-		"newwallet-WLN3hJo3NcsbWpsbBjezbJWoy7unZfcaGT",
+		"newwallet-WLN3hJo3NcsbWpsbBjezbJWoy7unZfcaGT.key",
 		"1234qwer",
 	)
 
@@ -654,4 +654,31 @@ func TestAPINode_ImportAccount(t *testing.T) {
 			log.Infof("Address[%d]:%+v", i, a)
 		}
 	})
+}
+
+func TestAPINode_ImportBatchAddress(t *testing.T) {
+	api := testNewAPINode()
+	walletID := "WLN3hJo3NcsbWpsbBjezbJWoy7unZfcaGT"
+	accountID := "6uoJj3JUrLbn4tD9ijaqiruGoyaSHM6xjU3A8cMvcxv2"
+	addressAndPubs := map[string]string{
+		"abcm23094820940": "kslfjlaxcvxvwe",
+		"abcm230948209402": "kslfjlaxcvxvwe2",
+		"abcm230948209403": "kslfjlaxcvxvwe3",
+		"abcm230948209404": "kslfjlaxcvxvwe4",
+	}
+	err := api.ImportBatchAddress(walletID, accountID, "", addressAndPubs, false, true,
+		func(status uint64, msg string, importAddresses []string) {
+		if status != owtp.StatusSuccess {
+			t.Errorf(msg)
+			return
+		}
+
+		for i, a := range importAddresses {
+			log.Infof("Address[%d]:%+v", i, a)
+		}
+	})
+	if err != nil {
+		t.Logf("ImportBatchAddress unexpected error: %v\n", err)
+		return
+	}
 }

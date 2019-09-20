@@ -3,6 +3,7 @@ package openwsdk
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/blocktree/openwallet/common"
 	"github.com/blocktree/openwallet/crypto"
 	"github.com/blocktree/openwallet/hdkeystore"
 	"github.com/blocktree/openwallet/log"
@@ -1006,5 +1007,49 @@ func (api *APINode) BindDevice(
 	}
 	return api.node.Call(HostNodeID, "bindAppDevice", params, sync, func(resp owtp.Response) {
 		reqFunc(resp.Status, resp.Msg)
+	})
+}
+
+// ImportBatchAddress 批量导入地址
+func (api *APINode) ImportBatchAddress(
+	walletID, accountID, memo string,
+	addressAndPubs map[string]string,
+	updateBalance bool,
+	sync bool,
+	reqFunc func(status uint64, msg string, importAddresses []string)) error {
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+
+	addresses := make([]string, 0)
+	publickeys := make([]string, 0)
+	for addr, pub := range addressAndPubs {
+		addresses = append(addresses, addr)
+		publickeys = append(publickeys, pub)
+	}
+
+	appID := api.config.AppID
+	params := map[string]interface{}{
+		"appID":         appID,
+		"walletID":      walletID,
+		"accountID":     accountID,
+		"memo":          memo,
+		"addresses":     addresses,
+		"publicKeys":    publickeys,
+		"updateBalance": common.NewString(updateBalance).Int64(),
+	}
+	return api.node.Call(HostNodeID, "importBatchAddress", params, sync, func(resp owtp.Response) {
+
+		data := resp.JsonData()
+
+		var importAddresses []string
+		array := data
+		if array.IsArray() {
+			for _, a := range array.Array() {
+				importAddresses = append(importAddresses, a.String())
+			}
+		}
+
+		reqFunc(resp.Status, resp.Msg, importAddresses)
 	})
 }

@@ -51,7 +51,6 @@ func TestTransmitNode_GetTrustNodeInfoDirectCall(t *testing.T) {
 
 	})
 
-
 	nodeID := "4YBHa3d3vAceSRngPWrsm1cSPJudFQSzNAhPGschFw47"
 
 	err := tn.GetTrustNodeInfo(nodeID, true,
@@ -164,13 +163,13 @@ func TestTransmitNode_SetSummaryInfoViaTrustNode(t *testing.T) {
 	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
 
 		setting := &SummarySetting{
-			"WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA",
-			"3i26MQmtuWVVnw8GnRCVopG3pi8MaYU6RqWVV2E1hwJx",
-			"mkdStRouBPVrDVpYmbE5VUJqhBgxJb3dSS",
-			"30",
-			"0.001",
-			"0",
-			1,
+			WalletID:        "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA",
+			AccountID:       "3i26MQmtuWVVnw8GnRCVopG3pi8MaYU6RqWVV2E1hwJx",
+			SumAddress:      "mkdStRouBPVrDVpYmbE5VUJqhBgxJb3dSS",
+			Threshold:       "30",
+			MinTransfer:     "0.001",
+			RetainedBalance: "0",
+			Confirms:        1,
 		}
 
 		transmitNode.SetSummaryInfoViaTrustNode(nodeInfo.NodeID, setting, true, func(status uint64, msg string) {
@@ -289,13 +288,13 @@ func TestTransmitNode_AppendSummaryTaskViaTrustNode(t *testing.T) {
 	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
 
 		setting := &SummarySetting{
-			"WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA",
-			"7ww2Gpfy8pN6HTngbMFBTEMAaVRGEpkmsiNkgAgqGQGf",
-			"0x4f544cbd23c42950a5fe7f967c3e6938955a1718",
-			"1",
-			"0.01",
-			"0",
-			1,
+			WalletID:        "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA",
+			AccountID:       "7ww2Gpfy8pN6HTngbMFBTEMAaVRGEpkmsiNkgAgqGQGf",
+			SumAddress:      "0x4f544cbd23c42950a5fe7f967c3e6938955a1718",
+			Threshold:       "1",
+			MinTransfer:     "0.01",
+			RetainedBalance: "0",
+			Confirms:        1,
 		}
 
 		transmitNode.SetSummaryInfoViaTrustNode(nodeInfo.NodeID, setting, true, func(status uint64, msg string) {
@@ -386,3 +385,17 @@ func TestTransmitNode_GetLocalWalletListViaTrustNode(t *testing.T) {
 	})
 }
 
+func TestTransmitNode_GetTrustAddressListViaTrustNode(t *testing.T) {
+	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
+
+		transmitNode.GetTrustAddressListViaTrustNode(nodeInfo.NodeID,
+			"",
+			true, func(status uint64, msg string, trustAddressList []*TrustAddress, enableTrustAddress bool) {
+				log.Infof("msg:%+v", msg)
+				for _, r := range trustAddressList {
+					log.Infof("turstaddress: %+v", r)
+				}
+				log.Infof("enableTrustAddress: %v", enableTrustAddress)
+			})
+	})
+}

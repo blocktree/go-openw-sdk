@@ -1,11 +1,14 @@
 package openwsdk
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/blocktree/openwallet/crypto"
 	"github.com/blocktree/openwallet/hdkeystore"
 	"github.com/blocktree/openwallet/openwallet"
 	"github.com/tidwall/gjson"
+	"time"
 )
 
 type BlockHeader struct {
@@ -435,4 +438,30 @@ type SupportFeeRate struct {
 	FeeRate string
 	Symbol  string
 	Unit    string
+}
+
+// 白名单地址
+type TrustAddress struct {
+	ID         string `json:"id" storm:"id"`
+	Address    string `json:"address"`
+	Symbol     string `json:"symbol"`
+	Memo       string `json:"memo"`
+	CreateTime int64  `json:"createTime"`
+}
+
+func NewTrustAddress(address, symbol, memo string) *TrustAddress {
+	addr := &TrustAddress{
+		Address:    address,
+		Symbol:     symbol,
+		Memo:       memo,
+		CreateTime: time.Now().Unix(),
+	}
+	addr.ID = GenTrustAddressID(address, symbol)
+	return addr
+}
+
+func GenTrustAddressID(address, symbol string) string {
+	plain := fmt.Sprintf("trustaddress_%s_%s", symbol, address)
+	id := base64.StdEncoding.EncodeToString(crypto.SHA256([]byte(plain)))
+	return id
 }

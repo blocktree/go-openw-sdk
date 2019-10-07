@@ -62,7 +62,7 @@ func TestAPINode_Subscribe(t *testing.T) {
 			Address:            "192.168.27.179:9322",
 			ConnectType:        owtp.Websocket,
 			EnableKeyAgreement: false,
-			EnableSSL:true,
+			EnableSSL:          true,
 		})
 	if err != nil {
 		t.Logf("Subscribe unexpected error: %v\n", err)
@@ -103,10 +103,9 @@ func TestAPINode_Call(t *testing.T) {
 	nodeID := "APINode_Listener"
 
 	config := owtp.ConnectConfig{
-		//Address:     "192.168.27.179:9322",
-		Address: "dblinkcallback.dblinkclub.com",
+		Address:     "127.0.0.1:8422",
 		ConnectType: owtp.HTTP,
-		EnableSSL:true,
+		EnableSSL:   false,
 	}
 	wsClient := owtp.RandomOWTPNode()
 	err := wsClient.Connect(nodeID, config)
@@ -115,12 +114,18 @@ func TestAPINode_Call(t *testing.T) {
 		return
 	}
 
+	err = wsClient.KeyAgreement(nodeID, "aes")
+	if err != nil {
+		t.Errorf("KeyAgreement unexcepted error: %v", err)
+		return
+	}
+
 	params := map[string]interface{}{
 		"name": "chance",
 		"age":  18,
 	}
 	//err = wsClient.Connect(wsHostNodeID, config)
-	err = wsClient.ConnectAndCall(nodeID, config, "subscribeToAccount", params, true, func(resp owtp.Response) {
+	err = wsClient.ConnectAndCall(nodeID, config, "subscribeToTrade", params, true, func(resp owtp.Response) {
 
 		result := resp.JsonData()
 		symbols := result.Get("symbols")

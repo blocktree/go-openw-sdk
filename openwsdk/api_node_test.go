@@ -15,7 +15,7 @@ import (
 )
 
 func init() {
-	owtp.Debug = true
+	owtp.Debug = false
 }
 
 func testNewAPINode() *APINode {
@@ -42,7 +42,7 @@ func testNewAPINode() *APINode {
 		Cert:               cert,
 		ConnectType:        owtp.HTTP,
 		EnableSignature:    false,
-		EnableKeyAgreement: false,
+		EnableKeyAgreement: true,
 		EnableSSL:          true,
 		TimeoutSEC:         120,
 	}

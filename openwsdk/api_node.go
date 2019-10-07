@@ -43,6 +43,7 @@ type APINode struct {
 	config       *APINodeConfig
 	observers    map[OpenwNotificationObject]bool //观察者
 	transmitNode *TransmitNode                    //钱包转发节点
+	proxyNode    *ProxyNode                       //代理服务节点，用于转发请求到openw-server接口
 }
 
 //NewAPINodeWithError 创建API节点

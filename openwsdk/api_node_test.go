@@ -15,13 +15,13 @@ import (
 )
 
 func init() {
-	owtp.Debug = false
+	owtp.Debug = true
 }
 
 func testNewAPINode() *APINode {
 
-	confFile := filepath.Join("conf", "node.ini")
-
+	//confFile := filepath.Join("conf", "node.ini")
+	confFile := filepath.Join("conf", "test.ini")
 	c, err := config.NewConfig("ini", confFile)
 	if err != nil {
 		log.Error("NewConfig error:", err)
@@ -32,6 +32,8 @@ func testNewAPINode() *APINode {
 	AppID := c.String("AppID")
 	AppKey := c.String("AppKey")
 	Host := c.String("Host")
+	EnableKeyAgreement, _ := c.Bool("EnableKeyAgreement")
+	EnableSSL, _ := c.Bool("EnableSSL")
 
 	cert, _ := owtp.NewCertificate(PrivateKey)
 
@@ -41,9 +43,8 @@ func testNewAPINode() *APINode {
 		Host:               Host,
 		Cert:               cert,
 		ConnectType:        owtp.HTTP,
-		EnableSignature:    false,
-		EnableKeyAgreement: true,
-		EnableSSL:          true,
+		EnableKeyAgreement: EnableKeyAgreement,
+		EnableSSL:          EnableSSL,
 		TimeoutSEC:         120,
 	}
 
@@ -128,8 +129,8 @@ func TestAPINode_CreateWallet(t *testing.T) {
 		return
 	}
 	wallet := &Wallet{
-		Alias:name,
-		WalletID:key.KeyID,
+		Alias:    name,
+		WalletID: key.KeyID,
 	}
 	api.CreateWallet(wallet, true,
 		func(status uint64, msg string, wallet *Wallet) {
@@ -661,22 +662,22 @@ func TestAPINode_ImportBatchAddress(t *testing.T) {
 	walletID := "WLN3hJo3NcsbWpsbBjezbJWoy7unZfcaGT"
 	accountID := "6uoJj3JUrLbn4tD9ijaqiruGoyaSHM6xjU3A8cMvcxv2"
 	addressAndPubs := map[string]string{
-		"abcm23094820940": "kslfjlaxcvxvwe",
+		"abcm23094820940":  "kslfjlaxcvxvwe",
 		"abcm230948209402": "kslfjlaxcvxvwe2",
 		"abcm230948209403": "kslfjlaxcvxvwe3",
 		"abcm230948209404": "kslfjlaxcvxvwe4",
 	}
 	err := api.ImportBatchAddress(walletID, accountID, "", addressAndPubs, false, true,
 		func(status uint64, msg string, importAddresses []string) {
-		if status != owtp.StatusSuccess {
-			t.Errorf(msg)
-			return
-		}
+			if status != owtp.StatusSuccess {
+				t.Errorf(msg)
+				return
+			}
 
-		for i, a := range importAddresses {
-			log.Infof("Address[%d]:%+v", i, a)
-		}
-	})
+			for i, a := range importAddresses {
+				log.Infof("Address[%d]:%+v", i, a)
+			}
+		})
 	if err != nil {
 		t.Logf("ImportBatchAddress unexpected error: %v\n", err)
 		return

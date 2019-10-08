@@ -340,3 +340,37 @@ TransmitNode是用于与授信的钱包托管节点进行双向交互。
         })
 ```
 ---
+
+### ProxyNode
+
+ProxyNode是用于给业务系统提供代理服务的实例。业务系统开启ProxyNode后，相当于给做一层中转服务.
+客户端通过SDK调用openw-server的API，会先发请求给业务系统的ProxyNode，再以业务系统为节点，发送请求给openw-server。
+openw-server响应后，经过业务系统，再转发会客户端。
+
+```go
+    
+    //开启端口7088作为代理服务节点
+	proxyNode, err := api.ServeProxyNode(":7088")
+	if err != nil {
+		log.Errorf("ServeProxyNode error: %v\n", err)
+		return
+	}
+
+    //设置中转请求前的处理方法
+	proxyNode.SetProxyRequestHandler(func(ctx *owtp.Context) {
+		log.Infof("Call ProxyRequestHandler")
+		log.Infof("proxy server handle method: %s", ctx.Method)
+		log.Infof("request params: %v", ctx.Params())
+	})
+
+    //设置中转响应前的处理方法
+	proxyNode.SetProxyResponseHandler(func(ctx *owtp.Context) {
+		log.Infof("Call ProxyResponseHandler")
+		log.Infof("response: %+v", ctx.Resp)
+	})
+	
+	//关闭代理服务
+	//proxyNode.Close()
+	
+
+```

@@ -48,7 +48,11 @@ func testNewAPINode() *APINode {
 		TimeoutSEC:         120,
 	}
 
-	api := NewAPINode(config)
+	api, err := NewAPINodeWithError(config)
+	if err != nil {
+		log.Errorf("NewAPINodeWithError: %s", err)
+		return nil
+	}
 	api.BindAppDevice()
 
 	return api

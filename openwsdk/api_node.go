@@ -53,11 +53,12 @@ func NewAPINodeWithError(config *APINodeConfig) (*APINode, error) {
 	connectCfg.ConnectType = config.ConnectType
 	connectCfg.EnableSSL = config.EnableSSL
 	connectCfg.EnableSignature = config.EnableSignature
+	connectCfg.EnableKeyAgreement = config.EnableKeyAgreement
 	node := owtp.NewNode(owtp.NodeConfig{
 		Cert:       config.Cert,
 		TimeoutSEC: config.TimeoutSEC,
 	})
-	err := node.Connect(HostNodeID, connectCfg)
+	_, err := node.Connect(HostNodeID, connectCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -69,12 +70,12 @@ func NewAPINodeWithError(config *APINodeConfig) (*APINode, error) {
 	api.observers = make(map[OpenwNotificationObject]bool)
 
 	//开启协商密码
-	if config.EnableKeyAgreement {
-		if err := node.KeyAgreement(HostNodeID, "aes"); err != nil {
-			log.Error(err)
-			return nil, err
-		}
-	}
+	//if config.EnableKeyAgreement {
+	//	if err := node.KeyAgreement(HostNodeID, "aes"); err != nil {
+	//		log.Error(err)
+	//		return nil, err
+	//	}
+	//}
 
 	api.node.HandleFunc("subscribeToAccount", api.subscribeToAccount)
 	api.node.HandleFunc("subscribeToTrade", api.subscribeToTrade)

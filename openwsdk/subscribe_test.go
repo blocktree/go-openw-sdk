@@ -103,20 +103,15 @@ func TestAPINode_Call(t *testing.T) {
 	nodeID := "APINode_Listener"
 
 	config := owtp.ConnectConfig{
-		Address:     "127.0.0.1:8422",
-		ConnectType: owtp.HTTP,
-		EnableSSL:   false,
+		Address:            "127.0.0.1:8422",
+		ConnectType:        owtp.HTTP,
+		EnableSSL:          false,
+		EnableKeyAgreement: true,
 	}
 	wsClient := owtp.RandomOWTPNode()
-	err := wsClient.Connect(nodeID, config)
+	_, err := wsClient.Connect(nodeID, config)
 	if err != nil {
 		t.Errorf("Connect unexcepted error: %v", err)
-		return
-	}
-
-	err = wsClient.KeyAgreement(nodeID, "aes")
-	if err != nil {
-		t.Errorf("KeyAgreement unexcepted error: %v", err)
 		return
 	}
 

@@ -1,12 +1,17 @@
 package main
 
 import (
+	"flag"
 	"github.com/astaxie/beego/config"
 	"github.com/blocktree/go-openw-sdk/openwsdk"
 	"github.com/blocktree/openwallet/log"
 	"github.com/blocktree/openwallet/owtp"
-	"path/filepath"
+	"strings"
 )
+
+func init() {
+	owtp.Debug = true
+}
 
 type Subscriber struct {
 }
@@ -38,19 +43,49 @@ func (s *Subscriber) OpenwNewBlockNotify(blockHeader *openwsdk.BlockHeader) (boo
 	return true, nil
 }
 
-func testNewAPINode() (*openwsdk.APINode, error) {
+//OpenwBalanceUpdateNotify openw余额更新
+func (s *Subscriber) OpenwBalanceUpdateNotify(balance *openwsdk.Balance, tokenBalance *openwsdk.TokenBalance) (bool, error) {
+	log.Infof("Symbol: %+v", balance.Symbol)
+	log.Infof("Balance: %+v", balance.Balance)
+	log.Infof("")
+	log.Infof("Token: %+v", tokenBalance.Token)
+	log.Infof("Balance: %+v", tokenBalance.Balance)
+	log.Infof("---------------------------------")
+	return true, nil
+}
 
-	confFile := filepath.Join("conf", "node.ini")
+func main() {
 
-	c, err := config.NewConfig("ini", confFile)
+	var (
+		endRunning = make(chan bool, 1)
+	)
+
+	confFile := flag.String("c", "", "callback node config file")
+	address := flag.String("ip", "", "callback node IP")
+
+	flag.Parse()
+
+	log.Infof("confFile: %s", *confFile)
+	log.Infof("address: %s", *address)
+
+	if *address == "" {
+		return
+	}
+
+	network := strings.Split(*address, ":")
+	port := network[1]
+
+	c, err := config.NewConfig("ini", *confFile)
 	if err != nil {
 		log.Error("NewConfig error:", err)
-		return nil, nil
+		return
 	}
 
 	AppID := c.String("AppID")
 	AppKey := c.String("AppKey")
 	Host := c.String("Host")
+	EnableKeyAgreement, _ := c.Bool("EnableKeyAgreement")
+	EnableSSL, _ := c.Bool("EnableSSL")
 
 	cert, _ := owtp.NewCertificate(owtp.RandomPrivateKey())
 
@@ -60,48 +95,37 @@ func testNewAPINode() (*openwsdk.APINode, error) {
 		Host:               Host,
 		Cert:               cert,
 		ConnectType:        owtp.HTTP,
-		EnableSignature:    false,
-		EnableKeyAgreement: false,
+		EnableKeyAgreement: EnableKeyAgreement,
+		EnableSSL:          EnableSSL,
 		TimeoutSEC:         60,
 	}
 
 	api, err := openwsdk.NewAPINodeWithError(config)
 	if err != nil {
-		return nil, err
+		log.Errorf("NewAPINode unexpected error: %v", err)
+		return
 	}
 
 	err = api.BindAppDevice()
 	if err != nil {
-		return nil, err
-	}
-
-	return api, nil
-}
-
-func main() {
-
-	var (
-		endRunning = make(chan bool, 1)
-	)
-
-	api, err := testNewAPINode()
-	log.Debug("NodeID:", api.NodeID())
-	if err != nil {
-		log.Errorf("NewAPINode unexpected error: %v", err)
+		log.Errorf("BindAppDevice unexpected error: %v", err)
 		return
 	}
+
+	log.Debug("NodeID:", api.NodeID())
 
 	err = api.Subscribe(
 		[]string{
 			openwsdk.SubscribeToTrade,
 			openwsdk.SubscribeToBlock,
+			openwsdk.SubscribeToAccount,
 		},
-		":30020",
+		":"+port,
 		openwsdk.CallbackModeNewConnection, openwsdk.CallbackNode{
 			NodeID:             api.NodeID(),
-			Address:            "120.78.83.180:30020",
+			Address:            *address,
 			ConnectType:        owtp.Websocket,
-			EnableKeyAgreement: false,
+			EnableKeyAgreement: EnableKeyAgreement,
 		})
 	if err != nil {
 		log.Errorf("Subscribe unexpected error: %v", err)

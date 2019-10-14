@@ -2,7 +2,9 @@ package openwsdk
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/blocktree/openwallet/log"
+	"github.com/blocktree/openwallet/owtp"
 	"github.com/google/uuid"
 	"testing"
 	"time"
@@ -397,5 +399,92 @@ func TestTransmitNode_GetTrustAddressListViaTrustNode(t *testing.T) {
 				}
 				log.Infof("enableTrustAddress: %v", enableTrustAddress)
 			})
+	})
+}
+
+func TestTransmitNode_SignTransactionViaTrustNode(t *testing.T) {
+
+	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
+
+		walletID := "W3LxqTNAcXFqW7HGcTuERRLXKdNWu17Ccx"
+		accountID := "65Y9FgipAS2M7ankrt4o3MR2Z1EEPNZKBqyQNsKt9wnj"
+		address := "AR8LWKndC2ztfLoCobZhHEwkQCUZk1yKEsF"
+		sid := uuid.New().String()
+		password := ""
+		coin := Coin{
+			Symbol:     "VSYS",
+			IsContract: false,
+		}
+
+		var (
+			retRawTx       *RawTransaction
+			retSignedRawTx *RawTransaction
+			retTx          []*Transaction
+			retFailed      []*FailedRawTransaction
+			err            error
+		)
+
+		api, _ := transmitNode.APINode()
+		api.CreateTrade(accountID, sid, coin, "0.01", address, "", "", true,
+			func(status uint64, msg string, rawTx *RawTransaction) {
+				if status != owtp.StatusSuccess {
+					err = fmt.Errorf(msg)
+					return
+				}
+
+				retRawTx = rawTx
+			})
+
+		if err != nil {
+			t.Logf("CreateTrade unexpected error: %v\n", err)
+			return
+		}
+
+		log.Infof("sid: %s", sid)
+		transmitNode.SignTransactionViaTrustNode(nodeInfo.NodeID, walletID, retRawTx, password,
+			true, func(status uint64, msg string, signedRawTx *RawTransaction) {
+				log.Infof("status: %d, msg: %s", status, msg)
+				log.Infof("signedRawTx: %+v", signedRawTx)
+				if status != owtp.StatusSuccess {
+					err = fmt.Errorf(msg)
+					return
+				}
+				retSignedRawTx = signedRawTx
+			})
+
+		if err != nil {
+			t.Logf("SignTransactionViaTrustNode unexpected error: %v\n", err)
+			return
+		}
+
+		api.SubmitTrade([]*RawTransaction{retSignedRawTx}, true,
+			func(status uint64, msg string, successTx []*Transaction, failedRawTxs []*FailedRawTransaction) {
+				if status != owtp.StatusSuccess {
+					err = fmt.Errorf(msg)
+					return
+				}
+
+				retTx = successTx
+				retFailed = failedRawTxs
+			})
+
+		if err != nil {
+			t.Logf("SubmitTrade unexpected error: %v\n", err)
+			return
+		}
+
+		log.Info("============== success ==============")
+
+		for _, tx := range retTx {
+			log.Infof("tx: %+v", tx)
+		}
+
+		log.Info("")
+
+		log.Info("============== fail ==============")
+
+		for _, tx := range retFailed {
+			log.Infof("tx: %+v", tx.Reason)
+		}
 	})
 }

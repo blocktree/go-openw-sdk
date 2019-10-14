@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/blocktree/openwallet/log"
+	"github.com/blocktree/openwallet/openwallet"
 	"github.com/blocktree/openwallet/owtp"
 )
 
@@ -101,7 +102,7 @@ func (transmit *TransmitNode) newNodeJoin(ctx *owtp.Context) {
 		var nodeInfo TrustNodeInfo
 		err := json.Unmarshal([]byte(ctx.Params().Get("nodeInfo").Raw), &nodeInfo)
 		if err != nil {
-			ctx.Response(nil, owtp.ErrCustomError, err.Error())
+			ctx.Response(nil, openwallet.ErrUnknownException, err.Error())
 			return
 		}
 		transmit.connectHandler(transmit, &nodeInfo)
@@ -549,5 +550,50 @@ func (transmit *TransmitNode) GetTrustAddressListViaTrustNode(
 		json.Unmarshal([]byte(trustAddressList.Raw), &list)
 		enableTrustAddress = data.Get("enableTrustAddress").Bool()
 		reqFunc(resp.Status, resp.Msg, list, enableTrustAddress)
+	})
+}
+
+//SignTransactionViaTrustNode 指定节点，签名交易单
+func (transmit *TransmitNode) SignTransactionViaTrustNode(
+	nodeID string,
+	walletID string,
+	rawTx *RawTransaction,
+	password string,
+	sync bool,
+	reqFunc func(status uint64, msg string, signedRawTx *RawTransaction),
+) error {
+	if transmit == nil {
+		return fmt.Errorf("TransmitNode is not inited")
+	}
+
+	if p := transmit.node.GetOnlinePeer(nodeID); p == nil {
+		return fmt.Errorf("Node ID: %s is not connected ", nodeID)
+	}
+
+	params := map[string]interface{}{
+		"appID":    transmit.config.AppID,
+		"walletID": walletID,
+		"password": password,
+		"rawTx":    rawTx,
+	}
+
+	return transmit.node.Call(nodeID, "signTransactionViaTrustNode", params, sync, func(resp owtp.Response) {
+
+		if resp.Status == owtp.StatusSuccess {
+			data := resp.JsonData()
+			jsonRawTx := data.Get("signedRawTx")
+
+			var rawTx RawTransaction
+			err := json.Unmarshal([]byte(jsonRawTx.Raw), &rawTx)
+			if err != nil {
+				reqFunc(openwallet.ErrUnknownException, err.Error(), nil)
+				return
+			}
+
+			reqFunc(resp.Status, resp.Msg, &rawTx)
+		} else {
+			reqFunc(resp.Status, resp.Msg, nil)
+		}
+
 	})
 }

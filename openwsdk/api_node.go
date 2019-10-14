@@ -7,6 +7,7 @@ import (
 	"github.com/blocktree/openwallet/crypto"
 	"github.com/blocktree/openwallet/hdkeystore"
 	"github.com/blocktree/openwallet/log"
+	"github.com/blocktree/openwallet/openwallet"
 	"github.com/blocktree/openwallet/owtp"
 	"strconv"
 	"sync"
@@ -515,7 +516,11 @@ func (api *APINode) CreateTrade(
 		jsonRawTx := data.Get("rawTx")
 
 		var rawTx RawTransaction
-		json.Unmarshal([]byte(jsonRawTx.Raw), &rawTx)
+		err := json.Unmarshal([]byte(jsonRawTx.Raw), &rawTx)
+		if err != nil {
+			reqFunc(openwallet.ErrUnknownException, err.Error(), nil)
+			return
+		}
 
 		reqFunc(resp.Status, resp.Msg, &rawTx)
 	})

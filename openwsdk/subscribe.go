@@ -17,13 +17,13 @@ const (
 type OpenwNotificationObject interface {
 
 	//OpenwNewTransactionNotify openw新交易单通知
-	OpenwNewTransactionNotify(transaction *Transaction) (bool, error)
+	OpenwNewTransactionNotify(transaction *Transaction, subscribeToken string) (bool, error)
 
 	//OpenwNewBlockNotify openw新区块头通知
-	OpenwNewBlockNotify(blockHeader *BlockHeader) (bool, error)
+	OpenwNewBlockNotify(blockHeader *BlockHeader, subscribeToken string) (bool, error)
 
 	//OpenwBalanceUpdateNotify openw余额更新
-	OpenwBalanceUpdateNotify(balance *Balance, tokenBalance *TokenBalance) (bool, error)
+	OpenwBalanceUpdateNotify(balance *Balance, tokenBalance *TokenBalance, subscribeToken string) (bool, error)
 }
 
 //ServeNotification 开启监听服务，接收通知
@@ -84,10 +84,20 @@ func (api *APINode) subscribeToAccount(ctx *owtp.Context) {
 		accepted bool
 		err error
 	)
+
+	if ctx.Peer.PID() != api.subscribeInfo.notifierNodeID {
+		ctx.Response(map[string]interface{}{
+			"accepted": false,
+		}, owtp.StatusSuccess, msg)
+		log.Warningf("get balance update notify by unknown notifier NodeID: %s", ctx.Peer.PID())
+		return
+	}
+
 	balance := NewBalance(data)
 	tokenBalance := NewTokenBalance(data.Get("tokenBalance"))
+	subscribeToken := data.Get("subscribeToken").String()
 	for o, _ := range api.observers {
-		accepted, err = o.OpenwBalanceUpdateNotify(balance, tokenBalance)
+		accepted, err = o.OpenwBalanceUpdateNotify(balance, tokenBalance, subscribeToken)
 		if err != nil {
 			msg = err.Error()
 			accepted = false
@@ -110,12 +120,22 @@ func (api *APINode) subscribeToTrade(ctx *owtp.Context) {
 	var msg string
 	var accepted bool
 	var tx Transaction
+
+	if ctx.Peer.PID() != api.subscribeInfo.notifierNodeID {
+		ctx.Response(map[string]interface{}{
+			"accepted": false,
+		}, owtp.StatusSuccess, msg)
+		log.Warningf("get transaction notify by unknown notifier NodeID: %s", ctx.Peer.PID())
+		return
+	}
+
+	subscribeToken := data.Get("subscribeToken").String()
 	err := json.Unmarshal([]byte(data.Raw), &tx)
 	if err != nil {
 		accepted = false
 	} else {
 		for o, _ := range api.observers {
-			accepted, err = o.OpenwNewTransactionNotify(&tx)
+			accepted, err = o.OpenwNewTransactionNotify(&tx, subscribeToken)
 			if err != nil {
 				msg = err.Error()
 				accepted = false
@@ -138,12 +158,22 @@ func (api *APINode) subscribeToBlock(ctx *owtp.Context) {
 	var msg string
 	var accepted bool
 	var header BlockHeader
+
+	if ctx.Peer.PID() != api.subscribeInfo.notifierNodeID {
+		ctx.Response(map[string]interface{}{
+			"accepted": false,
+		}, owtp.StatusSuccess, msg)
+		log.Warningf("get new block notify by unknown notifier NodeID: %s", ctx.Peer.PID())
+		return
+	}
+
+	subscribeToken := data.Get("subscribeToken").String()
 	err := json.Unmarshal([]byte(data.Raw), &header)
 	if err != nil {
 		accepted = false
 	} else {
 		for o, _ := range api.observers {
-			accepted, err = o.OpenwNewBlockNotify(&header)
+			accepted, err = o.OpenwNewBlockNotify(&header, subscribeToken)
 			if err != nil {
 				msg = err.Error()
 				accepted = false

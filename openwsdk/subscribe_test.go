@@ -11,7 +11,7 @@ type Subscriber struct {
 }
 
 //OpenwNewTransactionNotify openw新交易单通知
-func (s *Subscriber) OpenwNewTransactionNotify(transaction *Transaction) (bool, error) {
+func (s *Subscriber) OpenwNewTransactionNotify(transaction *Transaction, subscribeToken string) (bool, error) {
 	log.Infof("Symbol: %+v", transaction.Symbol)
 	log.Infof("contractID: %+v", transaction.ContractID)
 	log.Infof("blockHash: %+v", transaction.BlockHash)
@@ -20,25 +20,28 @@ func (s *Subscriber) OpenwNewTransactionNotify(transaction *Transaction) (bool, 
 	log.Infof("amount: %+v", transaction.Amount)
 	log.Infof("accountID: %+v", transaction.AccountID)
 	log.Infof("fees: %+v", transaction.Fees)
+	log.Infof("subscribeToken: %s", subscribeToken)
 	log.Infof("---------------------------------")
 	return true, nil
 }
 
 //OpenwNewBlockNotify openw新区块头通知
-func (s *Subscriber) OpenwNewBlockNotify(blockHeader *BlockHeader) (bool, error) {
+func (s *Subscriber) OpenwNewBlockNotify(blockHeader *BlockHeader, subscribeToken string) (bool, error) {
 	log.Infof("Symbol: %+v", blockHeader.Symbol)
 	log.Infof("blockHash: %+v", blockHeader.Hash)
 	log.Infof("blockHeight: %+v", blockHeader.Height)
+	log.Infof("subscribeToken: %s", subscribeToken)
 	log.Infof("---------------------------------")
 	return true, nil
 }
 
 //OpenwBalanceUpdateNotify openw余额更新
-func (s *Subscriber) OpenwBalanceUpdateNotify(balance *Balance, tokenBalance *TokenBalance) (bool, error) {
+func (s *Subscriber) OpenwBalanceUpdateNotify(balance *Balance, tokenBalance *TokenBalance, subscribeToken string) (bool, error) {
 	log.Infof("Symbol: %+v", balance.Symbol)
 	log.Infof("Balance: %+v", balance.Balance)
 	log.Infof("Token: %+v", tokenBalance.Token)
 	log.Infof("Balance: %+v", tokenBalance.Balance)
+	log.Infof("subscribeToken: %s", subscribeToken)
 	log.Infof("---------------------------------")
 	return true, nil
 }
@@ -59,11 +62,13 @@ func TestAPINode_Subscribe(t *testing.T) {
 		":9322",
 		CallbackModeNewConnection, CallbackNode{
 			NodeID:             api.NodeID(),
-			Address:            "192.168.27.179:9322",
-			ConnectType:        owtp.Websocket,
+			Address:            "127.0.0.1:9322",
+			ConnectType:        owtp.HTTP,
 			EnableKeyAgreement: false,
 			EnableSSL:          true,
-		})
+			EnableSignature:    true,
+		},
+		"hello world")
 	if err != nil {
 		t.Logf("Subscribe unexpected error: %v\n", err)
 		return
@@ -103,7 +108,7 @@ func TestAPINode_Call(t *testing.T) {
 	nodeID := "APINode_Listener"
 
 	config := owtp.ConnectConfig{
-		Address:            "127.0.0.1:8422",
+		Address:            "127.0.0.1:9322",
 		ConnectType:        owtp.HTTP,
 		EnableSSL:          false,
 		EnableKeyAgreement: true,

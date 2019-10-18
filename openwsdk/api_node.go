@@ -34,17 +34,17 @@ type APINodeConfig struct {
 	EnableSignature    bool             `json:"enableSignature"`
 	Cert               owtp.Certificate `json:"cert"`
 	TimeoutSEC         int              `json:"timeoutSEC"`
-	//HostNodeID string           `json:"hostNodeID"`
 }
 
 //APINode APINode通信节点
 type APINode struct {
-	mu           sync.RWMutex //读写锁
-	node         *owtp.OWTPNode
-	config       *APINodeConfig
-	observers    map[OpenwNotificationObject]bool //观察者
-	transmitNode *TransmitNode                    //钱包转发节点
-	proxyNode    *ProxyNode                       //代理服务节点，用于转发请求到openw-server接口
+	mu            sync.RWMutex //读写锁
+	node          *owtp.OWTPNode
+	config        *APINodeConfig
+	observers     map[OpenwNotificationObject]bool //观察者
+	transmitNode  *TransmitNode                    //钱包转发节点
+	proxyNode     *ProxyNode                       //代理服务节点，用于转发请求到openw-server接口
+	subscribeInfo *CallbackNode                    `json:"subscribeInfo"`
 }
 
 //NewAPINodeWithError 创建API节点
@@ -111,23 +111,35 @@ func (api *APINode) NodeID() string {
 }
 
 //Subscribe 订阅
-func (api *APINode) Subscribe(subscribeMethod []string, listenAddr string, callbackMode int, callbackNode CallbackNode) error {
+func (api *APINode) Subscribe(subscribeMethod []string, listenAddr string, callbackMode int, callbackNode CallbackNode, subscribeToken string) error {
 
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
 	}
 
+	//获取通知节点的NodeID
+	_, notifierNodeID, err := api.GetNotifierNodeInfo()
+	if err != nil {
+		return err
+	}
+
 	//http不能用当前连接模式
 	if callbackMode == CallbackModeCurrentConnection {
-		if api.config.ConnectType != owtp.Websocket {
-			return fmt.Errorf("%s can not use [SubscribeModeCurrentConnection]", api.config.ConnectType)
+		if callbackNode.ConnectType != owtp.Websocket {
+			return fmt.Errorf("%s can not use [SubscribeModeCurrentConnection]", callbackNode.ConnectType)
 		}
 	} else {
+
+		if api.node.Listening(callbackNode.ConnectType) {
+			return fmt.Errorf("subscribe connenct type [%s] is listening", callbackNode.ConnectType)
+		}
+
 		//开启监听
 		log.Infof("%s start to listen [%s] connection...", listenAddr, callbackNode.ConnectType)
 		api.node.Listen(owtp.ConnectConfig{
-			Address:     listenAddr,
-			ConnectType: callbackNode.ConnectType,
+			Address:         listenAddr,
+			ConnectType:     callbackNode.ConnectType,
+			EnableSignature: callbackNode.EnableSignature,
 		})
 
 	}
@@ -138,6 +150,7 @@ func (api *APINode) Subscribe(subscribeMethod []string, listenAddr string, callb
 		"subscribeMethod": subscribeMethod,
 		"callbackMode":    callbackMode,
 		"callbackNode":    callbackNode,
+		"subscribeToken":  subscribeToken,
 	}
 
 	response, err := api.node.CallSync(HostNodeID, "subscribe", params)
@@ -146,6 +159,10 @@ func (api *APINode) Subscribe(subscribeMethod []string, listenAddr string, callb
 	}
 
 	if response.Status == owtp.StatusSuccess {
+
+		api.subscribeInfo = &callbackNode
+		api.subscribeInfo.notifierNodeID = notifierNodeID
+
 		return nil
 	} else {
 		//关闭临时开启的端口
@@ -1059,4 +1076,48 @@ func (api *APINode) ImportBatchAddress(
 
 		reqFunc(resp.Status, resp.Msg, importAddresses)
 	})
+}
+
+// GetNotifierNodeInfo 获取通知者节点信息
+func (api *APINode) GetNotifierNodeInfo() (string, string, error) {
+	if api == nil {
+		return "", "", fmt.Errorf("APINode is not inited")
+	}
+
+	var (
+		pubKey     string
+		nodeId     string
+		requestErr *openwallet.Error
+	)
+	appID := api.config.AppID
+	time := time.Now().UnixNano()
+	plainText := fmt.Sprintf("%s%d%s", appID, time, api.config.AppKey)
+	sign := crypto.GetMD5(plainText)
+
+	params := map[string]interface{}{
+		"appID": appID,
+		"time":  time,
+		"sign":  sign,
+	}
+
+	err := api.node.Call(HostNodeID, "getNodeInfo", params, true, func(resp owtp.Response) {
+
+		if resp.Status != owtp.StatusSuccess {
+			requestErr = openwallet.Errorf(resp.Status, resp.Msg)
+			return
+		}
+
+		data := resp.JsonData()
+		pubKey = data.Get("pubKey").String()
+		nodeId = data.Get("nodeId").String()
+	})
+	if err != nil {
+		return "", "", err
+	}
+
+	if requestErr != nil {
+		return "", "", requestErr
+	}
+
+	return pubKey, nodeId, nil
 }

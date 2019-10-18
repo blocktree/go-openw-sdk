@@ -1,10 +1,8 @@
 release
 .idea/
 go.sum
-examples/performance_test/conf
-examples/subscriber-node/conf
-openwsdk/conf
-openwsdk/testkeys
-go-openw-sdk
-subscriber-node
-subscriber-node-linux-amd64
+*.db
+*.ini
+*.key
+build
+*.txt

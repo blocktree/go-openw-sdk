@@ -44,6 +44,8 @@ type CallbackNode struct {
 	ConnectType        string `json:"connectType"`        //@required 连接方式
 	EnableKeyAgreement bool   `json:"enableKeyAgreement"` //是否开启owtp协议协商密码
 	EnableSSL          bool   `json:"enableSSL"`          //是否开启链接SSL，https，wss
+	EnableSignature    bool   `json:"enableSignature"`    //是否开启owtp协议内签名，防重放
+	notifierNodeID     string `json:"notifierNodeID"`     //通知者节点ID
 }
 
 func NewCallbackNode(result gjson.Result) *CallbackNode {

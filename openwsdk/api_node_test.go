@@ -687,3 +687,15 @@ func TestAPINode_ImportBatchAddress(t *testing.T) {
 		return
 	}
 }
+
+func TestAPINode_GetNotifierNodeInfo(t *testing.T) {
+	api := testNewAPINode()
+	pubKey, nodeId, err := api.GetNotifierNodeInfo()
+	if err != nil {
+		t.Logf("GetNotifierNodeInfo unexpected error: %v", err)
+		return
+	}
+
+	log.Infof("pubKey: %s", pubKey)
+	log.Infof("nodeId: %s", nodeId)
+}

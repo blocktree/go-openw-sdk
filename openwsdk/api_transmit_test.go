@@ -133,30 +133,18 @@ func TestTransmitNode_SendTransactionViaTrustNode(t *testing.T) {
 		//accountID := "3i26MQmtuWVVnw8GnRCVopG3pi8MaYU6RqWVV2E1hwJx"
 		//address := "mgCzMJDyJoqa6XE3RSdNGvD5Bi5VTWudRq"
 
-		accountID := "xV88bvU2DCn9frHJ1BzHbEk6xHuUx9GE7froBmZhtuV"
-		address := "n1EcdDJUMPYN6vr7J8aCuDw3ajn5WeVMHv6"
+		accountID := "AEeBZy321NzbLWPFkjyGfFyUn8hHX2g93f4wMBVumin4"
+		address := "TRJJ9Mq4aMjdmKWpTDJAgbYNoY2P9Facg5"
 
-		password := ""
+		password := "12345678"
 		sid := uuid.New().String()
 		log.Infof("sid: %s", sid)
 		transmitNode.SendTransactionViaTrustNode(nodeInfo.NodeID, accountID, password, sid,
-			"", "0.002", address, "", "",
-			true, func(status uint64, msg string, successTx []*Transaction, failedRawTxs []*FailedRawTransaction) {
+			"", "0.998", address, "", "",
+			true, func(status uint64, msg string, successTx *Transaction) {
 				log.Infof("status: %d, msg: %s", status, msg)
 				log.Info("============== success ==============")
-
-				for _, tx := range successTx {
-					log.Infof("tx: %+v", tx)
-				}
-
-				log.Info("")
-
-				log.Info("============== fail ==============")
-
-				for _, tx := range failedRawTxs {
-					log.Infof("tx: %+v", tx.Reason)
-				}
-
+				log.Infof("tx: %+v", successTx)
 			})
 	})
 }
@@ -488,3 +476,4 @@ func TestTransmitNode_SignTransactionViaTrustNode(t *testing.T) {
 		}
 	})
 }
+

@@ -218,7 +218,7 @@ func TestAPINode_CreateAccount(t *testing.T) {
 }
 
 func TestAPINode_FindAccountByWalletID(t *testing.T) {
-	walletID := "WLN3hJo3NcsbWpsbBjezbJWoy7unZfcaGT"
+	walletID := "W3LxqTNAcXFqW7HGcTuERRLXKdNWu17Ccx"
 	api := testNewAPINode()
 	api.FindAccountByWalletID(walletID, true,
 		func(status uint64, msg string, accounts []*Account) {

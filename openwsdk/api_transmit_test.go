@@ -141,10 +141,22 @@ func TestTransmitNode_SendTransactionViaTrustNode(t *testing.T) {
 		log.Infof("sid: %s", sid)
 		transmitNode.SendTransactionViaTrustNode(nodeInfo.NodeID, accountID, password, sid,
 			"", "0.998", address, "", "",
-			true, func(status uint64, msg string, successTx *Transaction) {
+			true, func(status uint64, msg string, successTx []*Transaction, failedRawTxs []*FailedRawTransaction) {
 				log.Infof("status: %d, msg: %s", status, msg)
 				log.Info("============== success ==============")
-				log.Infof("tx: %+v", successTx)
+
+				for _, tx := range successTx {
+					log.Infof("tx: %+v", tx)
+				}
+
+				log.Info("")
+
+				log.Info("============== fail ==============")
+
+				for _, tx := range failedRawTxs {
+					log.Infof("tx: %+v", tx.Reason)
+				}
+
 			})
 	})
 }
@@ -476,4 +488,3 @@ func TestTransmitNode_SignTransactionViaTrustNode(t *testing.T) {
 		}
 	})
 }
-

@@ -214,7 +214,7 @@ func (transmit *TransmitNode) SendTransactionViaTrustNode(
 	feeRate string,
 	memo string,
 	sync bool,
-	reqFunc func(status uint64, msg string, successTx []*Transaction, failedRawTxs []*FailedRawTransaction),
+	reqFunc func(status uint64, msg string, successTx *Transaction),
 ) error {
 	if transmit == nil {
 		return fmt.Errorf("TransmitNode is not inited")
@@ -238,32 +238,11 @@ func (transmit *TransmitNode) SendTransactionViaTrustNode(
 
 	return transmit.node.Call(nodeID, "sendTransactionViaTrustNode", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
-		failedRawTxs := make([]*FailedRawTransaction, 0)
-		failedArray := data.Get("failure")
-		if failedArray.IsArray() {
-			for _, failed := range failedArray.Array() {
-				var failedRawTx FailedRawTransaction
-				err := json.Unmarshal([]byte(failed.Raw), &failedRawTx)
-				if err == nil {
-					failedRawTxs = append(failedRawTxs, &failedRawTx)
-				}
+		successTx := data.Get("success")
+		var tx Transaction
+		json.Unmarshal([]byte(successTx.Raw), &tx)
 
-			}
-		}
-
-		var txs []*Transaction
-		successArray := data.Get("success")
-		if successArray.IsArray() {
-			for _, a := range successArray.Array() {
-				var tx Transaction
-				err := json.Unmarshal([]byte(a.Raw), &tx)
-				if err == nil {
-					txs = append(txs, &tx)
-				}
-			}
-		}
-
-		reqFunc(resp.Status, resp.Msg, txs, failedRawTxs)
+		reqFunc(resp.Status, resp.Msg, &tx)
 	})
 }
 

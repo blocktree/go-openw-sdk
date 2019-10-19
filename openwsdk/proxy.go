@@ -26,8 +26,8 @@ type ProxyNode struct {
 	node                 *owtp.OWTPNode
 	config               *APINodeConfig
 	parent               *APINode
-	proxyRequestHandler  func(ctx *owtp.Context) //请求前的自定义处理
-	proxyResponseHandler func(ctx *owtp.Context) //相应后的自定义处理
+	proxyRequestHandler  func(ctx *owtp.Context) bool //请求前的自定义处理
+	proxyResponseHandler func(ctx *owtp.Context) bool //相应后的自定义处理
 }
 
 // NewProxyNode 创建一个代理节点实例
@@ -140,12 +140,12 @@ func (proxyNode *ProxyNode) Close() {
 }
 
 //SetProxyRequestHandler 通过设置请求处理器，你可以在请求被中转前进行一些自定义操作
-func (proxyNode *ProxyNode) SetProxyRequestHandler(h func(ctx *owtp.Context)) {
+func (proxyNode *ProxyNode) SetProxyRequestHandler(h func(ctx *owtp.Context) bool) {
 	proxyNode.proxyRequestHandler = h
 }
 
 //SetProxyResponseHandler 通过设置响应处理器，你可以在响应被中转前进行一些自定义操作
-func (proxyNode *ProxyNode) SetProxyResponseHandler(h func(ctx *owtp.Context)) {
+func (proxyNode *ProxyNode) SetProxyResponseHandler(h func(ctx *owtp.Context) bool) {
 	proxyNode.proxyResponseHandler = h
 }
 
@@ -153,23 +153,27 @@ func (proxyNode *ProxyNode) SetProxyResponseHandler(h func(ctx *owtp.Context)) {
 func (proxyNode *ProxyNode) proxyServerHandler(ctx *owtp.Context) {
 
 	//转发给openw-server节点
-
+	var (
+		pass bool
+	)
 
 	//代理转发请求前的处理
 	if proxyNode.proxyRequestHandler != nil {
-		proxyNode.proxyRequestHandler(ctx)
+		pass = proxyNode.proxyRequestHandler(ctx)
 	}
 
-	resp, err := proxyNode.parent.OWTPNode().CallSync(HostNodeID, ctx.Method, ctx.Params().Raw)
-	if err != nil {
-		ctx.ResponseStopRun(nil, owtp.ErrBadRequest, err.Error())
-		return
-	}
+	if pass {
+		resp, err := proxyNode.parent.OWTPNode().CallSync(HostNodeID, ctx.Method, ctx.Params().Raw)
+		if err != nil {
+			ctx.ResponseStopRun(nil, owtp.ErrBadRequest, err.Error())
+			return
+		}
 
-	ctx.ResponseStopRun(resp.Result, resp.Status, resp.Msg)
+		ctx.ResponseStopRun(resp.Result, resp.Status, resp.Msg)
 
-	//代理转发相应处理
-	if proxyNode.proxyResponseHandler != nil {
-		proxyNode.proxyResponseHandler(ctx)
+		//代理转发相应处理
+		if proxyNode.proxyResponseHandler != nil {
+			proxyNode.proxyResponseHandler(ctx)
+		}
 	}
 }

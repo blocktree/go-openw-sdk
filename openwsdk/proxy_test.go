@@ -34,13 +34,13 @@ func TestAPINode_ServeProxyNode(t *testing.T) {
 		return
 	}
 
-	proxyNode.SetProxyRequestHandler(func(ctx *owtp.Context) {
+	proxyNode.SetProxyRequestHandler(func(ctx *owtp.Context) bool {
 		log.Infof("Call ProxyRequestHandler")
 		log.Infof("proxy server handle method: %s", ctx.Method)
 		log.Infof("request params: %v", ctx.Params())
 	})
 
-	proxyNode.SetProxyResponseHandler(func(ctx *owtp.Context) {
+	proxyNode.SetProxyResponseHandler(func(ctx *owtp.Context) bool {
 		log.Infof("Call ProxyResponseHandler")
 		log.Infof("response: %+v", ctx.Resp)
 	})

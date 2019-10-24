@@ -38,11 +38,13 @@ func TestAPINode_ServeProxyNode(t *testing.T) {
 		log.Infof("Call ProxyRequestHandler")
 		log.Infof("proxy server handle method: %s", ctx.Method)
 		log.Infof("request params: %v", ctx.Params())
+		return true
 	})
 
 	proxyNode.SetProxyResponseHandler(func(ctx *owtp.Context) bool {
 		log.Infof("Call ProxyResponseHandler")
 		log.Infof("response: %+v", ctx.Resp)
+		return true
 	})
 
 	<-endRunning

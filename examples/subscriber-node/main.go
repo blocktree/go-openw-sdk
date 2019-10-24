@@ -95,6 +95,7 @@ func main() {
 	EnableKeyAgreement, _ := c.Bool("EnableKeyAgreement")
 	EnableSignature, _ := c.Bool("EnableSignature")
 	EnableSSL, _ := c.Bool("EnableSSL")
+	ConnectType := c.String("ConnectType")
 	//owtp.RandomPrivateKey()
 	cert, _ := owtp.NewCertificate(PrivateKey)
 
@@ -135,7 +136,7 @@ func main() {
 		openwsdk.CallbackModeNewConnection, openwsdk.CallbackNode{
 			NodeID:             api.NodeID(),
 			Address:            *address,
-			ConnectType:        owtp.Websocket,
+			ConnectType:        ConnectType,
 			EnableKeyAgreement: EnableKeyAgreement,
 			EnableSignature:    EnableSignature,
 		},

@@ -444,7 +444,7 @@ func TestAPINode_FindTradeLog(t *testing.T) {
 
 func TestAPINode_GetContracts(t *testing.T) {
 	api := testNewAPINode()
-	api.GetContracts("", 0, 1000, true,
+	api.GetContracts("TRX", "jKyfOtbSvdY57WhDZXJj885A4bs0np5eRdYcwS3ip2I=", 0, 1000, true,
 		func(status uint64, msg string, tokens []*TokenContract) {
 
 			for _, s := range tokens {

@@ -682,7 +682,7 @@ func (api *APINode) FindTradeLog(
 
 //GetContracts 获取智能合约
 func (api *APINode) GetContracts(
-	symbol string,
+	symbol, contractID string,
 	offset, limit int,
 	sync bool,
 	reqFunc func(status uint64, msg string, tokenContract []*TokenContract)) error {
@@ -690,10 +690,11 @@ func (api *APINode) GetContracts(
 		return fmt.Errorf("APINode is not inited")
 	}
 	params := map[string]interface{}{
-		"appID":  api.config.AppID,
-		"symbol": symbol,
-		"offset": offset,
-		"limit":  limit,
+		"appID":      api.config.AppID,
+		"symbol":     symbol,
+		"contractID": contractID,
+		"offset":     offset,
+		"limit":      limit,
 	}
 
 	return api.node.Call(HostNodeID, "getContracts", params, sync, func(resp owtp.Response) {

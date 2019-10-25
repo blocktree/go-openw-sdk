@@ -1123,3 +1123,100 @@ func (api *APINode) GetNotifierNodeInfo() (string, string, error) {
 
 	return pubKey, nodeId, nil
 }
+
+// FindWalletByParams 查询钱包列表
+func (api *APINode) FindWalletByParams(
+	params map[string]interface{},
+	offset int,
+	limit int,
+	sync bool,
+	reqFunc func(status uint64, msg string, wallets []*Wallet),
+) error {
+	if params == nil {
+		params = make(map[string]interface{})
+	}
+
+	params["appID"] = api.config.AppID
+	params["offset"] = offset
+	params["limit"] = limit
+	return api.node.Call(HostNodeID, "findWalletByParams", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		var wallets []*Wallet
+		array := data
+		if array.IsArray() {
+			for _, a := range array.Array() {
+				var wallet Wallet
+				err := json.Unmarshal([]byte(a.Raw), &wallet)
+				if err == nil {
+					wallets = append(wallets, &wallet)
+				}
+			}
+		}
+		reqFunc(resp.Status, resp.Msg, wallets)
+	})
+}
+
+// FindAccountByParams 根据条件查询账户列表
+func (api *APINode) FindAccountByParams(
+	params map[string]interface{},
+	offset int,
+	limit int,
+	sync bool,
+	reqFunc func(status uint64, msg string, accounts []*Account),
+) error {
+
+	if params == nil {
+		params = make(map[string]interface{})
+	}
+
+	params["appID"] = api.config.AppID
+	params["offset"] = offset
+	params["limit"] = limit
+	return api.node.Call(HostNodeID, "findAccountByParams", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		var accounts []*Account
+		array := data
+		if array.IsArray() {
+			for _, a := range array.Array() {
+				var account Account
+				err := json.Unmarshal([]byte(a.Raw), &account)
+				if err == nil {
+					accounts = append(accounts, &account)
+				}
+			}
+		}
+		reqFunc(resp.Status, resp.Msg, accounts)
+	})
+}
+
+// FindAddressByParams 过条件查询地址列表
+func (api *APINode) FindAddressByParams(
+	params map[string]interface{},
+	offset int,
+	limit int,
+	sync bool,
+	reqFunc func(status uint64, msg string, addresses []*Address),
+) error {
+	if params == nil {
+		params = make(map[string]interface{})
+	}
+
+	params["appID"] = api.config.AppID
+	params["offset"] = offset
+	params["limit"] = limit
+	return api.node.Call(HostNodeID, "findAddressByParams", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		var addresses []*Address
+		array := data
+		if array.IsArray() {
+			for _, a := range array.Array() {
+				var addr Address
+				err := json.Unmarshal([]byte(a.Raw), &addr)
+				if err == nil {
+					addresses = append(addresses, &addr)
+				}
+			}
+		}
+		reqFunc(resp.Status, resp.Msg, addresses)
+	})
+}

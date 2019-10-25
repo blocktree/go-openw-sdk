@@ -216,7 +216,7 @@ func (api *APINode) BindAppDevice() error {
 }
 
 //GetSymbolList 获取主链列表
-func (api *APINode) GetSymbolList(offset, limit, hasRole int, sync bool, reqFunc func(status uint64, msg string, total int, symbols []*Symbol)) error {
+func (api *APINode) GetSymbolList(symbol string, offset, limit, hasRole int, sync bool, reqFunc func(status uint64, msg string, total int, symbols []*Symbol)) error {
 
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
@@ -224,6 +224,7 @@ func (api *APINode) GetSymbolList(offset, limit, hasRole int, sync bool, reqFunc
 
 	params := map[string]interface{}{
 		"appID":   api.config.AppID,
+		"symbol":  symbol,
 		"offset":  offset,
 		"limit":   limit,
 		"hasRole": hasRole,

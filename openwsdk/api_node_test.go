@@ -699,3 +699,48 @@ func TestAPINode_GetNotifierNodeInfo(t *testing.T) {
 	log.Infof("pubKey: %s", pubKey)
 	log.Infof("nodeId: %s", nodeId)
 }
+
+func TestAPINode_FindAccountByParams(t *testing.T) {
+	api := testNewAPINode()
+	api.FindAccountByParams(nil, 0, 100, true,
+		func(status uint64, msg string, accounts []*Account) {
+			if status != owtp.StatusSuccess {
+				t.Errorf(msg)
+				return
+			}
+
+			for _, a := range accounts {
+				log.Infof("account: %+v", a)
+			}
+		})
+}
+
+func TestAPINode_FindWalletByParams(t *testing.T) {
+	api := testNewAPINode()
+	api.FindWalletByParams(nil, 0, 100, true,
+		func(status uint64, msg string, wallets []*Wallet) {
+			if status != owtp.StatusSuccess {
+				t.Errorf(msg)
+				return
+			}
+
+			for _, a := range wallets {
+				log.Infof("wallet: %+v", a)
+			}
+		})
+}
+
+func TestAPINode_FindAddressByParams(t *testing.T) {
+	api := testNewAPINode()
+	api.FindAddressByParams(nil, 0, 100, true,
+		func(status uint64, msg string, addresses []*Address) {
+			if status != owtp.StatusSuccess {
+				t.Errorf(msg)
+				return
+			}
+
+			for _, a := range addresses {
+				log.Infof("address: %+v", a)
+			}
+		})
+}

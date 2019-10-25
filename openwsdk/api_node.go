@@ -1132,7 +1132,13 @@ func (api *APINode) FindWalletByParams(
 	sync bool,
 	reqFunc func(status uint64, msg string, wallets []*Wallet),
 ) error {
+	if params == nil {
+		params = make(map[string]interface{})
+	}
+
 	params["appID"] = api.config.AppID
+	params["offset"] = offset
+	params["limit"] = limit
 	return api.node.Call(HostNodeID, "findWalletByParams", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
 		var wallets []*Wallet
@@ -1158,7 +1164,14 @@ func (api *APINode) FindAccountByParams(
 	sync bool,
 	reqFunc func(status uint64, msg string, accounts []*Account),
 ) error {
+
+	if params == nil {
+		params = make(map[string]interface{})
+	}
+
 	params["appID"] = api.config.AppID
+	params["offset"] = offset
+	params["limit"] = limit
 	return api.node.Call(HostNodeID, "findAccountByParams", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
 		var accounts []*Account
@@ -1184,7 +1197,13 @@ func (api *APINode) FindAddressByParams(
 	sync bool,
 	reqFunc func(status uint64, msg string, addresses []*Address),
 ) error {
+	if params == nil {
+		params = make(map[string]interface{})
+	}
+
 	params["appID"] = api.config.AppID
+	params["offset"] = offset
+	params["limit"] = limit
 	return api.node.Call(HostNodeID, "findAddressByParams", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
 		var addresses []*Address

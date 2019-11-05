@@ -530,6 +530,12 @@ func (api *APINode) CreateTrade(
 	}
 
 	return api.node.Call(HostNodeID, "createTrade", params, sync, func(resp owtp.Response) {
+
+		if resp.Status != owtp.StatusSuccess {
+			reqFunc(resp.Status, resp.Msg, nil)
+			return
+		}
+
 		data := resp.JsonData()
 		jsonRawTx := data.Get("rawTx")
 

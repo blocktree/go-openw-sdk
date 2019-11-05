@@ -137,7 +137,8 @@ func TestTransmitNode_SendTransactionViaTrustNode(t *testing.T) {
 		address := "TRJJ9Mq4aMjdmKWpTDJAgbYNoY2P9Facg5"
 
 		password := "12345678"
-		sid := uuid.New().String()
+		//sid := uuid.New().String()
+		sid := "2019110501"
 		log.Infof("sid: %s", sid)
 		transmitNode.SendTransactionViaTrustNode(nodeInfo.NodeID, accountID, password, sid,
 			"", "0.998", address, "", "",

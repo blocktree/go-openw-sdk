@@ -20,8 +20,8 @@ func init() {
 
 func testNewAPINode() *APINode {
 
-	//confFile := filepath.Join("conf", "node.ini")
-	confFile := filepath.Join("conf", "test.ini")
+	confFile := filepath.Join("conf", "node.ini")
+	//confFile := filepath.Join("conf", "test.ini")
 	c, err := config.NewConfig("ini", confFile)
 	if err != nil {
 		log.Error("NewConfig error:", err)
@@ -612,7 +612,7 @@ func TestAPINode_GetFeeRateList(t *testing.T) {
 }
 
 func TestAPINode_GetSymbolBlockList(t *testing.T) {
-	symbol := "BTC"
+	symbol := "BETH"
 	api := testNewAPINode()
 	api.GetSymbolBlockList(symbol, true,
 		func(status uint64, msg string, blockHeaders []*BlockHeader) {

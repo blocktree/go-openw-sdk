@@ -20,7 +20,7 @@ func init() {
 
 func testNewAPINode() *APINode {
 
-	confFile := filepath.Join("conf", "node.ini")
+	confFile := filepath.Join("conf", "test.ini")
 	//confFile := filepath.Join("conf", "test.ini")
 	c, err := config.NewConfig("ini", confFile)
 	if err != nil {

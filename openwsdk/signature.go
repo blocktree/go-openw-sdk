@@ -3,7 +3,7 @@ package openwsdk
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/blocktree/go-owcdrivers/signatureSet"
+	"github.com/blocktree/go-owcrypt"
 	"github.com/blocktree/openwallet/hdkeystore"
 )
 
@@ -30,9 +30,19 @@ func SignRawTransaction(rawTx *RawTransaction, key *hdkeystore.HDKey) error {
 
 				//签名交易
 				/////////交易单哈希签名
-				signature, err := signatureSet.SignTxHash(rawTx.Coin.Symbol, txHash, keyBytes, keySignature.EccType)
-				if err != nil {
-					return fmt.Errorf("transaction hash sign failed, unexpected error: %v", err)
+
+				//signature, err := signatureSet.SignTxHash(rawTx.Coin.Symbol, txHash, keyBytes, keySignature.EccType)
+				//if err != nil {
+				//	return fmt.Errorf("transaction hash sign failed, unexpected error: %v", err)
+				//}
+
+				signature, v, sigErr := owcrypt.Signature(keyBytes, nil, txHash, keySignature.EccType)
+				if sigErr != owcrypt.SUCCESS {
+					return fmt.Errorf("transaction hash sign failed")
+				}
+
+				if keySignature.RSV {
+					signature = append(signature, v)
 				}
 
 				//log.Debug("Signature:", txHash)

@@ -7,6 +7,7 @@ import (
 	"github.com/blocktree/openwallet/common/file"
 	"github.com/blocktree/openwallet/hdkeystore"
 	"github.com/blocktree/openwallet/log"
+	"github.com/blocktree/openwallet/openwallet"
 	"github.com/blocktree/openwallet/owtp"
 	"github.com/google/uuid"
 	"path/filepath"
@@ -20,7 +21,7 @@ func init() {
 
 func testNewAPINode() *APINode {
 
-	confFile := filepath.Join("conf", "test.ini")
+	confFile := filepath.Join("conf", "node.ini")
 	//confFile := filepath.Join("conf", "test.ini")
 	c, err := config.NewConfig("ini", confFile)
 	if err != nil {
@@ -92,7 +93,7 @@ func TestAPINode_BindAppDevice(t *testing.T) {
 
 func TestAPINode_GetSymbolList(t *testing.T) {
 	api := testNewAPINode()
-	api.GetSymbolList("BTC", 0, 1000, 0, true, func(status uint64, msg string, total int, symbols []*Symbol) {
+	api.GetSymbolList("", 0, 1000, 0, true, func(status uint64, msg string, total int, symbols []*Symbol) {
 		symbolStrArray := make([]string, 0)
 		for _, s := range symbols {
 			fmt.Printf("symbol: %+v\n", s)
@@ -243,7 +244,7 @@ func TestAPINode_FindAccountByWalletID(t *testing.T) {
 func TestAPINode_FindAccountByAccountID(t *testing.T) {
 	accountID := "6QvockspNbzxumH9soSL7PCerrsRsrfbqzC17Xs4Txhn"
 	api := testNewAPINode()
-	api.FindAccountByAccountID(accountID, 1, true,
+	api.FindAccountByAccountID(accountID, 0, true,
 		func(status uint64, msg string, a *Account) {
 
 			if status != owtp.StatusSuccess {
@@ -598,10 +599,6 @@ func TestAPINode_Send_TRC20(t *testing.T) {
 	}
 }
 
-func TestAPINode_CreateSummaryTx(t *testing.T) {
-
-}
-
 func TestAPINode_GetFeeRateList(t *testing.T) {
 	api := testNewAPINode()
 	api.GetFeeRateList(true, func(status uint64, msg string, feeRates []SupportFeeRate) {
@@ -743,4 +740,53 @@ func TestAPINode_FindAddressByParams(t *testing.T) {
 				log.Infof("address: %+v", a)
 			}
 		})
+}
+
+func TestAPINode_CreateSummaryTx(t *testing.T) {
+
+	var (
+		retErr         *openwallet.Error
+		retAccountInfo *Account
+		addressLimit = 200
+	)
+
+	api := testNewAPINode()
+	accountID := "FGAWc8mFXuRJpRJNBArvZ6W8v2sV4cpfYoPuJp9WCEPJ"
+	sumAddress := "HRywi4yTCjxf6CLwXFXzegr8w5wYAFdzui"
+	coin := Coin{
+		Symbol:     "HSS",
+		IsContract: false,
+	}
+
+	api.FindAccountByAccountID(accountID, 0, true,
+		func(status uint64, msg string, account *Account) {
+			if status != owtp.StatusSuccess {
+				retErr = openwallet.Errorf(status, msg)
+				return
+			}
+			retAccountInfo = account
+		})
+
+	if retErr != nil {
+		t.Errorf("error: %v", retErr)
+		return
+	}
+
+	log.Infof("total address = %d", retAccountInfo.AddressIndex + 1)
+
+	for i := 0; i <= int(retAccountInfo.AddressIndex); i = i + addressLimit {
+		sid := uuid.New().String()
+		log.Infof("Create Summary Transaction in address range [%d...%d]", i, i+addressLimit)
+		log.Infof("sid = %s", sid)
+		api.CreateSummaryTx(accountID, sumAddress, coin,
+			"", "0", "0",
+			i, addressLimit, 0,
+			sid, nil, "", true,
+			func(status uint64, msg string, rawTxs []*RawTransaction) {
+				for _, tx := range rawTxs {
+					log.Infof("tx: %+v", tx)
+				}
+			})
+	}
+
 }

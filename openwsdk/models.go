@@ -211,6 +211,7 @@ type ErrorMsg struct {
 
 type KeySignature struct {
 	EccType     uint32 `json:"eccType"`     //曲线类型
+	RSV         bool   `json:"rsv"`         //签名是否需要拼接V
 	Nonce       string `json:"nonce"`       //nonce
 	Address     string `json:"address"`     //提供签名的地址
 	Signature   string `json:"signed"`      //未花签名

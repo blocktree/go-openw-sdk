@@ -1227,3 +1227,17 @@ func (api *APINode) FindAddressByParams(
 	})
 }
 
+// VerifyAddress 地址校验
+func (api *APINode) VerifyAddress(symbol, address string, sync bool,
+	reqFunc func(status uint64, msg string, flag bool),
+) error {
+	params := make(map[string]interface{})
+
+	params["appID"] = api.config.AppID
+	params["symbol"] = symbol
+	params["address"] = address
+	return api.node.Call(HostNodeID, "verifyAddress", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		reqFunc(resp.Status, resp.Msg, data.Bool())
+	})
+}

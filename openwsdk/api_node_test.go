@@ -21,8 +21,8 @@ func init() {
 
 func testNewAPINode() *APINode {
 
-	confFile := filepath.Join("conf", "node.ini")
-	//confFile := filepath.Join("conf", "test.ini")
+	//confFile := filepath.Join("conf", "node.ini")
+	confFile := filepath.Join("conf", "test.ini")
 	c, err := config.NewConfig("ini", confFile)
 	if err != nil {
 		log.Error("NewConfig error:", err)
@@ -789,4 +789,19 @@ func TestAPINode_CreateSummaryTx(t *testing.T) {
 			})
 	}
 
+}
+
+func TestAPINode_VerifyAddress(t *testing.T) {
+	api := testNewAPINode()
+	symbol := "EOS"
+	address := "harrysunking"
+	api.VerifyAddress(symbol, address, true,
+		func(status uint64, msg string, flag bool) {
+			if status != owtp.StatusSuccess {
+				t.Errorf(msg)
+				return
+			}
+
+			log.Infof("flag: %v", flag)
+		})
 }

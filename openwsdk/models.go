@@ -63,6 +63,9 @@ type TrustNodeInfo struct {
 	NodeID      string `json:"nodeID"` //@required 节点ID
 	NodeName    string `json:"nodeName"`
 	ConnectType string `json:"connectType"`
+	Version     string `json:"version"`
+	GitRev      string `json:"gitRev"`
+	BuildTime   string `json:"buildTime"`
 }
 
 //SummarySetting 汇总设置信息

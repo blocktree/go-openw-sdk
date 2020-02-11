@@ -794,7 +794,7 @@ func TestAPINode_CreateSummaryTx(t *testing.T) {
 func TestAPINode_VerifyAddress(t *testing.T) {
 	api := testNewAPINode()
 	symbol := "EOS"
-	address := "harrysunking"
+	address := "hrt3arlcl354"
 	api.VerifyAddress(symbol, address, true,
 		func(status uint64, msg string, flag bool) {
 			if status != owtp.StatusSuccess {

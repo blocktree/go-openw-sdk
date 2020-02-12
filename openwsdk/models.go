@@ -119,6 +119,8 @@ type Symbol struct {
 	Icon         string `json:"icon"`
 	SupportMemo  uint64 `json:"supportMemo"`  //交易是否支持memo, 0: false, 1: true
 	OnlyContract uint64 `json:"onlyContract"` //支持合约代币, 0: false, 1: true
+	WithdrawStop int64  `json:"withdrawStop"`
+	BlockStop    int64  `json:"blockStop"`
 }
 
 type Account struct {

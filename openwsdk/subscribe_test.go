@@ -113,7 +113,7 @@ func TestAPINode_Call(t *testing.T) {
 	nodeID := "APINode_Listener"
 
 	config := owtp.ConnectConfig{
-		Address:            "47.244.96.187:10668",
+		Address:            "127.0.0.1:9322",
 		ConnectType:        owtp.HTTP,
 		EnableSSL:          false,
 		EnableKeyAgreement: true,

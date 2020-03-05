@@ -2,8 +2,8 @@ package openwsdk
 
 import (
 	"fmt"
-	"github.com/blocktree/openwallet/log"
-	"github.com/blocktree/openwallet/owtp"
+	"github.com/blocktree/openwallet/v2/log"
+	"github.com/blocktree/openwallet/v2/owtp"
 	"testing"
 )
 
@@ -43,6 +43,11 @@ func (s *Subscriber) OpenwBalanceUpdateNotify(balance *Balance, tokenBalance *To
 	log.Infof("Balance: %+v", tokenBalance.Balance)
 	log.Infof("subscribeToken: %s", subscribeToken)
 	log.Infof("---------------------------------")
+	return true, nil
+}
+
+//OpenwNewSmartContractReceiptNotify 智能合约交易回执通知
+func (s *Subscriber) OpenwNewSmartContractReceiptNotify(receipt *SmartContractReceipt, subscribeToken string) (bool, error) {
 	return true, nil
 }
 

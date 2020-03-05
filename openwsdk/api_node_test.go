@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"github.com/astaxie/beego/config"
 	"github.com/blocktree/go-owcrypt"
-	"github.com/blocktree/openwallet/common/file"
-	"github.com/blocktree/openwallet/hdkeystore"
-	"github.com/blocktree/openwallet/log"
-	"github.com/blocktree/openwallet/openwallet"
-	"github.com/blocktree/openwallet/owtp"
+	"github.com/blocktree/openwallet/v2/common/file"
+	"github.com/blocktree/openwallet/v2/hdkeystore"
+	"github.com/blocktree/openwallet/v2/log"
+	"github.com/blocktree/openwallet/v2/openwallet"
+	"github.com/blocktree/openwallet/v2/owtp"
 	"github.com/google/uuid"
 	"path/filepath"
 	"strings"
@@ -176,7 +176,7 @@ func TestAPINode_CreateAccount(t *testing.T) {
 	}
 
 	symbol := &Symbol{}
-	symbol.Coin = "TRX"
+	symbol.Coin = "QUORUM"
 	symbol.Curve = int64(owcrypt.ECC_CURVE_SECP256K1)
 
 	var findWallet *Wallet
@@ -242,7 +242,7 @@ func TestAPINode_FindAccountByWalletID(t *testing.T) {
 }
 
 func TestAPINode_FindAccountByAccountID(t *testing.T) {
-	accountID := "6QvockspNbzxumH9soSL7PCerrsRsrfbqzC17Xs4Txhn"
+	accountID := "5kTzFGuAH9UkB9yhZdmXtF8hGPh6iPt4hf8Q3DVy3Xo3"
 	api := testNewAPINode()
 	api.FindAccountByAccountID(accountID, 0, true,
 		func(status uint64, msg string, a *Account) {
@@ -308,7 +308,7 @@ func TestAPINode_FindAddressByAddress(t *testing.T) {
 }
 
 func TestAPINode_FindAddressByAccountID(t *testing.T) {
-	accountID := "6QvockspNbzxumH9soSL7PCerrsRsrfbqzC17Xs4Txhn"
+	accountID := "5kTzFGuAH9UkB9yhZdmXtF8hGPh6iPt4hf8Q3DVy3Xo3"
 	api := testNewAPINode()
 	api.FindAddressByAccountID(accountID, 0, 10, true,
 		func(status uint64, msg string, addresses []*Address) {
@@ -431,11 +431,11 @@ func TestAPINode_Send_LTC(t *testing.T) {
 }
 
 func TestAPINode_FindTradeLog(t *testing.T) {
-	walletID := "WFXtudgu9Q5ktpcfDPC8gVEbHF1t1QWiVV"
-	accountID := "9XXLQfJAC55S2PugGqoyhi7FLZeGrfgJSMN7JePj75Sf"
 	api := testNewAPINode()
-	api.FindTradeLog(walletID, accountID, "WICC", "c9534afcc6402df52d3d66aa29f34bb875f4d387e0fcac78db17f50384c532ba", "",
-		0, 0, 0, 0, 0, false, 0, 200, true,
+	param := map[string]interface{} {
+		"txid": "0x1f99030f19f5adefe522df1f3e2683ee7ad017d22cd1648292ac4d163201fbfa",
+	}
+	api.FindTradeLogByParams(param, true,
 		func(status uint64, msg string, tx []*Transaction) {
 			for i, value := range tx {
 				log.Infof("tx[%d]: %+v", i, value)
@@ -445,7 +445,7 @@ func TestAPINode_FindTradeLog(t *testing.T) {
 
 func TestAPINode_GetContracts(t *testing.T) {
 	api := testNewAPINode()
-	api.GetContracts("TRX", "jKyfOtbSvdY57WhDZXJj885A4bs0np5eRdYcwS3ip2I=", 0, 1000, true,
+	api.GetContracts("QUORUM", "", 0, 1000, true,
 		func(status uint64, msg string, tokens []*TokenContract) {
 
 			for _, s := range tokens {
@@ -747,7 +747,7 @@ func TestAPINode_CreateSummaryTx(t *testing.T) {
 	var (
 		retErr         *openwallet.Error
 		retAccountInfo *Account
-		addressLimit = 200
+		addressLimit   = 200
 	)
 
 	api := testNewAPINode()
@@ -772,7 +772,7 @@ func TestAPINode_CreateSummaryTx(t *testing.T) {
 		return
 	}
 
-	log.Infof("total address = %d", retAccountInfo.AddressIndex + 1)
+	log.Infof("total address = %d", retAccountInfo.AddressIndex+1)
 
 	for i := 0; i <= int(retAccountInfo.AddressIndex); i = i + addressLimit {
 		sid := uuid.New().String()
@@ -803,5 +803,122 @@ func TestAPINode_VerifyAddress(t *testing.T) {
 			}
 
 			log.Infof("flag: %v", flag)
+		})
+}
+
+func TestAPINode_CallSmartContractABI(t *testing.T) {
+	api := testNewAPINode()
+	accountID := "5kTzFGuAH9UkB9yhZdmXtF8hGPh6iPt4hf8Q3DVy3Xo3"
+	coin := Coin{
+		Symbol:     "QUORUM",
+		IsContract: true,
+		ContractID: "dl8WD7bM7xk4ZxRybuHCo3JDDtZn2ugPusapoKnQEWA=",
+	}
+	abiParam := []string{"balanceOf", "0xe6a9cc4fe66e7b726e3e8ef8e32c308ce74c0996"}
+	api.CallSmartContractABI(accountID, coin, abiParam, "", 0,
+		true, func(status uint64, msg string, callResult *SmartContractCallResult) {
+			if status != owtp.StatusSuccess {
+				t.Errorf(msg)
+				return
+			}
+
+			log.Infof("callResult: %+v", callResult)
+		})
+}
+
+func TestAPINode_FollowSmartContractRecepit(t *testing.T) {
+	api := testNewAPINode()
+	contracts := []string{"dl8WD7bM7xk4ZxRybuHCo3JDDtZn2ugPusapoKnQEWA="}
+	api.FollowSmartContractReceipt(contracts,
+		true, func(status uint64, msg string) {
+			log.Infof("status: %v, msg: %v", status, msg)
+		})
+}
+
+func TestAPINode_CreateSmartContractTrade(t *testing.T) {
+
+	var (
+		retRawTx  *SmartContractRawTransaction
+		retTx     []*SmartContractReceipt
+		retFailed []*FailureSmartContractLog
+		err       error
+		key       *hdkeystore.HDKey
+		accountID = "5kTzFGuAH9UkB9yhZdmXtF8hGPh6iPt4hf8Q3DVy3Xo3"
+		sid       = uuid.New().String()
+		coin      = Coin{
+			Symbol:     "QUORUM",
+			IsContract: true,
+			ContractID: "dl8WD7bM7xk4ZxRybuHCo3JDDtZn2ugPusapoKnQEWA=",
+		}
+		abiParam = []string{"transfer", "0x19a4b5d6ea319a5d5ad1d4cc00a5e2e28cac5ec3", "123"}
+	)
+
+	api := testNewAPINode()
+	api.CreateSmartContractTrade(sid, accountID, coin, abiParam, "", 1, "", "0", true,
+		func(status uint64, msg string, rawTx *SmartContractRawTransaction) {
+			if status != owtp.StatusSuccess {
+				err = fmt.Errorf(msg)
+				return
+			}
+			retRawTx = rawTx
+		})
+	log.Infof("rawTx: %+v", retRawTx)
+
+	key, err = testGetLocalKey()
+	if err != nil {
+		t.Logf("GetKey error: %v\n", err)
+		return
+	}
+
+	//签名交易单
+	signatures, signErr := SignTxHash(retRawTx.Signatures, key)
+	if signErr != nil {
+		t.Logf("SignRawTransaction unexpected error: %v\n", signErr)
+		return
+	}
+
+	retRawTx.Signatures = signatures
+
+	log.Infof("signed rawTx: %+v", retRawTx)
+
+	api.SubmitSmartContractTrade([]*SmartContractRawTransaction{retRawTx}, true,
+		func(status uint64, msg string, successTx []*SmartContractReceipt, failedRawTxs []*FailureSmartContractLog) {
+			if status != owtp.StatusSuccess {
+				err = fmt.Errorf(msg)
+				return
+			}
+
+			retTx = successTx
+			retFailed = failedRawTxs
+		})
+
+	log.Info("============== success ==============")
+
+	for _, tx := range retTx {
+		log.Infof("tx: %+v", tx)
+	}
+
+	log.Info("")
+
+	log.Info("============== fail ==============")
+
+	for _, tx := range retFailed {
+		log.Infof("tx: %+v", tx.Reason)
+	}
+}
+
+func TestAPINode_FindSmartContractReceiptByParams(t *testing.T) {
+	api := testNewAPINode()
+	param := map[string]interface{} {
+		"txid": "0x0b3b3099cd7c83a08b9a3d672632b0f87f654a61fa1376368ccc885f7d4476fd",
+	}
+	api.FindSmartContractReceiptByParams(param, true,
+		func(status uint64, msg string, receipts []*SmartContractReceipt) {
+			for i, value := range receipts {
+				log.Infof("receipt[%d]: %+v", i, value)
+				for i, event := range value.Events {
+					log.Std.Notice("events[%d]: %+v", i, event)
+				}
+			}
 		})
 }

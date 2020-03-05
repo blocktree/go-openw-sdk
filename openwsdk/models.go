@@ -4,9 +4,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/blocktree/openwallet/crypto"
-	"github.com/blocktree/openwallet/hdkeystore"
-	"github.com/blocktree/openwallet/openwallet"
+	"github.com/blocktree/openwallet/v2/crypto"
+	"github.com/blocktree/openwallet/v2/hdkeystore"
+	"github.com/blocktree/openwallet/v2/openwallet"
 	"github.com/tidwall/gjson"
 	"time"
 )
@@ -472,4 +472,70 @@ func GenTrustAddressID(address, symbol string) string {
 	plain := fmt.Sprintf("trustaddress_%s_%s", symbol, address)
 	id := base64.StdEncoding.EncodeToString(crypto.SHA256([]byte(plain)))
 	return id
+}
+
+// SmartContractCallResult 调用结果，不产生交易
+type SmartContractCallResult struct {
+	Method    string `json:"method"`    //调用方法
+	Value     string `json:"value"`     //json结果
+	RawHex    string `json:"rawHex"`    //16进制字符串结果
+	Status    uint64 `json:"status"`    //0：成功，1：失败
+	Exception string `json:"exception"` //异常错误
+}
+
+// SmartContractRawTransaction 智能合约原始交易单
+type SmartContractRawTransaction struct {
+	Coin       Coin                       `json:"coin"`      //@required 区块链类型标识
+	TxID       string                     `json:"txID"`      //交易单ID，广播后会生成
+	Sid        string                     `json:"sid"`       //@required 业务订单号，保证业务不重复交易而用
+	AccountID  string                     `json:"accountID"` //@required 创建交易单的账户
+	Signatures map[string][]*KeySignature `json:"sigParts"`  //拥有者accountID: []未花签名
+	Raw        string                     `json:"raw"`       //交易单调用参数，根据RawType填充数据
+	RawType    uint64                     `json:"rawType"`   // 0：hex字符串，1：json字符串，2：base64字符串
+	ABIParam   []string                   `json:"abiParam"`  //abi调用参数，[method, arg1, arg2, args...]
+	Value      string                     `json:"value"`     //主币数量
+	FeeRate    string                     `json:"feeRate"`   //自定义费率
+	Fees       string                     `json:"fees"`      //手续费
+}
+
+type SmartContractReceipt struct {
+	WxID         string                `json:"wxid" storm:"id"` //@required 通过GenTransactionWxID计算
+	TxID         string                `json:"txid"`            //@required
+	FromAddress  string                `json:"fromAddress"`     //@required 调用者
+	ToAddress    string                `json:"toAddress"`       //@required 调用地址，与合约地址一致
+	Value        string                `json:"value"`           //主币数量
+	Fees         string                `json:"fees"`            //手续费
+	Symbol       string                `json:"symbol"`          //主链标识
+	ContractID   string                `json:"contractID"`      //合约ID
+	ContractName string                `json:"contractName"`    //合约名字
+	ContractAddr string                `json:"contractAddr"`    //合约地址
+	BlockHash    string                `json:"blockHash"`       //@required
+	BlockHeight  uint64                `json:"blockHeight"`     //@required
+	IsMain       int64                 `json:"isMain"`          //1.区块数据正常 2.重扫或分叉状态
+	Applytime    int64                 `json:"applytime"`       //订单申请时间
+	SubmitTime   int64                 `json:"submitTime"`      //订单提交时间
+	Succtime     int64                 `json:"succtime"`        //订单处理成功时间
+	Dealstate    int64                 `json:"dealstate"`       //处理状态 1.未成功 2.已成功 3.已确认
+	Notifystate  int64                 `json:"notifystate"`     //通知状态 1.未通知 2.已通知
+	ConfirmTime  int64                 `json:"confirmTime"`     //订单确认时间
+	Status       string                `json:"status"`          //@required 链上状态，0：失败，1：成功
+	Success      string                `json:"success"`         //用于判断交易单链上的真实状态，0：失败，1：成功
+	RawReceipt   string                `json:"rawReceipt"`      //@required 原始交易回执，一般为json
+	Events       []*SmartContractEvent `json:"events"`          //@required 执行事件, 例如：event Transfer
+}
+
+// SmartContractEvent 事件记录
+type SmartContractEvent struct {
+	Symbol       string `json:"symbol"`       //主币类型
+	ContractID   string `json:"contractID"`   //合约ID
+	ContractName string `json:"contractName"` //合约名称
+	ContractAddr string `json:"contractAddr"` //合约地址
+	Event        string `json:"event"`        //记录事件
+	Value        string `json:"value"`        //结果参数，json字符串
+}
+
+// FailureSmartContractLog 广播失败的交易单
+type FailureSmartContractLog struct {
+	RawTx  *SmartContractRawTransaction `json:"rawTx"`
+	Reason string                       `json:"error"`
 }

@@ -3,12 +3,12 @@ package openwsdk
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/blocktree/openwallet/common"
-	"github.com/blocktree/openwallet/crypto"
-	"github.com/blocktree/openwallet/hdkeystore"
-	"github.com/blocktree/openwallet/log"
-	"github.com/blocktree/openwallet/openwallet"
-	"github.com/blocktree/openwallet/owtp"
+	"github.com/blocktree/openwallet/v2/common"
+	"github.com/blocktree/openwallet/v2/crypto"
+	"github.com/blocktree/openwallet/v2/hdkeystore"
+	"github.com/blocktree/openwallet/v2/log"
+	"github.com/blocktree/openwallet/v2/openwallet"
+	"github.com/blocktree/openwallet/v2/owtp"
 	"strconv"
 	"sync"
 	"time"
@@ -81,6 +81,7 @@ func NewAPINodeWithError(config *APINodeConfig) (*APINode, error) {
 	api.node.HandleFunc("subscribeToAccount", api.subscribeToAccount)
 	api.node.HandleFunc("subscribeToTrade", api.subscribeToTrade)
 	api.node.HandleFunc("subscribeToBlock", api.subscribeToBlock)
+	api.node.HandleFunc("subscribeToSmartContractReceipt", api.subscribeToSmartContractReceipt)
 
 	return &api, nil
 }
@@ -603,8 +604,6 @@ func (api *APINode) SubmitTrade(
 // new
 func (api *APINode) FindTradeLogByParams(
 	params map[string]interface{},
-	offset int,
-	limit int,
 	sync bool,
 	reqFunc func(status uint64, msg string, tx []*Transaction),
 ) error {
@@ -1240,4 +1239,165 @@ func (api *APINode) VerifyAddress(symbol, address string, sync bool,
 		data := resp.JsonData()
 		reqFunc(resp.Status, resp.Msg, data.Bool())
 	})
+}
+
+// CallSmartContractABI 调用智能合约ABI方法
+func (api *APINode) CallSmartContractABI(
+	accountID string,
+	coin Coin,
+	abiParam []string,
+	raw string,
+	rawType uint64,
+	sync bool, reqFunc func(status uint64, msg string, callResult *SmartContractCallResult),
+) error {
+	params := make(map[string]interface{})
+
+	params["appID"] = api.config.AppID
+	params["accountID"] = accountID
+	params["coin"] = coin
+	params["abiParam"] = abiParam
+	params["raw"] = raw
+	params["rawType"] = rawType
+	return api.node.Call(HostNodeID, "callSmartContractABI", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		var callResult SmartContractCallResult
+		err := json.Unmarshal([]byte(data.Raw), &callResult)
+		if err != nil {
+			reqFunc(openwallet.ErrUnknownException, err.Error(), nil)
+			return
+		}
+		reqFunc(resp.Status, resp.Msg, &callResult)
+	})
+}
+
+// CreateSmartContractTrade 创建智能合约交易单
+func (api *APINode) CreateSmartContractTrade(
+	sid string,
+	accountID string,
+	coin Coin,
+	abiParam []string,
+	raw string,
+	rawType uint64,
+	feeRate string,
+	value string,
+	sync bool, reqFunc func(status uint64, msg string, rawTx *SmartContractRawTransaction),
+) error {
+	params := make(map[string]interface{})
+
+	params["appID"] = api.config.AppID
+	params["sid"] = sid
+	params["accountID"] = accountID
+	params["coin"] = coin
+	params["abiParam"] = abiParam
+	params["raw"] = raw
+	params["rawType"] = rawType
+	params["feeRate"] = feeRate
+	params["value"] = value
+	return api.node.Call(HostNodeID, "createSmartContractTrade", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		var rawTx SmartContractRawTransaction
+		err := json.Unmarshal([]byte(data.Raw), &rawTx)
+		if err != nil {
+			reqFunc(openwallet.ErrUnknownException, err.Error(), nil)
+			return
+		}
+		reqFunc(resp.Status, resp.Msg, &rawTx)
+	})
+}
+
+//SubmitSmartContractTrade 广播转账交易订单
+func (api *APINode) SubmitSmartContractTrade(
+	rawTx []*SmartContractRawTransaction,
+	sync bool,
+	reqFunc func(status uint64, msg string, successTx []*SmartContractReceipt, failedRawTxs []*FailureSmartContractLog),
+) error {
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+	params := map[string]interface{}{
+		"appID": api.config.AppID,
+		"rawTx": rawTx,
+	}
+
+	return api.node.Call(HostNodeID, "submitSmartContractTrade", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		failedRawTxs := make([]*FailureSmartContractLog, 0)
+		failedArray := data.Get("failure")
+		if failedArray.IsArray() {
+			for _, failed := range failedArray.Array() {
+				var rawTx SmartContractRawTransaction
+				err := json.Unmarshal([]byte(failed.Get("rawTx").Raw), &rawTx)
+				if err == nil {
+					failedRawTx := &FailureSmartContractLog{
+						Reason: failed.Get("error").String(),
+						RawTx:  &rawTx,
+					}
+
+					failedRawTxs = append(failedRawTxs, failedRawTx)
+				}
+
+			}
+		}
+
+		var txs []*SmartContractReceipt
+		successArray := data.Get("success")
+		if successArray.IsArray() {
+			for _, a := range successArray.Array() {
+				var tx SmartContractReceipt
+				err := json.Unmarshal([]byte(a.Raw), &tx)
+				if err == nil {
+					txs = append(txs, &tx)
+				}
+			}
+		}
+
+		reqFunc(resp.Status, resp.Msg, txs, failedRawTxs)
+	})
+}
+
+// FindSmartContractReceiptByParams 获取智能合约交易回执
+func (api *APINode) FindSmartContractReceiptByParams(
+	params map[string]interface{},
+	sync bool,
+	reqFunc func(status uint64, msg string, receipts []*SmartContractReceipt),
+) error {
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+	params["appID"] = api.config.AppID
+	return api.node.Call(HostNodeID, "findSmartContractReceipt", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		var receipts []*SmartContractReceipt
+		array := data
+		if array.IsArray() {
+			for _, a := range array.Array() {
+				var receipt SmartContractReceipt
+				err := json.Unmarshal([]byte(a.Raw), &receipt)
+				if err == nil {
+					receipts = append(receipts, &receipt)
+				}
+			}
+		}
+		reqFunc(resp.Status, resp.Msg, receipts)
+	})
+
+}
+
+// FollowSmartContractReceipt 订阅要关注智能合约回执通知
+func (api *APINode) FollowSmartContractReceipt(
+	followContracts []string,
+	sync bool,
+	reqFunc func(status uint64, msg string),
+) error {
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+	params := map[string]interface{}{
+		"appID":           api.config.AppID,
+		"followContracts": followContracts,
+	}
+	return api.node.Call(HostNodeID, "followSmartContractReceipt", params, sync, func(resp owtp.Response) {
+		reqFunc(resp.Status, resp.Msg)
+	})
+
 }

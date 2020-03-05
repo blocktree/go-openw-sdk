@@ -17,8 +17,8 @@ package openwsdk
 
 import (
 	"fmt"
-	"github.com/blocktree/openwallet/log"
-	"github.com/blocktree/openwallet/owtp"
+	"github.com/blocktree/openwallet/v2/log"
+	"github.com/blocktree/openwallet/v2/owtp"
 )
 
 // ProxyNode 代理节点，用于承担转发客户端的请求到openw-server，返回结果给客户端

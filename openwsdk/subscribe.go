@@ -3,14 +3,15 @@ package openwsdk
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/blocktree/openwallet/log"
-	"github.com/blocktree/openwallet/owtp"
+	"github.com/blocktree/openwallet/v2/log"
+	"github.com/blocktree/openwallet/v2/owtp"
 )
 
 const (
-	SubscribeToAccount = "subscribeToAccount" //订阅余额更新通信
-	SubscribeToTrade   = "subscribeToTrade"   //订阅新交易单通知
-	SubscribeToBlock   = "subscribeToBlock"   //订阅新区块链头通知
+	SubscribeToAccount              = "subscribeToAccount"              //订阅余额更新通信
+	SubscribeToTrade                = "subscribeToTrade"                //订阅新交易单通知
+	SubscribeToBlock                = "subscribeToBlock"                //订阅新区块链头通知
+	SubscribeToSmartContractReceipt = "subscribeToSmartContractReceipt" //订阅智能合约交易回执通知
 )
 
 //OpenwNotificationObject openw-server的通知对象
@@ -24,6 +25,9 @@ type OpenwNotificationObject interface {
 
 	//OpenwBalanceUpdateNotify openw余额更新
 	OpenwBalanceUpdateNotify(balance *Balance, tokenBalance *TokenBalance, subscribeToken string) (bool, error)
+
+	//OpenwNewSmartContractReceiptNotify 智能合约交易回执通知
+	OpenwNewSmartContractReceiptNotify(receipt *SmartContractReceipt, subscribeToken string) (bool, error)
 }
 
 //ServeNotification 开启监听服务，接收通知
@@ -80,9 +84,9 @@ func (api *APINode) subscribeToAccount(ctx *owtp.Context) {
 	data := ctx.Params()
 
 	var (
-		msg string
+		msg      string
 		accepted bool
-		err error
+		err      error
 	)
 
 	if ctx.Peer.PID() != api.subscribeInfo.notifierNodeID {
@@ -174,6 +178,44 @@ func (api *APINode) subscribeToBlock(ctx *owtp.Context) {
 	} else {
 		for o, _ := range api.observers {
 			accepted, err = o.OpenwNewBlockNotify(&header, subscribeToken)
+			if err != nil {
+				msg = err.Error()
+				accepted = false
+			}
+			if accepted == false {
+				break
+			}
+		}
+	}
+
+	ctx.Response(map[string]interface{}{
+		"accepted": accepted,
+	}, owtp.StatusSuccess, msg)
+}
+
+//subscribeToSmartContractReceipt 处理新智能合约交易回执通知
+func (api *APINode) subscribeToSmartContractReceipt(ctx *owtp.Context) {
+	data := ctx.Params()
+
+	var msg string
+	var accepted bool
+	var receipt SmartContractReceipt
+
+	if ctx.Peer.PID() != api.subscribeInfo.notifierNodeID {
+		ctx.Response(map[string]interface{}{
+			"accepted": false,
+		}, owtp.StatusSuccess, msg)
+		log.Warningf("get smart contract receipt notify by unknown notifier NodeID: %s", ctx.Peer.PID())
+		return
+	}
+
+	subscribeToken := data.Get("subscribeToken").String()
+	err := json.Unmarshal([]byte(data.Raw), &receipt)
+	if err != nil {
+		accepted = false
+	} else {
+		for o, _ := range api.observers {
+			accepted, err = o.OpenwNewSmartContractReceiptNotify(&receipt, subscribeToken)
 			if err != nil {
 				msg = err.Error()
 				accepted = false

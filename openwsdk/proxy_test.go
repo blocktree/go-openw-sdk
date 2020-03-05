@@ -16,8 +16,8 @@
 package openwsdk
 
 import (
-	"github.com/blocktree/openwallet/log"
-	"github.com/blocktree/openwallet/owtp"
+	"github.com/blocktree/openwallet/v2/log"
+	"github.com/blocktree/openwallet/v2/owtp"
 	"testing"
 )
 
@@ -49,4 +49,3 @@ func TestAPINode_ServeProxyNode(t *testing.T) {
 
 	<-endRunning
 }
-

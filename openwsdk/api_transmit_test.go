@@ -3,8 +3,8 @@ package openwsdk
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/blocktree/openwallet/log"
-	"github.com/blocktree/openwallet/owtp"
+	"github.com/blocktree/openwallet/v2/log"
+	"github.com/blocktree/openwallet/v2/owtp"
 	"github.com/google/uuid"
 	"testing"
 	"time"

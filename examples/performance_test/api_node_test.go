@@ -3,9 +3,9 @@ package performance_test
 import (
 	"fmt"
 	"github.com/astaxie/beego/config"
-	"github.com/blocktree/go-openw-sdk/openwsdk"
-	"github.com/blocktree/openwallet/log"
-	"github.com/blocktree/openwallet/owtp"
+	"github.com/blocktree/go-openw-sdk/v2/openwsdk"
+	"github.com/blocktree/openwallet/v2/log"
+	"github.com/blocktree/openwallet/v2/owtp"
 	"path/filepath"
 	"reflect"
 	"runtime"

@@ -3,15 +3,15 @@ package main
 import (
 	"flag"
 	"github.com/astaxie/beego/config"
-	"github.com/blocktree/go-openw-sdk/openwsdk"
-	"github.com/blocktree/openwallet/log"
-	"github.com/blocktree/openwallet/owtp"
+	"github.com/blocktree/go-openw-sdk/v2/openwsdk"
+	"github.com/blocktree/openwallet/v2/log"
+	"github.com/blocktree/openwallet/v2/owtp"
 	"github.com/google/uuid"
 	"strings"
 )
 
 func init() {
-	owtp.Debug = true
+	owtp.Debug = false
 }
 
 type Subscriber struct {
@@ -30,7 +30,6 @@ func (s *Subscriber) OpenwNewTransactionNotify(transaction *openwsdk.Transaction
 	log.Infof("amount: %+v", transaction.Amount)
 	log.Infof("accountID: %+v", transaction.AccountID)
 	log.Infof("fees: %+v", transaction.Fees)
-	log.Infof("subscribeToken: %s", subscribeToken)
 	log.Infof("---------------------------------")
 	return true, nil
 }
@@ -57,6 +56,26 @@ func (s *Subscriber) OpenwBalanceUpdateNotify(balance *openwsdk.Balance, tokenBa
 	log.Infof("")
 	log.Infof("Token: %+v", tokenBalance.Token)
 	log.Infof("Balance: %+v", tokenBalance.Balance)
+	log.Infof("---------------------------------")
+	return true, nil
+}
+
+//OpenwNewSmartContractReceiptNotify 智能合约交易回执通知
+func (s *Subscriber) OpenwNewSmartContractReceiptNotify(receipt *openwsdk.SmartContractReceipt, subscribeToken string) (bool, error) {
+	log.Infof("OpenwNewSmartContractReceiptNotify")
+	log.Infof("---------------------------------")
+	log.Infof("subscribeToken: %s", subscribeToken)
+	log.Infof("Symbol: %+v", receipt.Symbol)
+	log.Infof("contractID: %+v", receipt.ContractID)
+	log.Infof("blockHash: %+v", receipt.BlockHash)
+	log.Infof("blockHeight: %+v", receipt.BlockHeight)
+	log.Infof("txid: %+v", receipt.TxID)
+	log.Infof("rawReceipt: %+v", receipt.RawReceipt)
+	log.Infof("value: %+v", receipt.Value)
+	log.Infof("fees: %+v", receipt.Fees)
+	for i, event := range receipt.Events {
+		log.Std.Notice("events[%d]: %+v", i, event)
+	}
 	log.Infof("---------------------------------")
 	return true, nil
 }
@@ -131,6 +150,7 @@ func main() {
 			openwsdk.SubscribeToTrade,
 			openwsdk.SubscribeToBlock,
 			openwsdk.SubscribeToAccount,
+			openwsdk.SubscribeToSmartContractReceipt,
 		},
 		":"+port,
 		openwsdk.CallbackModeNewConnection, openwsdk.CallbackNode{

@@ -597,3 +597,48 @@ func (transmit *TransmitNode) SignTransactionViaTrustNode(
 
 	})
 }
+
+//TriggerABIViaTrustNode 触发ABI上链调用
+func (transmit *TransmitNode) TriggerABIViaTrustNode(
+	nodeID string,
+	accountID string,
+	password string,
+	sid string,
+	contractAddress string,
+	amount string,
+	feeRate string,
+	abiParam []string,
+	sync bool,
+	reqFunc func(status uint64, msg string, receipt *SmartContractReceipt),
+) error {
+	if transmit == nil {
+		return fmt.Errorf("TransmitNode is not inited")
+	}
+
+	if p := transmit.node.GetOnlinePeer(nodeID); p == nil {
+		return fmt.Errorf("Node ID: %s is not connected ", nodeID)
+	}
+
+	params := map[string]interface{}{
+		"appID":           transmit.config.AppID,
+		"accountID":       accountID,
+		"password":        password,
+		"sid":             sid,
+		"contractAddress": contractAddress,
+		"amount":          amount,
+		"abiParam":        abiParam,
+		"feeRate":         feeRate,
+	}
+
+	return transmit.node.Call(nodeID, "triggerABIViaTrustNode", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		var receipt SmartContractReceipt
+		err := json.Unmarshal([]byte(data.Raw), &receipt)
+		if err != nil {
+			reqFunc(openwallet.ErrUnknownException, err.Error(), nil)
+			return
+		}
+
+		reqFunc(resp.Status, resp.Msg, &receipt)
+	})
+}

@@ -128,7 +128,6 @@ func TestAPINode_CreateWallet(t *testing.T) {
 		t.Logf("GetKey error: %v\n", err)
 		return
 	}
-
 	if err != nil {
 		t.Logf("unexpected error: %v\n", err)
 		return

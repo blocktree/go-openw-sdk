@@ -488,3 +488,22 @@ func TestTransmitNode_SignTransactionViaTrustNode(t *testing.T) {
 		}
 	})
 }
+
+func TestTransmitNode_TriggerABIViaTrustNode(t *testing.T) {
+
+	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
+
+		accountID := "7KgNQFx35ijMA43NgY89uaiwi9Tm4MH1PH68Kpnaqstu"
+		contractAddress := "0x550cdb1020046b3115a4f8ccebddfb28b66beb27"
+		abiParam := []string{"transfer", "0x19a4b5d6ea319a5d5ad1d4cc00a5e2e28cac5ec3", "3456"}
+		password := "12345678"
+		sid := uuid.New().String()
+		log.Infof("sid: %s", sid)
+		transmitNode.TriggerABIViaTrustNode(nodeInfo.NodeID, accountID, password, sid,
+			contractAddress, "0", "", abiParam,
+			true, func(status uint64, msg string, receipt *SmartContractReceipt) {
+				log.Infof("status: %d, msg: %s", status, msg)
+				log.Infof("receipt: %+v", receipt)
+			})
+	})
+}

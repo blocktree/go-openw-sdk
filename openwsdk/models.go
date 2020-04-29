@@ -485,17 +485,19 @@ type SmartContractCallResult struct {
 
 // SmartContractRawTransaction 智能合约原始交易单
 type SmartContractRawTransaction struct {
-	Coin       Coin                       `json:"coin"`      //@required 区块链类型标识
-	TxID       string                     `json:"txID"`      //交易单ID，广播后会生成
-	Sid        string                     `json:"sid"`       //@required 业务订单号，保证业务不重复交易而用
-	AccountID  string                     `json:"accountID"` //@required 创建交易单的账户
-	Signatures map[string][]*KeySignature `json:"sigParts"`  //拥有者accountID: []未花签名
-	Raw        string                     `json:"raw"`       //交易单调用参数，根据RawType填充数据
-	RawType    uint64                     `json:"rawType"`   // 0：hex字符串，1：json字符串，2：base64字符串
-	ABIParam   []string                   `json:"abiParam"`  //abi调用参数，[method, arg1, arg2, args...]
-	Value      string                     `json:"value"`     //主币数量
-	FeeRate    string                     `json:"feeRate"`   //自定义费率
-	Fees       string                     `json:"fees"`      //手续费
+	Coin         Coin                       `json:"coin"`         //@required 区块链类型标识
+	TxID         string                     `json:"txID"`         //交易单ID，广播后会生成
+	Sid          string                     `json:"sid"`          //@required 业务订单号，保证业务不重复交易而用
+	AccountID    string                     `json:"accountID"`    //@required 创建交易单的账户
+	Signatures   map[string][]*KeySignature `json:"sigParts"`     //拥有者accountID: []未花签名
+	Raw          string                     `json:"raw"`          //交易单调用参数，根据RawType填充数据
+	RawType      uint64                     `json:"rawType"`      // 0：hex字符串，1：json字符串，2：base64字符串
+	ABIParam     []string                   `json:"abiParam"`     //abi调用参数，[method, arg1, arg2, args...]
+	Value        string                     `json:"value"`        //主币数量
+	FeeRate      string                     `json:"feeRate"`      //自定义费率
+	Fees         string                     `json:"fees"`         //手续费
+	AwaitResult  bool                       `json:"awaitResult"`  //是否广播后同时等待结果
+	AwaitTimeout uint64                     `json:"awaitTimeout"` //广播后等待超时秒，0 = 默认超时90秒
 }
 
 type SmartContractReceipt struct {

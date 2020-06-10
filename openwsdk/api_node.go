@@ -78,6 +78,7 @@ func NewAPINodeWithError(config *APINodeConfig) (*APINode, error) {
 	//	}
 	//}
 
+	api.node.HandleFunc("checkNodeIsOnline", api.checkNodeIsOnline)
 	api.node.HandleFunc("subscribeToAccount", api.subscribeToAccount)
 	api.node.HandleFunc("subscribeToTrade", api.subscribeToTrade)
 	api.node.HandleFunc("subscribeToBlock", api.subscribeToBlock)

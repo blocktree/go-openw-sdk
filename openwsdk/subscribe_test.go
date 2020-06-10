@@ -1,7 +1,6 @@
 package openwsdk
 
 import (
-	"fmt"
 	"github.com/blocktree/openwallet/v2/log"
 	"github.com/blocktree/openwallet/v2/owtp"
 	"testing"
@@ -117,6 +116,7 @@ func TestAPINode_Call(t *testing.T) {
 		ConnectType:        owtp.HTTP,
 		EnableSSL:          false,
 		EnableKeyAgreement: true,
+		EnableSignature:    true,
 	}
 	wsClient := owtp.RandomOWTPNode()
 	_, err := wsClient.Connect(nodeID, config)
@@ -125,16 +125,8 @@ func TestAPINode_Call(t *testing.T) {
 		return
 	}
 
-	params := map[string]interface{}{
-		"name": "chance",
-		"age":  18,
-	}
-	//err = wsClient.Connect(wsHostNodeID, config)
-	err = wsClient.ConnectAndCall(nodeID, config, "subscribeToTrade", params, true, func(resp owtp.Response) {
-
-		result := resp.JsonData()
-		symbols := result.Get("symbols")
-		fmt.Printf("symbols: %v\n", symbols)
+	err = wsClient.ConnectAndCall(nodeID, config, "checkNodeIsOnline", nil, true, func(resp owtp.Response) {
+		t.Log(resp)
 	})
 
 	if err != nil {

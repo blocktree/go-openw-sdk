@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	owtp.Debug = false
+	owtp.Debug = true
 }
 
 type Subscriber struct {

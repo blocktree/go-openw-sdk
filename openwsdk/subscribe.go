@@ -230,3 +230,8 @@ func (api *APINode) subscribeToSmartContractReceipt(ctx *owtp.Context) {
 		"accepted": accepted,
 	}, owtp.StatusSuccess, msg)
 }
+
+
+func (api *APINode) checkNodeIsOnline(ctx *owtp.Context) {
+	ctx.Response(nil, owtp.StatusSuccess, "success")
+}

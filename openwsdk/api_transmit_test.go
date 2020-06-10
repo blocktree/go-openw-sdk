@@ -27,7 +27,7 @@ func testServeTransmitNode(f func(transmitNode *TransmitNode, nodeInfo *TrustNod
 
 	tn.SetConnectHandler(f)
 
-	time.Sleep(30 * time.Second)
+	time.Sleep(8 * time.Second)
 
 	return tn
 }
@@ -165,13 +165,13 @@ func TestTransmitNode_SetSummaryInfoViaTrustNode(t *testing.T) {
 	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
 
 		setting := &SummarySetting{
-			WalletID:        "WN84dVZXpgVixsvXnU8jkFWD1qWHp15LpA",
-			AccountID:       "3i26MQmtuWVVnw8GnRCVopG3pi8MaYU6RqWVV2E1hwJx",
-			SumAddress:      "mkdStRouBPVrDVpYmbE5VUJqhBgxJb3dSS",
+			WalletID:        "W3LxqTNAcXFqW7HGcTuERRLXKdNWu17Ccx",
+			AccountID:       "GfxqbJdTFgPZKHjtoZQcygdpcdSUCd8dj7gX7B5yvFoj",
+			SumAddress:      "0x50efe0a38381dfee9ab8947e81362199d3cf63d7",
 			Threshold:       "30",
 			MinTransfer:     "0.001",
 			RetainedBalance: "0",
-			Confirms:        1,
+			Confirms:        0,
 		}
 
 		transmitNode.SetSummaryInfoViaTrustNode(nodeInfo.NodeID, setting, true, func(status uint64, msg string) {

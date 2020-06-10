@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -294,7 +295,7 @@ func TestAPINode_CreateBatchAddress(t *testing.T) {
 }
 
 func TestAPINode_FindAddressByAddress(t *testing.T) {
-	addr := "mgCzMJDyJoqa6XE3RSdNGvD5Bi5VTWudRq"
+	addr := "1QGPMCCtXaop8C2J2mUf3DcofjYgiD8prd"
 	api := testNewAPINode()
 	api.FindAddressByAddress(addr, true,
 		func(status uint64, msg string, address *Address) {
@@ -431,7 +432,7 @@ func TestAPINode_Send_LTC(t *testing.T) {
 
 func TestAPINode_FindTradeLog(t *testing.T) {
 	api := testNewAPINode()
-	param := map[string]interface{} {
+	param := map[string]interface{}{
 		"txid": "0x1f99030f19f5adefe522df1f3e2683ee7ad017d22cd1648292ac4d163201fbfa",
 	}
 	api.FindTradeLogByParams(param, true,
@@ -633,12 +634,12 @@ func TestAPINode_GetAllTokenBalanceByAddress(t *testing.T) {
 func TestAPINode_ImportAccount(t *testing.T) {
 	account := &Account{
 		WalletID:     "WLN3hJo3NcsbWpsbBjezbJWoy7unZfcaGT",
-		AccountID:    "msa1qea6z8mzfspa3v894975r4gpgs7yfa6fptcmzgc2mnxlca5mtxpqw9fxc2",
-		Alias:        "mainnetXVG",
-		PublicKey:    "027a785253aef82a116072d622a57ee46cb8501fbfaf76dfe95ed1f1f91b3eed8f",
-		Symbol:       "XVG",
-		AccountIndex: 3,
-		HdPath:       "m/44'/88'/3'",
+		AccountID:    "msa1qea6z8mzfspa3v894975r4gpgs7yfa6fptcmzgc2mnxlca5mtxpqw9111111",
+		Alias:        "importBTC",
+		PublicKey:    "027a785253aef82a116072d622a57ee46cb8501fbfaf76dfe95ed1f1f91b3e1111",
+		Symbol:       "BTC",
+		AccountIndex: 16,
+		HdPath:       "m/44'/88'/16'",
 	}
 	api := testNewAPINode()
 	api.ImportAccount(account, true, func(status uint64, msg string, account *Account, addresses []*Address) {
@@ -660,12 +661,12 @@ func TestAPINode_ImportAccount(t *testing.T) {
 func TestAPINode_ImportBatchAddress(t *testing.T) {
 	api := testNewAPINode()
 	walletID := "WLN3hJo3NcsbWpsbBjezbJWoy7unZfcaGT"
-	accountID := "6uoJj3JUrLbn4tD9ijaqiruGoyaSHM6xjU3A8cMvcxv2"
+	accountID := "msa1qea6z8mzfspa3v894975r4gpgs7yfa6fptcmzgc2mnxlca5mtxpqw9111111"
 	addressAndPubs := map[string]string{
-		"abcm23094820940":  "kslfjlaxcvxvwe",
-		"abcm230948209402": "kslfjlaxcvxvwe2",
-		"abcm230948209403": "kslfjlaxcvxvwe3",
-		"abcm230948209404": "kslfjlaxcvxvwe4",
+		"1QGPMCCtXaop8C2J2mUf3DcofjYgiD8prd": "027a785253aef82a116072d622a57ee46cb8501fbfaf76dfe95ed1f1f91b3e1133",
+		//"abcm230948209402": "kslfjlaxcvxvwe2",
+		//"abcm230948209403": "kslfjlaxcvxvwe3",
+		//"abcm230948209404": "kslfjlaxcvxvwe4",
 	}
 	err := api.ImportBatchAddress(walletID, accountID, "", addressAndPubs, false, true,
 		func(status uint64, msg string, importAddresses []string) {
@@ -750,10 +751,10 @@ func TestAPINode_CreateSummaryTx(t *testing.T) {
 	)
 
 	api := testNewAPINode()
-	accountID := "FGAWc8mFXuRJpRJNBArvZ6W8v2sV4cpfYoPuJp9WCEPJ"
-	sumAddress := "HRywi4yTCjxf6CLwXFXzegr8w5wYAFdzui"
+	accountID := ""
+	sumAddress := ""
 	coin := Coin{
-		Symbol:     "HSS",
+		Symbol:     "",
 		IsContract: false,
 	}
 
@@ -783,7 +784,8 @@ func TestAPINode_CreateSummaryTx(t *testing.T) {
 			sid, nil, "", true,
 			func(status uint64, msg string, rawTxs []*RawTransaction) {
 				for _, tx := range rawTxs {
-					log.Infof("tx: %+v", tx)
+					log.Infof("from: %+v", tx.Signatures[accountID][0].Address)
+					//log.Infof("tx: %+v", tx)
 				}
 			})
 	}
@@ -877,6 +879,7 @@ func TestAPINode_CreateSmartContractTrade(t *testing.T) {
 	}
 
 	retRawTx.Signatures = signatures
+	retRawTx.AwaitResult = true
 
 	log.Infof("signed rawTx: %+v", retRawTx)
 
@@ -895,6 +898,10 @@ func TestAPINode_CreateSmartContractTrade(t *testing.T) {
 
 	for _, tx := range retTx {
 		log.Infof("tx: %+v", tx)
+
+		for i, event := range tx.Events {
+			log.Std.Notice("events[%d]: %+v", i, event)
+		}
 	}
 
 	log.Info("")
@@ -908,7 +915,7 @@ func TestAPINode_CreateSmartContractTrade(t *testing.T) {
 
 func TestAPINode_FindSmartContractReceiptByParams(t *testing.T) {
 	api := testNewAPINode()
-	param := map[string]interface{} {
+	param := map[string]interface{}{
 		"txid": "0x0b3b3099cd7c83a08b9a3d672632b0f87f654a61fa1376368ccc885f7d4476fd",
 	}
 	api.FindSmartContractReceiptByParams(param, true,
@@ -920,4 +927,97 @@ func TestAPINode_FindSmartContractReceiptByParams(t *testing.T) {
 				}
 			}
 		})
+}
+
+func TestAPINode_CreateSmartContractTradeMulti(t *testing.T) {
+
+	multiFunc := func() {
+
+		var (
+			retRawTx  *SmartContractRawTransaction
+			retTx     []*SmartContractReceipt
+			retFailed []*FailureSmartContractLog
+			err       error
+			key       *hdkeystore.HDKey
+			accountID = "5kTzFGuAH9UkB9yhZdmXtF8hGPh6iPt4hf8Q3DVy3Xo3"
+			sid       = uuid.New().String()
+			coin      = Coin{
+				Symbol:     "QUORUM",
+				IsContract: true,
+				ContractID: "dl8WD7bM7xk4ZxRybuHCo3JDDtZn2ugPusapoKnQEWA=",
+			}
+			abiParam = []string{"transfer", "0x19a4b5d6ea319a5d5ad1d4cc00a5e2e28cac5ec3", "123"}
+		)
+
+		api := testNewAPINode()
+		api.CreateSmartContractTrade(sid, accountID, coin, abiParam, "", 1, "", "0", true,
+			func(status uint64, msg string, rawTx *SmartContractRawTransaction) {
+				if status != owtp.StatusSuccess {
+					err = fmt.Errorf(msg)
+					return
+				}
+				retRawTx = rawTx
+			})
+		log.Infof("rawTx: %+v", retRawTx)
+
+		key, err = testGetLocalKey()
+		if err != nil {
+			t.Logf("GetKey error: %v\n", err)
+			return
+		}
+
+		//签名交易单
+		signatures, signErr := SignTxHash(retRawTx.Signatures, key)
+		if signErr != nil {
+			t.Logf("SignRawTransaction unexpected error: %v\n", signErr)
+			return
+		}
+
+		retRawTx.Signatures = signatures
+
+		log.Infof("signed rawTx: %+v", retRawTx)
+
+		api.SubmitSmartContractTrade([]*SmartContractRawTransaction{retRawTx}, true,
+			func(status uint64, msg string, successTx []*SmartContractReceipt, failedRawTxs []*FailureSmartContractLog) {
+				if status != owtp.StatusSuccess {
+					err = fmt.Errorf(msg)
+					return
+				}
+
+				retTx = successTx
+				retFailed = failedRawTxs
+			})
+
+		if len(retTx) > 0 {
+			log.Info("============== success ==============")
+
+			for _, tx := range retTx {
+				log.Infof("tx: %+v", tx)
+			}
+		}
+
+		log.Info("")
+
+		if len(retFailed) > 0 {
+			log.Info("============== fail ==============")
+
+			for _, tx := range retFailed {
+				log.Infof("tx: %+v", tx.Reason)
+			}
+		}
+
+	}
+
+	var wait sync.WaitGroup
+
+	for i := 0; i < 5; i++ {
+		wait.Add(1)
+		go func() {
+			multiFunc()
+			wait.Done()
+		}()
+	}
+
+	wait.Wait()
+
 }

@@ -242,7 +242,7 @@ func TestAPINode_FindAccountByWalletID(t *testing.T) {
 }
 
 func TestAPINode_FindAccountByAccountID(t *testing.T) {
-	accountID := "5kTzFGuAH9UkB9yhZdmXtF8hGPh6iPt4hf8Q3DVy3Xo3"
+	accountID := "Ey6MU7v5CdPbpy9Ph18d2v4HwgNAG6UDgQEFfKCRmUZE"
 	api := testNewAPINode()
 	api.FindAccountByAccountID(accountID, 0, true,
 		func(status uint64, msg string, a *Account) {
@@ -308,7 +308,7 @@ func TestAPINode_FindAddressByAddress(t *testing.T) {
 }
 
 func TestAPINode_FindAddressByAccountID(t *testing.T) {
-	accountID := "5kTzFGuAH9UkB9yhZdmXtF8hGPh6iPt4hf8Q3DVy3Xo3"
+	accountID := "Ey6MU7v5CdPbpy9Ph18d2v4HwgNAG6UDgQEFfKCRmUZE"
 	api := testNewAPINode()
 	api.FindAddressByAccountID(accountID, 0, 10, true,
 		func(status uint64, msg string, addresses []*Address) {
@@ -337,7 +337,7 @@ func testCreateTrade(
 	)
 
 	api := testNewAPINode()
-	api.CreateTrade(accountID, sid, coin, amount, address, feeRate, "", true,
+	api.CreateTrade(accountID, sid, coin, amount, address, feeRate, "", "", true,
 		func(status uint64, msg string, rawTx *RawTransaction) {
 			if status != owtp.StatusSuccess {
 				err = fmt.Errorf(msg)
@@ -927,6 +927,8 @@ func TestAPINode_FindSmartContractReceiptByParams(t *testing.T) {
 				}
 			}
 		})
+
+	api.OWTPNode().Close()
 }
 
 func TestAPINode_CreateSmartContractTradeMulti(t *testing.T) {

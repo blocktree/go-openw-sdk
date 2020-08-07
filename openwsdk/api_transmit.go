@@ -213,6 +213,7 @@ func (transmit *TransmitNode) SendTransactionViaTrustNode(
 	address string,
 	feeRate string,
 	memo string,
+	extParam string,
 	sync bool,
 	reqFunc func(status uint64, msg string, successTx []*Transaction, failedRawTxs []*FailedRawTransaction),
 ) error {
@@ -234,6 +235,7 @@ func (transmit *TransmitNode) SendTransactionViaTrustNode(
 		"address":         address,
 		"feeRate":         feeRate,
 		"memo":            memo,
+		"extParam":        extParam,
 	}
 
 	return transmit.node.Call(nodeID, "sendTransactionViaTrustNode", params, sync, func(resp owtp.Response) {
@@ -247,7 +249,6 @@ func (transmit *TransmitNode) SendTransactionViaTrustNode(
 				if err == nil {
 					failedRawTxs = append(failedRawTxs, &failedRawTx)
 				}
-
 			}
 		}
 

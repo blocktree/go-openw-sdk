@@ -133,14 +133,18 @@ func TestTransmitNode_SendTransactionViaTrustNode(t *testing.T) {
 		//accountID := "3i26MQmtuWVVnw8GnRCVopG3pi8MaYU6RqWVV2E1hwJx"
 		//address := "mgCzMJDyJoqa6XE3RSdNGvD5Bi5VTWudRq"
 
-		accountID := "AEeBZy321NzbLWPFkjyGfFyUn8hHX2g93f4wMBVumin4"
-		address := "TRJJ9Mq4aMjdmKWpTDJAgbYNoY2P9Facg5"
+		//accountID := "AEeBZy321NzbLWPFkjyGfFyUn8hHX2g93f4wMBVumin4"
+		//address := "TRJJ9Mq4aMjdmKWpTDJAgbYNoY2P9Facg5"
 
-		password := "12345678"
+		accountID := "Ey6MU7v5CdPbpy9Ph18d2v4HwgNAG6UDgQEFfKCRmUZE"
+		address := "V8aq1aCzKRZsqJb9Apsbdtm1wPkgtQXVdZ"
+
+		//password := "12345678"
+		password := "1234qwer"
 		sid := uuid.New().String()
 		log.Infof("sid: %s", sid)
 		transmitNode.SendTransactionViaTrustNode(nodeInfo.NodeID, accountID, password, sid,
-			"", "0.998", address, "", "",
+			"", "0.1234", address, "", "", "",
 			true, func(status uint64, msg string, successTx []*Transaction, failedRawTxs []*FailedRawTransaction) {
 				log.Infof("status: %d, msg: %s", status, msg)
 				log.Info("============== success ==============")
@@ -166,7 +170,7 @@ func TestTransmitNode_SetSummaryInfoViaTrustNode(t *testing.T) {
 
 		setting := &SummarySetting{
 			WalletID:        "W3LxqTNAcXFqW7HGcTuERRLXKdNWu17Ccx",
-			AccountID:       "GfxqbJdTFgPZKHjtoZQcygdpcdSUCd8dj7gX7B5yvFoj",
+			AccountID:       "3A7Q3nWRvMpQi7HWmSwd7gj8URXFXhLiNfuSoLU1YdUt",
 			SumAddress:      "0x50efe0a38381dfee9ab8947e81362199d3cf63d7",
 			Threshold:       "30",
 			MinTransfer:     "0.001",
@@ -425,7 +429,7 @@ func TestTransmitNode_SignTransactionViaTrustNode(t *testing.T) {
 		)
 
 		api, _ := transmitNode.APINode()
-		api.CreateTrade(accountID, sid, coin, "0.01", address, "", "", true,
+		api.CreateTrade(accountID, sid, coin, "0.01", address, "", "", "", true,
 			func(status uint64, msg string, rawTx *RawTransaction) {
 				if status != owtp.StatusSuccess {
 					err = fmt.Errorf(msg)

@@ -514,6 +514,7 @@ func (api *APINode) CreateTrade(
 	address string,
 	feeRate string,
 	memo string,
+	extParam string,
 	sync bool,
 	reqFunc func(status uint64, msg string, rawTx *RawTransaction),
 ) error {
@@ -529,6 +530,7 @@ func (api *APINode) CreateTrade(
 		"address":   address,
 		"feeRate":   feeRate,
 		"memo":      memo,
+		"extParam":  extParam,
 	}
 
 	return api.node.Call(HostNodeID, "createTrade", params, sync, func(resp owtp.Response) {

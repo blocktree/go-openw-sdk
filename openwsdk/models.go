@@ -306,9 +306,9 @@ type SummaryContractTask struct {
 
 type SummaryWalletTask struct {
 	WalletID string                `json:"walletID"`
-	Password string                `json:"password"`
+	Password string                `json:"password,omitempty"`
 	Accounts []*SummaryAccountTask `json:"accounts"`
-	Wallet   *Wallet
+	Wallet   *Wallet               `json:"wallet,omitempty"`
 }
 
 func NewSummaryWalletTask(result gjson.Result) *SummaryWalletTask {

@@ -264,7 +264,7 @@ func TestTransmitNode_StartSummaryTaskViaTrustNode(t *testing.T) {
 			return
 		}
 
-		transmitNode.StartSummaryTaskViaTrustNode(nodeInfo.NodeID, 120, &summaryTask, SummaryTaskOperateTypeReset,
+		transmitNode.StartSummaryTaskViaTrustNode(nodeInfo.NodeID, 10, &summaryTask, SummaryTaskOperateTypeReset,
 			true, func(status uint64, msg string) {
 				log.Infof("status: %d, msg: %+v", status, msg)
 			})

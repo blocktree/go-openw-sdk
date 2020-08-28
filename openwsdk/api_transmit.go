@@ -611,7 +611,6 @@ func (transmit *TransmitNode) TriggerABIViaTrustNode(
 	abiParam []string,
 	raw string,
 	rawType uint64,
-	value string,
 	sync bool,
 	reqFunc func(status uint64, msg string, receipt *SmartContractReceipt),
 ) error {

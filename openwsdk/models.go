@@ -181,9 +181,10 @@ type TokenContract struct {
 }
 
 type Coin struct {
-	Symbol     string `json:"symbol"`
-	IsContract bool   `json:"isContract"`
-	ContractID string `json:"contractID"`
+	Symbol          string `json:"symbol"`
+	IsContract      bool   `json:"isContract"`
+	ContractID      string `json:"contractID"`
+	ContractAddress string `json:"contractAddress"`
 }
 
 func NewCoin(result gjson.Result) *Coin {

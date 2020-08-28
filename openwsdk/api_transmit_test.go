@@ -504,7 +504,7 @@ func TestTransmitNode_TriggerABIViaTrustNode(t *testing.T) {
 		sid := uuid.New().String()
 		log.Infof("sid: %s", sid)
 		transmitNode.TriggerABIViaTrustNode(nodeInfo.NodeID, accountID, password, sid,
-			contractAddress, "0", "", abiParam,
+			contractAddress, "0", "", abiParam, "", 0,
 			true, func(status uint64, msg string, receipt *SmartContractReceipt) {
 				log.Infof("status: %d, msg: %s", status, msg)
 				log.Infof("receipt: %+v", receipt)

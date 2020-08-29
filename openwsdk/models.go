@@ -185,6 +185,7 @@ type Coin struct {
 	IsContract      bool   `json:"isContract"`
 	ContractID      string `json:"contractID"`
 	ContractAddress string `json:"contractAddress"`
+	ContractABI     string `json:"contractABI"`
 }
 
 func NewCoin(result gjson.Result) *Coin {

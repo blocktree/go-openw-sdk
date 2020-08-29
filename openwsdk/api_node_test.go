@@ -855,7 +855,7 @@ func TestAPINode_CreateSmartContractTrade(t *testing.T) {
 	)
 
 	api := testNewAPINode()
-	api.CreateSmartContractTrade(sid, accountID, coin, abiParam, "", 1, "", "0", true,
+	api.CreateSmartContractTrade(sid, accountID, coin, abiParam, "", 0, "", "1", true,
 		func(status uint64, msg string, rawTx *SmartContractRawTransaction) {
 			if status != owtp.StatusSuccess {
 				err = fmt.Errorf(msg)
@@ -952,7 +952,7 @@ func TestAPINode_CreateSmartContractTradeMulti(t *testing.T) {
 		)
 
 		api := testNewAPINode()
-		api.CreateSmartContractTrade(sid, accountID, coin, abiParam, "", 1, "", "0", true,
+		api.CreateSmartContractTrade(sid, accountID, coin, abiParam, "", 0, "", "0", true,
 			func(status uint64, msg string, rawTx *SmartContractRawTransaction) {
 				if status != owtp.StatusSuccess {
 					err = fmt.Errorf(msg)

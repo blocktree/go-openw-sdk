@@ -624,6 +624,7 @@ func (transmit *TransmitNode) TriggerABIViaTrustNode(
 	abiParam []string,
 	raw string,
 	rawType uint64,
+	awaitResult bool,
 	sync bool,
 	reqFunc func(status uint64, msg string, receipt *SmartContractReceipt),
 ) error {
@@ -647,6 +648,7 @@ func (transmit *TransmitNode) TriggerABIViaTrustNode(
 		"feeRate":         feeRate,
 		"raw":             raw,
 		"rawType":         rawType,
+		"awaitResult":     awaitResult,
 	}
 
 	return transmit.node.Call(nodeID, "triggerABIViaTrustNode", params, sync, func(resp owtp.Response) {

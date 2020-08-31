@@ -1274,6 +1274,16 @@ func (api *APINode) CallSmartContractABI(
 }
 
 // CreateSmartContractTrade 创建智能合约交易单
+// @param sid 必填 业务编号
+// @param accountID 必填 账户ID
+// @param coin 必填 币种信息
+// @param abiParam 可选 ABI参数组
+// @param raw 可选 原始交易单
+// @param rawType 可选 原始交易单编码类型，0：hex字符串，1：json字符串，2：base64字符串
+// @param feeRate 可选 自定义手续费率
+// @param value 可选 主币数量
+// @param sync 必填 是否同步线程
+// @param reqFunc 必填 回调函数处理
 func (api *APINode) CreateSmartContractTrade(
 	sid string,
 	accountID string,

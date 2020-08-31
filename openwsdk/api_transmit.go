@@ -599,7 +599,19 @@ func (transmit *TransmitNode) SignTransactionViaTrustNode(
 	})
 }
 
-//TriggerABIViaTrustNode 触发ABI上链调用
+// TriggerABIViaTrustNode 触发ABI上链调用
+// @param nodeID 必填 节点ID
+// @param accountID 必填 账户ID
+// @param password 可选 钱包解锁密码
+// @param contractAddress 必填 合约地址
+// @param contractABI 可选 ABI定义
+// @param amount 可选 主币数量
+// @param feeRate 可选 自定义手续费率
+// @param abiParam 可选 ABI参数组
+// @param raw 可选 原始交易单
+// @param rawType 可选 原始交易单编码类型，0：hex字符串，1：json字符串，2：base64字符串
+// @param sync 必填 是否同步线程
+//@param reqFunc 必填 回调函数处理
 func (transmit *TransmitNode) TriggerABIViaTrustNode(
 	nodeID string,
 	accountID string,
@@ -612,6 +624,7 @@ func (transmit *TransmitNode) TriggerABIViaTrustNode(
 	abiParam []string,
 	raw string,
 	rawType uint64,
+	awaitResult bool,
 	sync bool,
 	reqFunc func(status uint64, msg string, receipt *SmartContractReceipt),
 ) error {
@@ -635,6 +648,7 @@ func (transmit *TransmitNode) TriggerABIViaTrustNode(
 		"feeRate":         feeRate,
 		"raw":             raw,
 		"rawType":         rawType,
+		"awaitResult":     awaitResult,
 	}
 
 	return transmit.node.Call(nodeID, "triggerABIViaTrustNode", params, sync, func(resp owtp.Response) {

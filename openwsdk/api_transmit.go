@@ -663,3 +663,51 @@ func (transmit *TransmitNode) TriggerABIViaTrustNode(
 		reqFunc(resp.Status, resp.Msg, &receipt)
 	})
 }
+
+// SignHashViaTrustNode 通过节点签名哈希消息
+// @param walletID 必填 节点ID
+// @param accountID 必填 钱包ID
+// @param message 必填 账户ID
+// @param password 可选 钱包解锁密码
+// @param address 必填 地址
+// @param symbol 可选 主链标识
+// @param hdPath 可选 子密钥路径
+// @param sync 必填 是否同步线程
+//@param reqFunc 必填 回调函数处理
+func (transmit *TransmitNode) SignHashViaTrustNode(
+	nodeID string,
+	walletID string,
+	accountID string,
+	address string,
+	message string,
+	password string,
+	symbol string,
+	hdPath string,
+	sync bool,
+	reqFunc func(status uint64, msg string, signature string),
+) error {
+	if transmit == nil {
+		return fmt.Errorf("TransmitNode is not inited")
+	}
+
+	if p := transmit.node.GetOnlinePeer(nodeID); p == nil {
+		return fmt.Errorf("Node ID: %s is not connected ", nodeID)
+	}
+
+	params := map[string]interface{}{
+		"appID":     transmit.config.AppID,
+		"walletID":  walletID,
+		"accountID": accountID,
+		"address":   address,
+		"message":   message,
+		"password":  password,
+		"symbol":    symbol,
+		"hdPath":    hdPath,
+	}
+
+	return transmit.node.Call(nodeID, "signHashViaTrustNode", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		signature := data.Get("signature").String()
+		reqFunc(resp.Status, resp.Msg, signature)
+	})
+}

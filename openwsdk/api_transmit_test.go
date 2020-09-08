@@ -1,8 +1,10 @@
 package openwsdk
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/blocktree/go-owcrypt"
 	"github.com/blocktree/openwallet/v2/log"
 	"github.com/blocktree/openwallet/v2/owtp"
 	"github.com/google/uuid"
@@ -505,9 +507,44 @@ func TestTransmitNode_TriggerABIViaTrustNode(t *testing.T) {
 		log.Infof("sid: %s", sid)
 		transmitNode.TriggerABIViaTrustNode(nodeInfo.NodeID, accountID, password, sid,
 			contractAddress, "", "0", "", abiParam, "", 0,
-			true, func(status uint64, msg string, receipt *SmartContractReceipt) {
+			true, true, func(status uint64, msg string, receipt *SmartContractReceipt) {
 				log.Infof("status: %d, msg: %s", status, msg)
 				log.Infof("receipt: %+v", receipt)
+			})
+	})
+}
+
+
+func TestTransmitNode_SignHashViaTrustNode(t *testing.T) {
+
+	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
+
+		userMsg := "hello world"
+
+		//签名消息
+		//The sign method calculates an Ethereum specific signature with:
+		//sign(keccak256("\x19Ethereum Signed Message:\n" + len(message) + message))).
+		msg := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len([]byte(userMsg)), userMsg)
+		hash := owcrypt.Hash([]byte(msg), 0, owcrypt.HASH_ALG_KECCAK256)
+
+		walletID := "W3LxqTNAcXFqW7HGcTuERRLXKdNWu17Ccx"
+		accountID := "7KgNQFx35ijMA43NgY89uaiwi9Tm4MH1PH68Kpnaqstu"
+		address := "0xe6b21da9cfb6fc959e31db57a32d5cb680db4146"
+		password := "12345678"
+		symbol := "QUORUM"
+		hdPath := "m/44'/88'/4'/0/0"
+		transmitNode.SignHashViaTrustNode(
+			nodeInfo.NodeID,
+			walletID,
+			accountID,
+			address,
+			hex.EncodeToString(hash),
+			password,
+			symbol,
+			hdPath,
+			true, func(status uint64, msg string, signature string) {
+				log.Infof("status: %d, msg: %s", status, msg)
+				log.Infof("signature: %+v", signature)
 			})
 	})
 }

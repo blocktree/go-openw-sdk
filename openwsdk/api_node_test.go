@@ -729,7 +729,11 @@ func TestAPINode_FindWalletByParams(t *testing.T) {
 
 func TestAPINode_FindAddressByParams(t *testing.T) {
 	api := testNewAPINode()
-	api.FindAddressByParams(nil, 0, 100, true,
+	param := map[string]interface{}{
+		"walletIDs": []string{"W3LxqTNAcXFqW7HGcTuERRLXKdNWu17Ccx"},
+		"symbol": "QUORUM",
+	}
+	api.FindAddressByParams(param, 0, 100, true,
 		func(status uint64, msg string, addresses []*Address) {
 			if status != owtp.StatusSuccess {
 				t.Errorf(msg)
@@ -916,7 +920,7 @@ func TestAPINode_CreateSmartContractTrade(t *testing.T) {
 func TestAPINode_FindSmartContractReceiptByParams(t *testing.T) {
 	api := testNewAPINode()
 	param := map[string]interface{}{
-		"txid": "0x0b3b3099cd7c83a08b9a3d672632b0f87f654a61fa1376368ccc885f7d4476fd",
+		"txid": "0x3d266b3c7e9f09ab8484086fd7db082b5f4a9b756307a067b89bf91320e4edc4",
 	}
 	api.FindSmartContractReceiptByParams(param, true,
 		func(status uint64, msg string, receipts []*SmartContractReceipt) {

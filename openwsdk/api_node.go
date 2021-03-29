@@ -67,16 +67,10 @@ func NewAPINodeWithError(config *APINodeConfig) (*APINode, error) {
 		node:   node,
 		config: config,
 	}
-
 	api.observers = make(map[OpenwNotificationObject]bool)
 
-	//开启协商密码
-	//if config.EnableKeyAgreement {
-	//	if err := node.KeyAgreement(HostNodeID, "aes"); err != nil {
-	//		log.Error(err)
-	//		return nil, err
-	//	}
-	//}
+	// 设置重新加载配置回调
+	node.SetReloadPeerInfoHandler(api.getConnectCfg)
 
 	api.node.HandleFunc("checkNodeIsOnline", api.checkNodeIsOnline)
 	api.node.HandleFunc("subscribeToAccount", api.subscribeToAccount)
@@ -174,6 +168,22 @@ func (api *APINode) Subscribe(subscribeMethod []string, listenAddr string, callb
 	}
 
 	return nil
+}
+
+// getConnectCfg
+func (api *APINode) getConnectCfg(n *owtp.OWTPNode, peerID string) owtp.PeerInfo {
+	p := owtp.PeerInfo{}
+	if peerID == HostNodeID {
+		p.ID = peerID
+		p.Config = owtp.ConnectConfig{
+			Address:            api.config.Host,
+			ConnectType:        api.config.ConnectType,
+			EnableSSL:          api.config.EnableSSL,
+			EnableSignature:    api.config.EnableSignature,
+			EnableKeyAgreement: api.config.EnableKeyAgreement,
+		}
+	}
+	return p
 }
 
 //signAppDevice 生成登记节点的签名
@@ -534,6 +544,56 @@ func (api *APINode) CreateTrade(
 	}
 
 	return api.node.Call(HostNodeID, "createTrade", params, sync, func(resp owtp.Response) {
+
+		if resp.Status != owtp.StatusSuccess {
+			reqFunc(resp.Status, resp.Msg, nil)
+			return
+		}
+
+		data := resp.JsonData()
+		jsonRawTx := data.Get("rawTx")
+
+		var rawTx RawTransaction
+		err := json.Unmarshal([]byte(jsonRawTx.Raw), &rawTx)
+		if err != nil {
+			reqFunc(openwallet.ErrUnknownException, err.Error(), nil)
+			return
+		}
+
+		reqFunc(resp.Status, resp.Msg, &rawTx)
+	})
+}
+
+//CreateBatchTrade 创建批量转账交易订单
+func (api *APINode) CreateBatchTrade(
+	accountID string,
+	sid string,
+	coin Coin,
+	to map[string]string,
+	feeRate string,
+	memo string,
+	extParam string,
+	sync bool,
+	reqFunc func(status uint64, msg string, rawTx *RawTransaction),
+) error {
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+
+	address, _ := json.Marshal(to)
+
+	params := map[string]interface{}{
+		"appID":     api.config.AppID,
+		"accountID": accountID,
+		"sid":       sid,
+		"coin":      coin,
+		"address":   string(address),
+		"feeRate":   feeRate,
+		"memo":      memo,
+		"extParam":  extParam,
+	}
+
+	return api.node.Call(HostNodeID, "createBatchTrade", params, sync, func(resp owtp.Response) {
 
 		if resp.Status != owtp.StatusSuccess {
 			reqFunc(resp.Status, resp.Msg, nil)

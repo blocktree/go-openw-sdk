@@ -84,7 +84,25 @@ func SignTxHash(signatures map[string][]*KeySignature, key *hdkeystore.HDKey) (m
 		//log.Infof("accountID: %s", accountID)
 		if keySignatures != nil {
 			for _, keySignature := range keySignatures {
+				if keySignature.EccType == owcrypt.ECC_CURVE_BLS12381_G2_XMD_SHA_256_SSWU_RO_AUG {
 
+					childKey, err := key.DerivedKeyWithPath(keySignature.DerivedPath, keySignature.EccType)
+					keyBytes, err := childKey.GetPrivateKeyBytes()
+					if err != nil {
+						return nil,openwallet.NewError(openwallet.ErrSignRawTransactionFailed, err.Error())
+					}
+					message, err := hex.DecodeString(keySignature.Message)
+					if err != nil {
+						return  nil,err
+					}
+					key2 := Calculate_synthetic_secret_key(keyBytes)
+					signature, _, sigErr := owcrypt.Signature(key2, nil, message, keySignature.EccType)
+					if sigErr != owcrypt.SUCCESS {
+						return  nil,fmt.Errorf("transaction hash sign failed")
+					}
+					keySignature.Signature = hex.EncodeToString(signature)
+					continue
+				}
 				childKey, err := key.DerivedKeyWithPath(keySignature.DerivedPath, keySignature.EccType)
 				keyBytes, err := childKey.GetPrivateKeyBytes()
 				if err != nil {

@@ -98,7 +98,7 @@ func SignTxHash(signatures map[string][]*KeySignature, key *hdkeystore.HDKey) (m
 					key2 := Calculate_synthetic_secret_key(keyBytes)
 					signature, _, sigErr := owcrypt.Signature(key2, nil, message, keySignature.EccType)
 					if sigErr != owcrypt.SUCCESS {
-						return  nil,fmt.Errorf("transaction hash sign failed")
+						return  nil,fmt.Errorf("transaction hash sign failed："+keySignature.Message)
 					}
 					keySignature.Signature = hex.EncodeToString(signature)
 					continue

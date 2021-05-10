@@ -28,7 +28,14 @@ func SignRawTransaction(rawTx *RawTransaction, key *hdkeystore.HDKey) error {
 						return err
 					}
 					key2 := Calculate_synthetic_secret_key(keyBytes)
-					signature, _, sigErr := owcrypt.Signature(key2, nil, message, keySignature.EccType)
+					newKey := make([]byte,0)
+					if len(key2) != 32{
+						for i:=0 ;i< 32 - len(key2) ;i++{
+							newKey = append(newKey, 0)
+						}
+					}
+					newKey = append(newKey, key2...)
+					signature, _, sigErr := owcrypt.Signature(newKey, nil, message, keySignature.EccType)
 					if sigErr != owcrypt.SUCCESS {
 						return fmt.Errorf("transaction hash sign failed")
 					}
@@ -95,8 +102,16 @@ func SignTxHash(signatures map[string][]*KeySignature, key *hdkeystore.HDKey) (m
 					if err != nil {
 						return  nil,err
 					}
+
 					key2 := Calculate_synthetic_secret_key(keyBytes)
-					signature, _, sigErr := owcrypt.Signature(key2, nil, message, keySignature.EccType)
+					newKey := make([]byte,0)
+					if len(key2) != 32{
+						for i:=0 ;i< 32 - len(key2) ;i++{
+							newKey = append(newKey, 0)
+						}
+					}
+					newKey = append(newKey, key2...)
+					signature, _, sigErr := owcrypt.Signature(newKey, nil, message, keySignature.EccType)
 					if sigErr != owcrypt.SUCCESS {
 						return  nil,fmt.Errorf("transaction hash sign failed："+keySignature.Message)
 					}

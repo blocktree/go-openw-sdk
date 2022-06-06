@@ -8,7 +8,7 @@ require (
 	github.com/blocktree/go-owcrypt v1.1.7
 	github.com/blocktree/openwallet/v2 v2.1.0
 	github.com/google/uuid v1.1.1
-	github.com/tidwall/gjson v1.3.5
+	github.com/tidwall/gjson v1.9.3
 )
 
 //replace github.com/blocktree/go-owcdrivers => ../go-owcdrivers

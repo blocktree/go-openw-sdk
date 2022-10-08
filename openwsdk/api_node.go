@@ -215,13 +215,13 @@ func (api *APINode) BindAppDevice() error {
 
 	response, err := api.node.CallSync(HostNodeID, "bindAppDevice", params)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	if response.Status == owtp.StatusSuccess {
 		return nil
 	} else {
-		return fmt.Errorf("[%d]%s", response.Status, response.Msg)
+		panic(fmt.Errorf("[%d]%s", response.Status, response.Msg))
 	}
 
 	return nil

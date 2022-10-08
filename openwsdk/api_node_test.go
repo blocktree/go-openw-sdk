@@ -56,7 +56,6 @@ func testNewAPINode() *APINode {
 		return nil
 	}
 	api.BindAppDevice()
-
 	return api
 }
 
@@ -731,7 +730,7 @@ func TestAPINode_FindAddressByParams(t *testing.T) {
 	api := testNewAPINode()
 	param := map[string]interface{}{
 		"walletIDs": []string{"W3LxqTNAcXFqW7HGcTuERRLXKdNWu17Ccx"},
-		"symbol": "QUORUM",
+		"symbol":    "QUORUM",
 	}
 	api.FindAddressByParams(param, 0, 100, true,
 		func(status uint64, msg string, addresses []*Address) {

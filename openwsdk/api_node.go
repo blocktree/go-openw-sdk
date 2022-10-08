@@ -1,6 +1,9 @@
 package openwsdk
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/blocktree/openwallet/v2/common"
@@ -9,6 +12,7 @@ import (
 	"github.com/blocktree/openwallet/v2/log"
 	"github.com/blocktree/openwallet/v2/openwallet"
 	"github.com/blocktree/openwallet/v2/owtp"
+	"math/rand"
 	"strconv"
 	"sync"
 	"time"
@@ -186,11 +190,27 @@ func (api *APINode) getConnectCfg(n *owtp.OWTPNode, peerID string) owtp.PeerInfo
 	return p
 }
 
+// HmacSHA256 哈希hex结果
+func HmacSHA256(data, key []byte) string {
+	hmac := hmac.New(sha256.New, key)
+	hmac.Write(data)
+	return hex.EncodeToString(hmac.Sum([]byte(nil)))
+}
+
+func RandNonce() string {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	n := r.Int63n(99999999)
+	if n < 10000000 {
+		n += 10000000
+	}
+	return strconv.FormatInt(n, 10)
+}
+
 //signAppDevice 生成登记节点的签名
-func (api *APINode) signAppDevice(appID, nodID, appkey string, accessTime int64) string {
+func (api *APINode) signAppDevice(appID, nodID, nonce, appkey string, accessTime int64) string {
 	// 校验签名
-	plainText := fmt.Sprintf("%s.%s.%d.%s", appID, nodID, accessTime, appkey)
-	signature := crypto.GetMD5(plainText)
+	plainText := fmt.Sprintf("%s%s%s%d", appID, nodID, nonce, accessTime)
+	signature := HmacSHA256([]byte(plainText), []byte(appkey))
 	return signature
 }
 
@@ -204,11 +224,13 @@ func (api *APINode) BindAppDevice() error {
 
 	nodeID := api.config.Cert.ID()
 	accessTime := time.Now().UnixNano()
-	sig := api.signAppDevice(api.config.AppID, nodeID, api.config.AppKey, accessTime)
+	nonce := RandNonce()
+	sig := api.signAppDevice(api.config.AppID, nodeID, nonce, api.config.AppKey, accessTime)
 
 	params := map[string]interface{}{
 		"appID":      api.config.AppID,
 		"deviceID":   nodeID,
+		"nonce":      nonce,
 		"accessTime": accessTime,
 		"sign":       sig,
 	}

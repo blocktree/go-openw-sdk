@@ -311,11 +311,11 @@ func (api *APINode) FindWalletByWalletID(walletID string, sync bool, reqFunc fun
 		"appID":    api.config.AppID,
 		"walletID": walletID,
 	}
-
 	return api.node.Call(HostNodeID, "findWalletByWalletID", params, sync, func(resp owtp.Response) {
-		data := resp.JsonData()
 		var wallet Wallet
-		json.Unmarshal([]byte(data.Raw), &wallet)
+		if err := json.Unmarshal([]byte(resp.JsonData().Raw), &wallet); err != nil {
+			log.Error("json unmarshal failed: ", err)
+		}
 		reqFunc(resp.Status, resp.Msg, &wallet)
 	})
 }
@@ -340,70 +340,56 @@ func (api *APINode) CreateNormalAccount(
 		"reqSigs":      accountParam.ReqSigs,
 		"isTrust":      0,
 	}
-
 	return api.node.Call(HostNodeID, "createAccount", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
 		var account Account
-		json.Unmarshal([]byte(data.Get("account").Raw), &account)
-
-		var addresses []*Address
-		addressArray := data.Get("address")
-		if addressArray.IsArray() {
-			for _, a := range addressArray.Array() {
-				var addr Address
-				err := json.Unmarshal([]byte(a.Raw), &addr)
-				if err == nil {
-					addresses = append(addresses, &addr)
-				}
-			}
+		if err := json.Unmarshal([]byte(data.Get("account").Raw), &account); err != nil {
+			log.Error("json unmarshal failed: ", err)
 		}
-
+		var addresses []*Address
+		if err := json.Unmarshal([]byte(data.Get("addresses").Raw), &addresses); err != nil {
+			log.Error("json unmarshal failed: ", err)
+		}
 		reqFunc(resp.Status, resp.Msg, &account, addresses)
 	})
 }
 
 //FindAccountByAccountID 通过资产账户ID获取资产账户信息
-func (api *APINode) FindAccountByAccountID(accountID string, refresh int, sync bool, reqFunc func(status uint64, msg string, account *Account)) error {
+func (api *APINode) FindAccountByAccountID(symbol, accountID string, refresh int, sync bool, reqFunc func(status uint64, msg string, account *Account)) error {
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
 	}
 	params := map[string]interface{}{
 		"appID":     api.config.AppID,
+		"symbol":    symbol,
 		"accountID": accountID,
 		"refresh":   refresh,
 	}
-
 	return api.node.Call(HostNodeID, "findAccountByAccountID", params, sync, func(resp owtp.Response) {
-		data := resp.JsonData()
 		var account Account
-		json.Unmarshal([]byte(data.Raw), &account)
+		if err := json.Unmarshal([]byte(resp.JsonData().Raw), &account); err != nil {
+			log.Error("json unmarshal failed: ", err)
+		}
 		reqFunc(resp.Status, resp.Msg, &account)
 	})
 }
 
 //FindAccountByWalletID 通过钱包ID获取资产账户列表信息
-func (api *APINode) FindAccountByWalletID(walletID string, sync bool, reqFunc func(status uint64, msg string, accounts []*Account)) error {
+func (api *APINode) FindAccountByWalletID(symbol, walletID string, lastID, limit int64, sync bool, reqFunc func(status uint64, msg string, accounts []*Account)) error {
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
 	}
 	params := map[string]interface{}{
 		"appID":    api.config.AppID,
 		"walletID": walletID,
+		"symbol":   symbol,
+		"lastID":   lastID,
+		"limit":    limit,
 	}
-
 	return api.node.Call(HostNodeID, "findAccountByWalletID", params, sync, func(resp owtp.Response) {
-		data := resp.JsonData()
-
 		var accounts []*Account
-		accountArray := data
-		if accountArray.IsArray() {
-			for _, a := range accountArray.Array() {
-				var acc Account
-				err := json.Unmarshal([]byte(a.Raw), &acc)
-				if err == nil {
-					accounts = append(accounts, &acc)
-				}
-			}
+		if err := json.Unmarshal([]byte(resp.JsonData().Raw), &accounts); err != nil {
+			log.Error("json unmarshal failed: ", err)
 		}
 		reqFunc(resp.Status, resp.Msg, accounts)
 	})
@@ -411,6 +397,7 @@ func (api *APINode) FindAccountByWalletID(walletID string, sync bool, reqFunc fu
 
 //CreateAddress 创建资产账户的地址
 func (api *APINode) CreateAddress(
+	symbol string,
 	walletID string,
 	accountID string,
 	count uint64,
@@ -421,25 +408,15 @@ func (api *APINode) CreateAddress(
 	}
 	params := map[string]interface{}{
 		"appID":     api.config.AppID,
+		"symbol":    symbol,
 		"walletID":  walletID,
 		"accountID": accountID,
 		"count":     count,
 	}
-
 	return api.node.Call(HostNodeID, "createAddress", params, sync, func(resp owtp.Response) {
-		data := resp.JsonData()
-
 		var addresses []*Address
-		addressArray := data
-		if addressArray.IsArray() {
-			for _, a := range addressArray.Array() {
-				var addr Address
-				err := json.Unmarshal([]byte(a.Raw), &addr)
-				if err == nil {
-					addresses = append(addresses, &addr)
-				}
-			}
-
+		if err := json.Unmarshal([]byte(resp.JsonData().Raw), &addresses); err != nil {
+			log.Error("json unmarshal failed: ", err)
 		}
 		reqFunc(resp.Status, resp.Msg, addresses)
 	})
@@ -452,7 +429,6 @@ func (api *APINode) CreateBatchAddress(
 	count uint64,
 	sync bool,
 	reqFunc func(status uint64, msg string, addresses []string)) error {
-
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
 	}
@@ -462,7 +438,6 @@ func (api *APINode) CreateBatchAddress(
 		"accountID": accountID,
 		"count":     count,
 	}
-
 	return api.node.Call(HostNodeID, "createBatchAddress", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
 		var addresses []string
@@ -471,57 +446,47 @@ func (api *APINode) CreateBatchAddress(
 			for _, a := range addressArray.Array() {
 				addresses = append(addresses, a.String())
 			}
-
 		}
 		reqFunc(resp.Status, resp.Msg, addresses)
 	})
 }
 
 //FindAddressByAddress 通获取具体交易地址信息
-func (api *APINode) FindAddressByAddress(address string, sync bool, reqFunc func(status uint64, msg string, address *Address)) error {
+func (api *APINode) FindAddressByAddress(symbol, address string, sync bool, reqFunc func(status uint64, msg string, address *Address)) error {
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
 	}
 	params := map[string]interface{}{
 		"appID":   api.config.AppID,
+		"symbol":  symbol,
 		"address": address,
 	}
-
 	return api.node.Call(HostNodeID, "findAddressByAddress", params, sync, func(resp owtp.Response) {
-		data := resp.JsonData()
 		var address Address
-		json.Unmarshal([]byte(data.Raw), &address)
+		if err := json.Unmarshal([]byte(resp.JsonData().Raw), &address); err != nil {
+			log.Error("json unmarshal failed: ", err)
+		}
 		reqFunc(resp.Status, resp.Msg, &address)
 	})
 }
 
 //FindAccountByWalletID 通过资产账户ID获取交易地址列表
-func (api *APINode) FindAddressByAccountID(accountID string, offset int, limit int, sync bool, reqFunc func(status uint64, msg string, addresses []*Address)) error {
+func (api *APINode) FindAddressByAccountID(symbol, accountID string, lastID, limit int64, sync bool, reqFunc func(status uint64, msg string, addresses []*Address)) error {
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
 	}
 	params := map[string]interface{}{
 		"appID":     api.config.AppID,
+		"symbol":    symbol,
 		"accountID": accountID,
-		"offset":    offset,
+		"lastID":    lastID,
 		"limit":     limit,
 	}
-
 	return api.node.Call(HostNodeID, "findAddressByAccountID", params, sync, func(resp owtp.Response) {
-		data := resp.JsonData()
-
 		var addresses []*Address
-		array := data
-		if array.IsArray() {
-			for _, a := range array.Array() {
-				var addr Address
-				err := json.Unmarshal([]byte(a.Raw), &addr)
-				if err == nil {
-					addresses = append(addresses, &addr)
-				}
-			}
+		if err := json.Unmarshal([]byte(resp.JsonData().Raw), &addresses); err != nil {
+			log.Error("json unmarshal failed: ", err)
 		}
-
 		reqFunc(resp.Status, resp.Msg, addresses)
 	})
 }
@@ -531,8 +496,7 @@ func (api *APINode) CreateTrade(
 	accountID string,
 	sid string,
 	coin Coin,
-	amount string,
-	address string,
+	to map[string]string,
 	feeRate string,
 	memo string,
 	extParam string,
@@ -547,30 +511,24 @@ func (api *APINode) CreateTrade(
 		"accountID": accountID,
 		"sid":       sid,
 		"coin":      coin,
-		"amount":    amount,
-		"address":   address,
+		"to":        to,
 		"feeRate":   feeRate,
 		"memo":      memo,
 		"extParam":  extParam,
 	}
-
 	return api.node.Call(HostNodeID, "createTrade", params, sync, func(resp owtp.Response) {
-
 		if resp.Status != owtp.StatusSuccess {
 			reqFunc(resp.Status, resp.Msg, nil)
 			return
 		}
-
 		data := resp.JsonData()
 		jsonRawTx := data.Get("rawTx")
-
 		var rawTx RawTransaction
 		err := json.Unmarshal([]byte(jsonRawTx.Raw), &rawTx)
 		if err != nil {
 			reqFunc(openwallet.ErrUnknownException, err.Error(), nil)
 			return
 		}
-
 		reqFunc(resp.Status, resp.Msg, &rawTx)
 	})
 }
@@ -590,15 +548,12 @@ func (api *APINode) CreateBatchTrade(
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
 	}
-
-	address, _ := json.Marshal(to)
-
 	params := map[string]interface{}{
 		"appID":     api.config.AppID,
 		"accountID": accountID,
 		"sid":       sid,
 		"coin":      coin,
-		"address":   string(address),
+		"address":   to,
 		"feeRate":   feeRate,
 		"memo":      memo,
 		"extParam":  extParam,
@@ -638,39 +593,16 @@ func (api *APINode) SubmitTrade(
 		"appID": api.config.AppID,
 		"rawTx": rawTx,
 	}
-
 	return api.node.Call(HostNodeID, "submitTrade", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
-		failedRawTxs := make([]*FailedRawTransaction, 0)
-		failedArray := data.Get("failure")
-		if failedArray.IsArray() {
-			for _, failed := range failedArray.Array() {
-				var rawTx RawTransaction
-				err := json.Unmarshal([]byte(failed.Get("rawTx").Raw), &rawTx)
-				if err == nil {
-					failedRawTx := &FailedRawTransaction{
-						Reason: failed.Get("error").String(),
-						RawTx:  &rawTx,
-					}
-
-					failedRawTxs = append(failedRawTxs, failedRawTx)
-				}
-
-			}
+		var failedRawTxs []*FailedRawTransaction
+		if err := json.Unmarshal([]byte(data.Get("failure").Raw), &failedRawTxs); err != nil {
+			log.Error("json unmarshal failed: ", err)
 		}
-
 		var txs []*Transaction
-		successArray := data.Get("success")
-		if successArray.IsArray() {
-			for _, a := range successArray.Array() {
-				var tx Transaction
-				err := json.Unmarshal([]byte(a.Raw), &tx)
-				if err == nil {
-					txs = append(txs, &tx)
-				}
-			}
+		if err := json.Unmarshal([]byte(data.Get("success").Raw), &txs); err != nil {
+			log.Error("json unmarshal failed: ", err)
 		}
-
 		reqFunc(resp.Status, resp.Msg, txs, failedRawTxs)
 	})
 }
@@ -683,17 +615,9 @@ func (api *APINode) FindTradeLogByParams(
 ) error {
 	params["appID"] = api.config.AppID
 	return api.node.Call(HostNodeID, "findTradeLog", params, sync, func(resp owtp.Response) {
-		data := resp.JsonData()
 		var txs []*Transaction
-		array := data
-		if array.IsArray() {
-			for _, a := range array.Array() {
-				var tx Transaction
-				err := json.Unmarshal([]byte(a.Raw), &tx)
-				if err == nil {
-					txs = append(txs, &tx)
-				}
-			}
+		if err := json.Unmarshal([]byte(resp.JsonData().Raw), &txs); err != nil {
+			log.Error("json unmarshal failed: ", err)
 		}
 		reqFunc(resp.Status, resp.Msg, txs)
 	})
@@ -763,7 +687,7 @@ func (api *APINode) FindTradeLog(
 //GetContracts 获取智能合约
 func (api *APINode) GetContracts(
 	symbol, contractID string,
-	offset, limit int,
+	lastID, limit int,
 	sync bool,
 	reqFunc func(status uint64, msg string, tokenContract []*TokenContract)) error {
 	if api == nil {
@@ -773,46 +697,64 @@ func (api *APINode) GetContracts(
 		"appID":      api.config.AppID,
 		"symbol":     symbol,
 		"contractID": contractID,
-		"offset":     offset,
+		"lastID":     lastID,
 		"limit":      limit,
 	}
-
 	return api.node.Call(HostNodeID, "getContracts", params, sync, func(resp owtp.Response) {
-		data := resp.JsonData()
-		tokens := make([]*TokenContract, 0)
-		array := data.Get("contracts")
-		if array.IsArray() {
-			for _, s := range array.Array() {
-				var t TokenContract
-				err := json.Unmarshal([]byte(s.Raw), &t)
-				if err == nil {
-					tokens = append(tokens, &t)
-				}
-			}
+		var tokens []*TokenContract
+		if err := json.Unmarshal([]byte(resp.JsonData().Raw), &tokens); err != nil {
+			log.Error("json unmarshal failed: ", err)
 		}
-
 		reqFunc(resp.Status, resp.Msg, tokens)
 	})
 }
 
-//GetTokenBalanceByAccount 获取token余额接口
-func (api *APINode) GetTokenBalanceByAccount(
+//GetBalanceByAccount 获取accountID主币/合约余额
+func (api *APINode) GetBalanceByAccount(
+	symbol string,
 	accountID string,
 	contractID string,
 	sync bool,
-	reqFunc func(status uint64, msg string, balance *TokenBalance)) error {
+	reqFunc func(status uint64, msg string, balance *BalanceResult)) error {
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
 	}
 	params := map[string]interface{}{
 		"appID":      api.config.AppID,
+		"symbol":     symbol,
 		"accountID":  accountID,
-		"contractID": contractID,
+		"contractID": contractID, // 查询合约余额不能为空,如主币余额为空
 	}
+	return api.node.Call(HostNodeID, "getBalanceByAccount", params, sync, func(resp owtp.Response) {
+		balance := &BalanceResult{}
+		if err := json.Unmarshal([]byte(resp.JsonData().Raw), balance); err != nil {
+			log.Error("json unmarshal failed: ", err)
+		}
+		reqFunc(resp.Status, resp.Msg, balance)
+	})
+}
 
-	return api.node.Call(HostNodeID, "getTokenBalanceByAccount", params, sync, func(resp owtp.Response) {
-		data := resp.JsonData()
-		balance := NewTokenBalance(data)
+//GetBalanceByAddress 获取address主币/合约余额
+func (api *APINode) GetBalanceByAddress(
+	symbol string,
+	address string,
+	contractID string,
+	sync bool,
+	reqFunc func(status uint64, msg string, balance *BalanceResult)) error {
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+	params := map[string]interface{}{
+		"appID":      api.config.AppID,
+		"symbol":     symbol,
+		"address":    address,
+		"contractID": contractID, // 查询合约余额不能为空,如主币余额为空
+	}
+	return api.node.Call(HostNodeID, "getBalanceByAddress", params, sync, func(resp owtp.Response) {
+		balance := &BalanceResult{}
+		if err := json.Unmarshal([]byte(resp.JsonData().Raw), balance); err != nil {
+			log.Error("json unmarshal failed: ", err)
+		}
 		reqFunc(resp.Status, resp.Msg, balance)
 	})
 }
@@ -961,19 +903,11 @@ func (api *APINode) CreateSummaryTx(
 		"feesSupportAccount": feesSupportAccount,
 		"memo":               memo,
 	}
-
 	return api.node.Call(HostNodeID, "createSummaryTx", params, sync, func(resp owtp.Response) {
-
-		data := resp.JsonData()
 		rawTxs := make([]*RawTransaction, 0)
-		if data.IsArray() {
-			for _, jsonRawTx := range data.Array() {
-				var rawTx RawTransaction
-				json.Unmarshal([]byte(jsonRawTx.Raw), &rawTx)
-				rawTxs = append(rawTxs, &rawTx)
-			}
+		if err := json.Unmarshal([]byte(resp.JsonData().Raw), &rawTxs); err != nil {
+			log.Error("json unmarshal failed: ", err)
 		}
-
 		reqFunc(resp.Status, resp.Msg, rawTxs)
 	})
 }

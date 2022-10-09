@@ -104,8 +104,6 @@ type Wallet struct {
 	RootPath     string `json:"rootPath" bson:"rootPath"`
 	AccountIndex int64  `json:"accountIndex" bson:"accountIndex"`
 	Keystore     string `json:"keystore" bson:"keystore"`
-	Applytime    int64  `json:"applytime" bson:"applytime"`
-	Dealstate    int64  `json:"dealstate" bson:"dealstate"`
 }
 
 type Symbol struct {
@@ -128,50 +126,37 @@ type Symbol struct {
 }
 
 type Account struct {
-	AppID            string   `json:"appID" bson:"appID"`
-	WalletID         string   `json:"walletID" bson:"walletID"`
-	AccountID        string   `json:"accountID" bson:"accountID"`
-	Alias            string   `json:"alias" bson:"alias"`
-	Symbol           string   `json:"symbol" bson:"symbol"`
-	OtherOwnerKeys   []string `json:"otherOwnerKeys" bson:"otherOwnerKeys"`
-	ReqSigs          int64    `json:"reqSigs" bson:"reqSigs"`
-	IsTrust          int64    `json:"isTrust" bson:"isTrust"`
-	Password         string   `json:"password" bson:"password"`
-	PublicKey        string   `json:"publicKey" bson:"publicKey"`
-	HdPath           string   `json:"hdPath" bson:"hdPath"`
-	ContractAddress  string   `json:"contractAddress" bson:"contractAddress"`
-	AccountIndex     int64    `json:"accountIndex" bson:"accountIndex"`
-	Balance          string   `json:"balance" bson:"balance"`
-	ConfirmBalance   string   `json:"confirmBalance" bson:"confirmBalance"`
-	UnconfirmBalance string   `json:"unconfirmBalance" bson:"unconfirmBalance"`
-	ExtInfo          string   `json:"extInfo" bson:"extInfo"`
-	AddressIndex     int64    `json:"addressIndex" bson:"addressIndex"`
-	Applytime        int64    `json:"applytime" bson:"applytime"`
-	Dealstate        int64    `json:"dealstate" bson:"dealstate"`
+	AppID           string   `json:"appID" bson:"appID"`
+	WalletID        string   `json:"walletID" bson:"walletID"`
+	AccountID       string   `json:"accountID" bson:"accountID"`
+	Alias           string   `json:"alias" bson:"alias"`
+	Symbol          string   `json:"symbol" bson:"symbol"`
+	OtherOwnerKeys  []string `json:"otherOwnerKeys" bson:"otherOwnerKeys"`
+	ReqSigs         int64    `json:"reqSigs" bson:"reqSigs"`
+	IsTrust         int64    `json:"isTrust" bson:"isTrust"`
+	Password        string   `json:"password" bson:"password"`
+	PublicKey       string   `json:"publicKey" bson:"publicKey"`
+	HdPath          string   `json:"hdPath" bson:"hdPath"`
+	ContractAddress string   `json:"contractAddress" bson:"contractAddress"`
+	AccountIndex    int64    `json:"accountIndex" bson:"accountIndex"`
+	ExtInfo         string   `json:"extInfo" bson:"extInfo"`
+	AddressIndex    int64    `json:"addressIndex" bson:"addressIndex"`
 }
 
 type Address struct {
-	AppID            string `json:"appID" bson:"appID"`
-	WalletID         string `json:"walletID" bson:"walletID"`
-	AccountID        string `json:"accountID" bson:"accountID"`
-	Alias            string `json:"alias" bson:"alias"`
-	Symbol           string `json:"symbol" bson:"symbol"`
-	AddrIndex        int64  `json:"addrIndex" bson:"addrIndex"`
-	Address          string `json:"address" bson:"address"`
-	Balance          string `json:"balance" bson:"balance"`
-	ConfirmBalance   string `json:"confirmBalance" bson:"confirmBalance"`
-	UnconfirmBalance string `json:"unconfirmBalance" bson:"unconfirmBalance"`
-	IsMemo           int64  `json:"isMemo" bson:"isMemo"`
-	Memo             string `json:"memo" bson:"memo"`
-	WatchOnly        int64  `json:"watchOnly" bson:"watchOnly"`
-	PublicKey        string `json:"publicKey" bson:"publicKey"`
-	CreatedAt        int64  `json:"createdAt" bson:"createdAt"`
-	Num              int64  `json:"num" bson:"num"`
-	Tag              string `json:"tag" bson:"tag"`
-	HdPath           string `json:"hdPath" bson:"hdPath"`
-	IsChange         int64  `json:"isChange" bson:"isChange"`
-	Applytime        int64  `json:"applytime" bson:"applytime"`
-	Dealstate        int64  `json:"dealstate" bson:"dealstate"`
+	AppID     string `json:"appID" bson:"appID"`
+	WalletID  string `json:"walletID" bson:"walletID"`
+	AccountID string `json:"accountID" bson:"accountID"`
+	Alias     string `json:"alias" bson:"alias"`
+	Symbol    string `json:"symbol" bson:"symbol"`
+	AddrIndex int64  `json:"addrIndex" bson:"addrIndex"`
+	Address   string `json:"address" bson:"address"`
+	IsMemo    int64  `json:"isMemo" bson:"isMemo"`
+	Memo      string `json:"memo" bson:"memo"`
+	WatchOnly int64  `json:"watchOnly" bson:"watchOnly"`
+	PublicKey string `json:"publicKey" bson:"publicKey"`
+	HdPath    string `json:"hdPath" bson:"hdPath"`
+	IsChange  int64  `json:"isChange" bson:"isChange"`
 }
 
 type TokenContract struct {
@@ -237,8 +222,8 @@ type Transaction struct {
 	WalletID     string                 `json:"walletID" bson:"walletID"`
 	AccountID    string                 `json:"accountID" bson:"accountID"`
 	Sid          string                 `json:"sid" bson:"sid"`
-	Txid         string                 `json:"txid" bson:"txid"`
-	Wxid         string                 `json:"wxid" bson:"wxid"`
+	TxID         string                 `json:"txID" bson:"txID"`
+	WxID         string                 `json:"wxID" bson:"wxID"`
 	FromAddress  []string               `json:"fromAddress" bson:"fromAddress"`
 	FromAddressV []string               `json:"fromAddressV" bson:"fromAddressV"`
 	ToAddress    []string               `json:"toAddress" bson:"toAddress"`
@@ -273,11 +258,11 @@ type Transaction struct {
 }
 
 func (tx *Transaction) FromSID(n int) string {
-	return openwallet.GenTxInputSID(tx.Txid, tx.Symbol, tx.ContractID, uint64(n))
+	return openwallet.GenTxInputSID(tx.TxID, tx.Symbol, tx.ContractID, uint64(n))
 }
 
 func (tx *Transaction) ToSID(n int) string {
-	return openwallet.GenTxOutPutSID(tx.Txid, tx.Symbol, tx.ContractID, uint64(n))
+	return openwallet.GenTxOutPutSID(tx.TxID, tx.Symbol, tx.ContractID, uint64(n))
 }
 
 type FailedRawTransaction struct {
@@ -419,6 +404,20 @@ type TokenBalance struct {
 	Address    string
 	Balance    Balance
 	IsContract int64
+}
+
+type BalanceResult struct {
+	AppID            string `json:"appID,omitempty"`
+	WalletID         string `json:"walletID,omitempty"`
+	AccountID        string `json:"accountID,omitempty"`
+	Address          string `json:"address,omitempty"`
+	MainSymbol       string `json:"mainSymbol,omitempty"`
+	Symbol           string `json:"symbol,omitempty"`
+	ContractID       string `json:"contractID,omitempty"`
+	ContractAddr     string `json:"contractAddr,omitempty"`
+	Balance          string `json:"balance,omitempty"`
+	ConfirmBalance   string `json:"confirmBalance,omitempty"`
+	UnconfirmBalance string `json:"unconfirmBalance,omitempty"`
 }
 
 func NewTokenBalance(result gjson.Result) *TokenBalance {

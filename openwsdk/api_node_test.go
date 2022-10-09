@@ -97,7 +97,7 @@ func TestAPINode_GetSymbolList(t *testing.T) {
 		symbolStrArray := make([]string, 0)
 		for _, s := range symbols {
 			fmt.Printf("symbol: %+v\n", s)
-			symbolStrArray = append(symbolStrArray, s.Coin)
+			symbolStrArray = append(symbolStrArray, s.Symbol)
 		}
 		allSymbols := strings.Join(symbolStrArray, ", ")
 		log.Infof("all symbols: %s", allSymbols)
@@ -175,7 +175,7 @@ func TestAPINode_CreateAccount(t *testing.T) {
 	}
 
 	symbol := &Symbol{}
-	symbol.Coin = "QUORUM"
+	symbol.Symbol = "QUORUM"
 	symbol.Curve = int64(owcrypt.ECC_CURVE_SECP256K1)
 
 	var findWallet *Wallet

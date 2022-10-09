@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/blocktree/openwallet/v2/common"
-	"github.com/blocktree/openwallet/v2/crypto"
 	"github.com/blocktree/openwallet/v2/hdkeystore"
 	"github.com/blocktree/openwallet/v2/log"
 	"github.com/blocktree/openwallet/v2/openwallet"
@@ -264,22 +263,12 @@ func (api *APINode) GetSymbolList(symbol string, offset, limit, hasRole int, syn
 		"hasRole": hasRole,
 	}
 
-	return api.node.Call(HostNodeID, "getSymbolList", params, sync, func(resp owtp.Response) {
-		data := resp.JsonData()
-		symbols := make([]*Symbol, 0)
-		symbolArray := data.Get("symbols")
-		total := data.Get("total").Int()
-		if symbolArray.IsArray() {
-			for _, s := range symbolArray.Array() {
-				var sym Symbol
-				err := json.Unmarshal([]byte(s.Raw), &sym)
-				if err == nil {
-					symbols = append(symbols, &sym)
-				}
-			}
+	return api.node.Call(HostNodeID, "getSymbolBlockList", params, sync, func(resp owtp.Response) {
+		var result []*Symbol
+		if err := json.Unmarshal([]byte(resp.JsonData().Raw), &result); err != nil {
+			log.Error("json unmarshal failed: ", err)
 		}
-
-		reqFunc(resp.Status, resp.Msg, int(total), symbols)
+		reqFunc(resp.Status, resp.Msg, 0, nil)
 	})
 }
 
@@ -1102,30 +1091,6 @@ func (api *APINode) ImportAccount(
 	})
 }
 
-// BindDevice 绑定设备ID
-func (api *APINode) BindDevice(
-	deviceID string,
-	sync bool,
-	reqFunc func(status uint64, msg string)) error {
-	if api == nil {
-		return fmt.Errorf("APINode is not inited")
-	}
-	appID := api.config.AppID
-	appKey := api.config.AppKey
-	accessTime := time.Now().UnixNano() / 1e6
-	t := strconv.FormatInt(accessTime, 10)
-	sigStr := appID + "." + deviceID + "." + t + "." + appKey
-	params := map[string]interface{}{
-		"appID":      appID,
-		"deviceID":   deviceID,
-		"accessTime": accessTime,
-		"sign":       crypto.GetMD5(sigStr),
-	}
-	return api.node.Call(HostNodeID, "bindAppDevice", params, sync, func(resp owtp.Response) {
-		reqFunc(resp.Status, resp.Msg)
-	})
-}
-
 // ImportBatchAddress 批量导入地址
 func (api *APINode) ImportBatchAddress(
 	walletID, accountID, memo string,
@@ -1183,11 +1148,13 @@ func (api *APINode) GetNotifierNodeInfo() (string, string, error) {
 	)
 	appID := api.config.AppID
 	time := time.Now().UnixNano()
-	plainText := fmt.Sprintf("%s%d%s", appID, time, api.config.AppKey)
-	sign := crypto.GetMD5(plainText)
+	nonce := RandNonce()
+	plainText := fmt.Sprintf("%s%s%d", appID, nonce, time)
+	sign := HmacSHA256([]byte(plainText), []byte(api.config.AppKey))
 
 	params := map[string]interface{}{
 		"appID": appID,
+		"nonce": nonce,
 		"time":  time,
 		"sign":  sign,
 	}
@@ -1201,7 +1168,7 @@ func (api *APINode) GetNotifierNodeInfo() (string, string, error) {
 
 		data := resp.JsonData()
 		pubKey = data.Get("pubKey").String()
-		nodeId = data.Get("nodeId").String()
+		nodeId = data.Get("nodeID").String()
 	})
 	if err != nil {
 		return "", "", err

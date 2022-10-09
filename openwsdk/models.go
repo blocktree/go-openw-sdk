@@ -110,9 +110,10 @@ type Wallet struct {
 
 type Symbol struct {
 	Name         string `json:"name" bson:"name" storm:"id"`
-	Coin         string `json:"coin" bson:"coin"`
+	MainSymbol   string `json:"mainSymbol" bson:"mainSymbol"`
+	Symbol       string `json:"symbol" bson:"symbol"`
 	Curve        int64  `json:"curve" bson:"curve"`
-	Orderno      int64  `json:"orderno" bson:"orderno"`
+	OrderNo      int64  `json:"orderNo" bson:"orderNo"`
 	Confirm      int64  `json:"confirm" bson:"confirm"`
 	Decimals     int64  `json:"decimals" bson:"decimals"`
 	BalanceMode  uint64 `json:"balanceMode" bson:"balanceMode"`
@@ -121,6 +122,9 @@ type Symbol struct {
 	OnlyContract uint64 `json:"onlyContract"` //支持合约代币, 0: false, 1: true
 	WithdrawStop int64  `json:"withdrawStop"`
 	BlockStop    int64  `json:"blockStop"`
+	MaxHeight    int64  `json:"maxHeight"`
+	FeeRate      string `json:"feeRate"`
+	Unit         string `json:"unit"`
 }
 
 type Account struct {
@@ -363,7 +367,7 @@ func (wallet *Wallet) CreateAccount(alias string, symbol *Symbol, key *hdkeystor
 	)
 
 	account.Alias = alias
-	account.Symbol = symbol.Coin
+	account.Symbol = symbol.Symbol
 	account.ReqSigs = 1
 
 	newAccIndex := wallet.AccountIndex + 1

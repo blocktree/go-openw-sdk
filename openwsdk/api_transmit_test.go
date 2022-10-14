@@ -146,7 +146,7 @@ func TestTransmitNode_SendTransactionViaTrustNode(t *testing.T) {
 		sid := uuid.New().String()
 		log.Infof("sid: %s", sid)
 		transmitNode.SendTransactionViaTrustNode(nodeInfo.NodeID, accountID, password, sid,
-			"", "0.1234", address, "", "", "",
+			"ETH", "", "0.1234", address, "", "", "",
 			true, func(status uint64, msg string, successTx []*Transaction, failedRawTxs []*FailedRawTransaction) {
 				log.Infof("status: %d, msg: %s", status, msg)
 				log.Info("============== success ==============")
@@ -506,7 +506,7 @@ func TestTransmitNode_TriggerABIViaTrustNode(t *testing.T) {
 		sid := uuid.New().String()
 		log.Infof("sid: %s", sid)
 		transmitNode.TriggerABIViaTrustNode(nodeInfo.NodeID, accountID, password, sid,
-			contractAddress, "", "0", "", abiParam, "", 0,
+			"ETH", contractAddress, "", "0", "", abiParam, "", 0,
 			true, true, func(status uint64, msg string, receipt *SmartContractReceipt) {
 				log.Infof("status: %d, msg: %s", status, msg)
 				log.Infof("receipt: %+v", receipt)

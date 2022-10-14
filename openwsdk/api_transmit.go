@@ -54,7 +54,7 @@ func NewTransmitNode(config *APINodeConfig) (*TransmitNode, error) {
 	return t, nil
 }
 
-//APINode
+// APINode
 func (transmit *TransmitNode) APINode() (*APINode, error) {
 	if transmit.parent == nil {
 		return nil, fmt.Errorf("transmit node is not inited")
@@ -62,7 +62,7 @@ func (transmit *TransmitNode) APINode() (*APINode, error) {
 	return transmit.parent, nil
 }
 
-//OWTPNode
+// OWTPNode
 func (transmit *TransmitNode) OWTPNode() (*owtp.OWTPNode, error) {
 	if transmit.node == nil {
 		return nil, fmt.Errorf("transmit node is not inited")
@@ -70,7 +70,7 @@ func (transmit *TransmitNode) OWTPNode() (*owtp.OWTPNode, error) {
 	return transmit.node, nil
 }
 
-//Listen 启动监听
+// Listen 启动监听
 func (transmit *TransmitNode) Listen() {
 
 	//开启监听
@@ -82,17 +82,17 @@ func (transmit *TransmitNode) Listen() {
 	})
 }
 
-//Close 关闭监听
+// Close 关闭监听
 func (transmit *TransmitNode) Close() {
 	transmit.node.Close()
 }
 
-//SetConnectHandler 设置托管节点断开连接后的通知
+// SetConnectHandler 设置托管节点断开连接后的通知
 func (transmit *TransmitNode) SetConnectHandler(h func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo)) {
 	transmit.connectHandler = h
 }
 
-//SetDisconnectHandler 设置托管节点连接成功的通知
+// SetDisconnectHandler 设置托管节点连接成功的通知
 func (transmit *TransmitNode) SetDisconnectHandler(h func(transmitNode *TransmitNode, nodeID string)) {
 	transmit.disconnectHandler = h
 }
@@ -111,7 +111,7 @@ func (transmit *TransmitNode) newNodeJoin(ctx *owtp.Context) {
 	ctx.Response(nil, owtp.StatusSuccess, "success")
 }
 
-//GetTrustNodeInfo 获取授信的托管节点信息
+// GetTrustNodeInfo 获取授信的托管节点信息
 func (transmit *TransmitNode) GetTrustNodeInfo(nodeID string,
 	sync bool, reqFunc func(status uint64, msg string, nodeInfo *TrustNodeInfo)) error {
 
@@ -135,7 +135,7 @@ func (transmit *TransmitNode) GetTrustNodeInfo(nodeID string,
 	})
 }
 
-//CreateWalletViaTrustNode 指定节点，创建种子托管钱包
+// CreateWalletViaTrustNode 指定节点，创建种子托管钱包
 func (transmit *TransmitNode) CreateWalletViaTrustNode(nodeID, alias, password string,
 	sync bool, reqFunc func(status uint64, msg string, wallet *Wallet)) error {
 
@@ -161,7 +161,7 @@ func (transmit *TransmitNode) CreateWalletViaTrustNode(nodeID, alias, password s
 	})
 }
 
-//CreateAccountViaTrustNode 指定节点，创建种子托管钱包
+// CreateAccountViaTrustNode 指定节点，创建种子托管钱包
 func (transmit *TransmitNode) CreateAccountViaTrustNode(
 	nodeID, walletID, alias, password, symbol string, sync bool,
 	reqFunc func(status uint64, msg string, account *Account, addresses []*Address)) error {
@@ -202,12 +202,13 @@ func (transmit *TransmitNode) CreateAccountViaTrustNode(
 	})
 }
 
-//SendTransactionViaTrustNode 创建转账交易订单
+// SendTransactionViaTrustNode 创建转账交易订单
 func (transmit *TransmitNode) SendTransactionViaTrustNode(
 	nodeID string,
 	accountID string,
 	password string,
 	sid string,
+	symbol string,
 	contractAddress string,
 	amount string,
 	address string,
@@ -236,6 +237,7 @@ func (transmit *TransmitNode) SendTransactionViaTrustNode(
 		"feeRate":         feeRate,
 		"memo":            memo,
 		"extParam":        extParam,
+		"symbol":          symbol,
 	}
 
 	return transmit.node.Call(nodeID, "sendTransactionViaTrustNode", params, sync, func(resp owtp.Response) {
@@ -268,7 +270,7 @@ func (transmit *TransmitNode) SendTransactionViaTrustNode(
 	})
 }
 
-//SetSummaryInfoViaTrustNode 指定节点，设置汇总信息
+// SetSummaryInfoViaTrustNode 指定节点，设置汇总信息
 func (transmit *TransmitNode) SetSummaryInfoViaTrustNode(
 	nodeID string,
 	summarySetting *SummarySetting,
@@ -291,7 +293,7 @@ func (transmit *TransmitNode) SetSummaryInfoViaTrustNode(
 	})
 }
 
-//FindSummaryInfoByWalletIDViaTrustNode 指定节点，获取汇总设置信息
+// FindSummaryInfoByWalletIDViaTrustNode 指定节点，获取汇总设置信息
 func (transmit *TransmitNode) FindSummaryInfoByWalletIDViaTrustNode(
 	nodeID string,
 	walletID string,
@@ -357,7 +359,7 @@ func (transmit *TransmitNode) StartSummaryTaskViaTrustNode(
 	})
 }
 
-//StopSummaryTaskViaTrustNode 指定节点，停止汇总任务
+// StopSummaryTaskViaTrustNode 指定节点，停止汇总任务
 func (transmit *TransmitNode) StopSummaryTaskViaTrustNode(
 	nodeID string,
 	sync bool, reqFunc func(status uint64, msg string)) error {
@@ -378,7 +380,7 @@ func (transmit *TransmitNode) StopSummaryTaskViaTrustNode(
 	})
 }
 
-//UpdateInfo UpdateInfoViaTrustNode，更新主链信息和合约资料
+// UpdateInfo UpdateInfoViaTrustNode，更新主链信息和合约资料
 func (transmit *TransmitNode) UpdateInfoViaTrustNode(
 	nodeID string,
 	sync bool, reqFunc func(status uint64, msg string)) error {
@@ -399,7 +401,7 @@ func (transmit *TransmitNode) UpdateInfoViaTrustNode(
 	})
 }
 
-//AppendSummaryTaskViaTrustNode 指定节点，追加汇总任务
+// AppendSummaryTaskViaTrustNode 指定节点，追加汇总任务
 func (transmit *TransmitNode) AppendSummaryTaskViaTrustNode(
 	nodeID string,
 	summaryTask *SummaryTask,
@@ -422,7 +424,7 @@ func (transmit *TransmitNode) AppendSummaryTaskViaTrustNode(
 	})
 }
 
-//RemoveSummaryTaskViaTrustNode 指定节点，移除汇总任务
+// RemoveSummaryTaskViaTrustNode 指定节点，移除汇总任务
 func (transmit *TransmitNode) RemoveSummaryTaskViaTrustNode(
 	nodeID string,
 	walletID string,
@@ -447,7 +449,7 @@ func (transmit *TransmitNode) RemoveSummaryTaskViaTrustNode(
 	})
 }
 
-//GetCurrentSummaryTaskViaTrustNode 指定节点，获取当前的执行中的汇总任务
+// GetCurrentSummaryTaskViaTrustNode 指定节点，获取当前的执行中的汇总任务
 func (transmit *TransmitNode) GetCurrentSummaryTaskViaTrustNode(
 	nodeID string,
 	sync bool, reqFunc func(status uint64, msg string, summaryTask *SummaryTask)) error {
@@ -471,7 +473,7 @@ func (transmit *TransmitNode) GetCurrentSummaryTaskViaTrustNode(
 	})
 }
 
-//GetSummaryTaskLogViaTrustNode 指定节点，获取汇总日志列表
+// GetSummaryTaskLogViaTrustNode 指定节点，获取汇总日志列表
 func (transmit *TransmitNode) GetSummaryTaskLogViaTrustNode(
 	nodeID string,
 	offset int,
@@ -499,7 +501,7 @@ func (transmit *TransmitNode) GetSummaryTaskLogViaTrustNode(
 	})
 }
 
-//GetLocalWalletListViaTrustNode 指定节点，获取该节点创建的钱包
+// GetLocalWalletListViaTrustNode 指定节点，获取该节点创建的钱包
 func (transmit *TransmitNode) GetLocalWalletListViaTrustNode(
 	nodeID string,
 	sync bool, reqFunc func(status uint64, msg string, wallets []*Wallet)) error {
@@ -523,7 +525,7 @@ func (transmit *TransmitNode) GetLocalWalletListViaTrustNode(
 	})
 }
 
-//GetTrustAddressListViaTrustNode 指定节点，获取信任地址列表
+// GetTrustAddressListViaTrustNode 指定节点，获取信任地址列表
 func (transmit *TransmitNode) GetTrustAddressListViaTrustNode(
 	nodeID string,
 	symbol string,
@@ -554,7 +556,7 @@ func (transmit *TransmitNode) GetTrustAddressListViaTrustNode(
 	})
 }
 
-//SignTransactionViaTrustNode 指定节点，签名交易单
+// SignTransactionViaTrustNode 指定节点，签名交易单
 func (transmit *TransmitNode) SignTransactionViaTrustNode(
 	nodeID string,
 	walletID string,
@@ -611,12 +613,13 @@ func (transmit *TransmitNode) SignTransactionViaTrustNode(
 // @param raw 可选 原始交易单
 // @param rawType 可选 原始交易单编码类型，0：hex字符串，1：json字符串，2：base64字符串
 // @param sync 必填 是否同步线程
-//@param reqFunc 必填 回调函数处理
+// @param reqFunc 必填 回调函数处理
 func (transmit *TransmitNode) TriggerABIViaTrustNode(
 	nodeID string,
 	accountID string,
 	password string,
 	sid string,
+	symbol string,
 	contractAddress string,
 	contractABI string,
 	amount string,
@@ -649,6 +652,7 @@ func (transmit *TransmitNode) TriggerABIViaTrustNode(
 		"raw":             raw,
 		"rawType":         rawType,
 		"awaitResult":     awaitResult,
+		"symbol":          symbol,
 	}
 
 	return transmit.node.Call(nodeID, "triggerABIViaTrustNode", params, sync, func(resp owtp.Response) {
@@ -673,7 +677,7 @@ func (transmit *TransmitNode) TriggerABIViaTrustNode(
 // @param symbol 可选 主链标识
 // @param hdPath 可选 子密钥路径
 // @param sync 必填 是否同步线程
-//@param reqFunc 必填 回调函数处理
+// @param reqFunc 必填 回调函数处理
 func (transmit *TransmitNode) SignHashViaTrustNode(
 	nodeID string,
 	walletID string,

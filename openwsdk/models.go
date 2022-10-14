@@ -68,7 +68,7 @@ type TrustNodeInfo struct {
 	BuildTime   string `json:"buildTime"`
 }
 
-//SummarySetting 汇总设置信息
+// SummarySetting 汇总设置信息
 type SummarySetting struct {
 	WalletID        string `json:"walletID"`
 	AccountID       string `json:"accountID" storm:"id"`
@@ -78,6 +78,7 @@ type SummarySetting struct {
 	RetainedBalance string `json:"retainedBalance"`
 	Confirms        uint64 `json:"confirms"`
 	AddressLimit    uint64 `json:"addressLimit"`
+	Symbol          string `json:"symbol"`
 }
 
 func NewSummarySetting(result gjson.Result) *SummarySetting {
@@ -126,6 +127,7 @@ type Symbol struct {
 }
 
 type Account struct {
+	Id              int64    `json:"id" bson:"_id"`
 	AppID           string   `json:"appID" bson:"appID"`
 	WalletID        string   `json:"walletID" bson:"walletID"`
 	AccountID       string   `json:"accountID" bson:"accountID"`
@@ -144,6 +146,7 @@ type Account struct {
 }
 
 type Address struct {
+	Id        int64  `json:"id" bson:"_id"`
 	AppID     string `json:"appID" bson:"appID"`
 	WalletID  string `json:"walletID" bson:"walletID"`
 	AccountID string `json:"accountID" bson:"accountID"`
@@ -160,6 +163,7 @@ type Address struct {
 }
 
 type TokenContract struct {
+	Id         int64  `json:"id" bson:"_id"`
 	ContractID string `json:"contractID" bson:"contractID" storm:"id"`
 	Symbol     string `json:"symbol" bson:"symbol"` //主链标记
 	Name       string `json:"name" bson:"name"`
@@ -218,6 +222,7 @@ type KeySignature struct {
 }
 
 type Transaction struct {
+	Id           int64                  `json:"id" bson:"_id"`
 	AppID        string                 `json:"appID" bson:"appID"`
 	WalletID     string                 `json:"walletID" bson:"walletID"`
 	AccountID    string                 `json:"accountID" bson:"accountID"`
@@ -418,6 +423,7 @@ type BalanceResult struct {
 	Balance          string `json:"balance,omitempty"`
 	ConfirmBalance   string `json:"confirmBalance,omitempty"`
 	UnconfirmBalance string `json:"unconfirmBalance,omitempty"`
+	ContractToken    string `json:"contractToken"`
 }
 
 func NewTokenBalance(result gjson.Result) *TokenBalance {
@@ -444,6 +450,7 @@ type FeesSupportAccount struct {
 	FeesScale         string `json:"feesScale"`
 	IsTokenContract   bool   `json:"isTokenContract"` //手续费是否合约代币
 	ContractAddress   string `json:"contractAddress"` //合约地址
+	Symbol            string `json:"symbol"`
 }
 
 // support feeRate

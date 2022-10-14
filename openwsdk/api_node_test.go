@@ -175,7 +175,7 @@ func TestAPINode_CreateAccount(t *testing.T) {
 	}
 
 	symbol := &Symbol{}
-	symbol.Symbol = "QUORUM"
+	symbol.Symbol = "ETH"
 	symbol.Curve = int64(owcrypt.ECC_CURVE_SECP256K1)
 
 	var findWallet *Wallet
@@ -218,9 +218,9 @@ func TestAPINode_CreateAccount(t *testing.T) {
 }
 
 func TestAPINode_FindAccountByWalletID(t *testing.T) {
-	walletID := "W3LxqTNAcXFqW7HGcTuERRLXKdNWu17Ccx"
+	walletID := "W1iymivnBrjxtQdbm9esyheuy3mLeJWHto"
 	api := testNewAPINode()
-	api.FindAccountByWalletID("", walletID, 0, 0, true,
+	api.FindAccountByWalletID("ETH", walletID, 0, 0, true,
 		func(status uint64, msg string, accounts []*Account) {
 
 			if status != owtp.StatusSuccess {
@@ -228,6 +228,7 @@ func TestAPINode_FindAccountByWalletID(t *testing.T) {
 				return
 			}
 			for i, a := range accounts {
+				log.Infof("account[%d] ID:%v", i, a.Id)
 				log.Infof("account[%d] AccountID:%v", i, a.AccountID)
 				log.Infof("account[%d] Symbol:%v", i, a.Symbol)
 				log.Infof("account[%d] PublicKey:%v", i, a.PublicKey)

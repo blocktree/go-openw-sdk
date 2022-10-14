@@ -126,6 +126,7 @@ type Symbol struct {
 }
 
 type Account struct {
+	Id              int64    `json:"id" bson:"_id"`
 	AppID           string   `json:"appID" bson:"appID"`
 	WalletID        string   `json:"walletID" bson:"walletID"`
 	AccountID       string   `json:"accountID" bson:"accountID"`
@@ -144,6 +145,7 @@ type Account struct {
 }
 
 type Address struct {
+	Id        int64  `json:"id" bson:"_id"`
 	AppID     string `json:"appID" bson:"appID"`
 	WalletID  string `json:"walletID" bson:"walletID"`
 	AccountID string `json:"accountID" bson:"accountID"`
@@ -160,6 +162,7 @@ type Address struct {
 }
 
 type TokenContract struct {
+	Id         int64  `json:"id" bson:"_id"`
 	ContractID string `json:"contractID" bson:"contractID" storm:"id"`
 	Symbol     string `json:"symbol" bson:"symbol"` //主链标记
 	Name       string `json:"name" bson:"name"`
@@ -218,6 +221,7 @@ type KeySignature struct {
 }
 
 type Transaction struct {
+	Id           int64                  `json:"id" bson:"_id"`
 	AppID        string                 `json:"appID" bson:"appID"`
 	WalletID     string                 `json:"walletID" bson:"walletID"`
 	AccountID    string                 `json:"accountID" bson:"accountID"`

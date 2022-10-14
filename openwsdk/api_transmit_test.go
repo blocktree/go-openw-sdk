@@ -548,3 +548,49 @@ func TestTransmitNode_SignHashViaTrustNode(t *testing.T) {
 			})
 	})
 }
+
+func TestServeTransmitNode(t *testing.T) {
+
+	testRunTimeTask := func (tn *TransmitNode) {
+		for {
+			//log.Debugf("call time task")
+			nodeID := "2Thz4GfdwRqj4zmtfhqrzARWUP5FwFmzyFr68xaWKLXt"
+			tn.UpdateInfoViaTrustNode(nodeID, true,
+				func(status uint64, msg string) {
+					log.Infof("status: %v, msg: %v", status, msg)
+			})
+			time.Sleep(5 * time.Second)
+		}
+	}
+
+	api := testNewAPINode()
+	err := api.ServeTransmitNode("127.0.0.1:9088")
+	if err != nil {
+		log.Errorf("ServeTransmitNode error: %v\n", err)
+		return
+	}
+
+	tn, err := api.TransmitNode()
+	if err != nil {
+		log.Errorf("TransmitNode error: %v\n", err)
+		return
+	}
+
+	proxyNode, err := api.ServeProxyNode(":7088")
+	if err != nil {
+		log.Errorf("ServeProxyNode error: %v\n", err)
+		return
+	}
+
+	proxyNode.SetProxyRequestHandler(func(ctx *owtp.Context) bool {
+		return true
+	})
+
+	proxyNode.SetProxyResponseHandler(func(ctx *owtp.Context) bool {
+		return true
+	})
+
+	testRunTimeTask(tn)
+
+}
+

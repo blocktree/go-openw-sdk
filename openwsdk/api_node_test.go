@@ -22,8 +22,8 @@ func init() {
 
 func testNewAPINode() *APINode {
 
-	//confFile := filepath.Join("conf", "node.ini")
-	confFile := filepath.Join("conf", "test.ini")
+	confFile := filepath.Join("conf", "node.ini")
+	//confFile := filepath.Join("conf", "test.ini")
 	c, err := config.NewConfig("ini", confFile)
 	if err != nil {
 		log.Error("NewConfig error:", err)
@@ -176,7 +176,7 @@ func TestAPINode_CreateAccount(t *testing.T) {
 	}
 
 	symbol := &Symbol{}
-	symbol.Coin = "QUORUM"
+	symbol.Coin = "ETP"
 	symbol.Curve = int64(owcrypt.ECC_CURVE_SECP256K1)
 
 	var findWallet *Wallet
@@ -219,7 +219,7 @@ func TestAPINode_CreateAccount(t *testing.T) {
 }
 
 func TestAPINode_FindAccountByWalletID(t *testing.T) {
-	walletID := "W3LxqTNAcXFqW7HGcTuERRLXKdNWu17Ccx"
+	walletID := ""
 	api := testNewAPINode()
 	api.FindAccountByWalletID(walletID, true,
 		func(status uint64, msg string, accounts []*Account) {
@@ -295,7 +295,7 @@ func TestAPINode_CreateBatchAddress(t *testing.T) {
 }
 
 func TestAPINode_FindAddressByAddress(t *testing.T) {
-	addr := "1QGPMCCtXaop8C2J2mUf3DcofjYgiD8prd"
+	addr := "0xc21a2eb0eea50060efb9307627c6d0046ca57d8d"
 	api := testNewAPINode()
 	api.FindAddressByAddress(addr, true,
 		func(status uint64, msg string, address *Address) {
@@ -308,16 +308,16 @@ func TestAPINode_FindAddressByAddress(t *testing.T) {
 }
 
 func TestAPINode_FindAddressByAccountID(t *testing.T) {
-	accountID := "Ey6MU7v5CdPbpy9Ph18d2v4HwgNAG6UDgQEFfKCRmUZE"
+	accountID := "5qEpgFJFdbUQnQccXKyZoE8YBYoKSoHCgPCPVcy9mhVL"
 	api := testNewAPINode()
-	api.FindAddressByAccountID(accountID, 0, 10, true,
+	api.FindAddressByAccountID(accountID, 7200, 50, true,
 		func(status uint64, msg string, addresses []*Address) {
 
 			if status != owtp.StatusSuccess {
 				return
 			}
-			for i, a := range addresses {
-				log.Infof("Address[%d]:%+v", i, a)
+			for _, a := range addresses {
+				log.Infof("Address: %s, Index: %d", a.Address, a.AddrIndex)
 			}
 		})
 }
@@ -338,6 +338,33 @@ func testCreateTrade(
 
 	api := testNewAPINode()
 	api.CreateTrade(accountID, sid, coin, amount, address, feeRate, "", "", true,
+		func(status uint64, msg string, rawTx *RawTransaction) {
+			if status != owtp.StatusSuccess {
+				err = fmt.Errorf(msg)
+				return
+			}
+
+			retRawTx = rawTx
+		})
+
+	return retRawTx, err
+}
+
+func testCreateBatchTrade(
+	accountID string,
+	sid string,
+	coin Coin,
+	to map[string]string,
+	feeRate string,
+) (*RawTransaction, error) {
+
+	var (
+		retRawTx *RawTransaction
+		err      error
+	)
+
+	api := testNewAPINode()
+	api.CreateBatchTrade(accountID, sid, coin, to, feeRate, "", "", true,
 		func(status uint64, msg string, rawTx *RawTransaction) {
 			if status != owtp.StatusSuccess {
 				err = fmt.Errorf(msg)
@@ -631,6 +658,29 @@ func TestAPINode_GetAllTokenBalanceByAddress(t *testing.T) {
 		})
 }
 
+func TestAPINode_GetAllTokenBalanceOfAddressByAccountID(t *testing.T) {
+	accountID := "HDGv4GwxfRcGWZBn8Xfp3bJ4zJTTGrajWbjQrRTvMDsG"
+	api := testNewAPINode()
+	getAddrs := make([]*Address, 0)
+	api.FindAddressByAccountID(accountID, 800, 200, true,
+		func(status uint64, msg string, addresses []*Address) {
+
+			if status != owtp.StatusSuccess {
+				return
+			}
+			getAddrs = addresses
+		})
+	for _, a := range getAddrs {
+		api.GetAllTokenBalanceByAddress(accountID, a.Address, "XWC", true,
+			func(status uint64, msg string, balance []*TokenBalance) {
+				for _, b := range balance {
+					log.Infof("address: %s, index: %d, token: %s, balance: %s", a.Address, a.AddrIndex, b.Token, b.Balance.Balance)
+				}
+			})
+	}
+
+}
+
 func TestAPINode_ImportAccount(t *testing.T) {
 	account := &Account{
 		WalletID:     "WLN3hJo3NcsbWpsbBjezbJWoy7unZfcaGT",
@@ -730,18 +780,19 @@ func TestAPINode_FindWalletByParams(t *testing.T) {
 func TestAPINode_FindAddressByParams(t *testing.T) {
 	api := testNewAPINode()
 	param := map[string]interface{}{
-		"walletIDs": []string{"W3LxqTNAcXFqW7HGcTuERRLXKdNWu17Ccx"},
-		"symbol": "QUORUM",
+		"walletIDs":  []string{"WLVEGBFFSevB5tfsdgKPVGw9zFwccYtafn"},
+		"accountIDs": []string{"5qEpgFJFdbUQnQccXKyZoE8YBYoKSoHCgPCPVcy9mhVL"},
+		"symbol":     "BSC",
 	}
-	api.FindAddressByParams(param, 0, 100, true,
+	api.FindAddressByParams(param, 7250, 50, true,
 		func(status uint64, msg string, addresses []*Address) {
 			if status != owtp.StatusSuccess {
 				t.Errorf(msg)
 				return
 			}
-
+			log.Infof("total addresses: %d", len(addresses))
 			for _, a := range addresses {
-				log.Infof("address: %+v", a)
+				log.Infof("address: %s, index: %d", a.Address, a.AddrIndex)
 			}
 		})
 }
@@ -755,12 +806,21 @@ func TestAPINode_CreateSummaryTx(t *testing.T) {
 	)
 
 	api := testNewAPINode()
-	accountID := ""
-	sumAddress := ""
+	accountID := "HDGv4GwxfRcGWZBn8Xfp3bJ4zJTTGrajWbjQrRTvMDsG"
+	sumAddress := "XWCNjAfoTwK77dJw58VthU5YKKG9kUfLHvcbK"
 	coin := Coin{
-		Symbol:     "",
-		IsContract: false,
+		Symbol:          "XWC",
+		IsContract:      true,
+		ContractID:      "BJftiCFBOsJ3Vu54QfSHXnqwhDbTzQDzF+e62mUsBe8=",
+		ContractAddress: "1.3.0",
 	}
+
+	//feeSupport := &FeesSupportAccount{
+	//	AccountID:         "7dSaDccksuj75DEhtw3LwSCQbybRfVPhxPv8DGDD4M9o",
+	//	LowBalanceWarning: "0.001",
+	//	LowBalanceStop:    "0.0001",
+	//	FeesScale:         "2",
+	//}
 
 	api.FindAccountByAccountID(accountID, 0, true,
 		func(status uint64, msg string, account *Account) {
@@ -775,7 +835,10 @@ func TestAPINode_CreateSummaryTx(t *testing.T) {
 		t.Errorf("error: %v", retErr)
 		return
 	}
-
+	if retAccountInfo == nil {
+		t.Errorf("retAccountInfo is nil")
+		return
+	}
 	log.Infof("total address = %d", retAccountInfo.AddressIndex+1)
 
 	for i := 0; i <= int(retAccountInfo.AddressIndex); i = i + addressLimit {
@@ -784,12 +847,24 @@ func TestAPINode_CreateSummaryTx(t *testing.T) {
 		log.Infof("sid = %s", sid)
 		api.CreateSummaryTx(accountID, sumAddress, coin,
 			"", "0", "0",
-			i, addressLimit, 0,
+			i, addressLimit, 1,
 			sid, nil, "", true,
 			func(status uint64, msg string, rawTxs []*RawTransaction) {
+				if status != owtp.StatusSuccess {
+					log.Errorf(msg)
+					return
+				}
 				for _, tx := range rawTxs {
-					log.Infof("from: %+v", tx.Signatures[accountID][0].Address)
-					//log.Infof("tx: %+v", tx)
+					//log.Infof("from: %+v", tx.Signatures[accountID][0].Address)
+					log.Infof("tx: %+v", tx)
+					for _, sigs := range tx.Signatures {
+						for _, sig := range sigs {
+							log.Infof("address: %s, nonce: %s", sig.Address, sig.Nonce)
+						}
+					}
+					if tx.ErrorMsg != nil && tx.ErrorMsg.Code != 0 {
+						log.Warning(tx.ErrorMsg.Err)
+					}
 				}
 			})
 	}
@@ -813,13 +888,13 @@ func TestAPINode_VerifyAddress(t *testing.T) {
 
 func TestAPINode_CallSmartContractABI(t *testing.T) {
 	api := testNewAPINode()
-	accountID := "5kTzFGuAH9UkB9yhZdmXtF8hGPh6iPt4hf8Q3DVy3Xo3"
+	accountID := "AVrCpwbnGRHEk2HCHTGJ3abFkMARLzarCLCaDpH56H3H"
 	coin := Coin{
-		Symbol:     "QUORUM",
+		Symbol:     "TDEX",
 		IsContract: true,
-		ContractID: "dl8WD7bM7xk4ZxRybuHCo3JDDtZn2ugPusapoKnQEWA=",
+		ContractID: "VVLWoJe++pOGMU8oxp174T+66n3BrP7vG6Mcyqogtqk=",
 	}
-	abiParam := []string{"balanceOf", "0xe6a9cc4fe66e7b726e3e8ef8e32c308ce74c0996"}
+	abiParam := []string{"balanceOf", "0x941f298dc3ec1728e21065e84237159958a5b20a"}
 	api.CallSmartContractABI(accountID, coin, abiParam, "", 0,
 		true, func(status uint64, msg string, callResult *SmartContractCallResult) {
 			if status != owtp.StatusSuccess {
@@ -1026,4 +1101,90 @@ func TestAPINode_CreateSmartContractTradeMulti(t *testing.T) {
 
 	wait.Wait()
 
+}
+
+func TestAPINode_CreateBatchTrade(t *testing.T) {
+	accountID := "BtbecAGzVMFX4PT1QjKpQ1cDKhWtJcFqPoLP5CVi2gVt"
+	sid := uuid.New().String()
+	feeRate := ""
+
+	coin := Coin{
+		Symbol:     "ETP",
+		IsContract: true,
+		ContractID: "q7OtI9+EP6Ze8LNvJDGStyS15mzhnntduQ3wcphv9Zc=",
+	}
+
+	receivers := map[string]string{
+		"M8zhymCjZD9ZzSR9skirEhJnNDEdcJBb6c": "1",
+		"MC3byQPhQS9dQYkY4ME5R94j5GksWvDYTR": "1",
+		"MDgW56oXUFMRfSuRhPcyoWcGwSyj81hUnM": "1",
+		"MHr2w1nQ2aiGuh7McpAvi5TMvqmzVLJeNC": "1",
+		"MMRbpJdtxXeNmdwRZa4JjNgraL2XKUeg4e": "1",
+		"MNVJdDfesiRdPMWz1QCnyvAXTbTcfdaBun": "1",
+	}
+
+	rawTx, err := testCreateBatchTrade(accountID, sid, coin, receivers, feeRate)
+	if err != nil {
+		t.Logf("CreateTrade unexpected error: %v\n", err)
+		return
+	}
+	log.Infof("rawTx: %+v", rawTx)
+
+	key, err := testGetLocalKey()
+	if err != nil {
+		t.Logf("GetKey error: %v\n", err)
+		return
+	}
+
+	//签名交易单
+	err = SignRawTransaction(rawTx, key)
+	if err != nil {
+		t.Logf("SignRawTransaction unexpected error: %v\n", err)
+		return
+	}
+
+	log.Infof("signed rawTx: %+v", rawTx)
+
+	success, fail, err := testSubmitTrade([]*RawTransaction{rawTx})
+	if err != nil {
+		t.Logf("SubmitTrade unexpected error: %v\n", err)
+		return
+	}
+
+	log.Info("============== success ==============")
+
+	for _, tx := range success {
+		log.Infof("tx: %+v", tx)
+	}
+
+	log.Info("")
+
+	log.Info("============== fail ==============")
+
+	for _, tx := range fail {
+		log.Infof("tx: %+v", tx.Reason)
+	}
+}
+
+func TestAPINode_CreateTrade(t *testing.T) {
+	accountID := "B6UbwNZrz82QqUPBsSCPUkEJ1CjxSzSwnewziCseCt4c"
+	sid := uuid.New().String()
+	amount := "3266824611.6667"
+	address := "MQFXFvYmVmr7LTCPMs61wLiZvrgg2vnN75"
+	feeRate := ""
+
+	coin := Coin{
+		Symbol:          "ETP",
+		IsContract:      true,
+		ContractID:      "q7OtI9+EP6Ze8LNvJDGStyS15mzhnntduQ3wcphv9Zc=",
+		ContractAddress: "DNA",
+		ContractABI:     "",
+	}
+
+	rawTx, err := testCreateTrade(accountID, sid, coin, amount, address, feeRate)
+	if err != nil {
+		t.Logf("CreateTrade unexpected error: %v\n", err)
+		return
+	}
+	log.Infof("rawTx: %+v", rawTx)
 }

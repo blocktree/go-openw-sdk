@@ -12,6 +12,7 @@ const (
 	SubscribeToTrade                = "subscribeToTrade"                //订阅新交易单通知
 	SubscribeToBlock                = "subscribeToBlock"                //订阅新区块链头通知
 	SubscribeToSmartContractReceipt = "subscribeToSmartContractReceipt" //订阅智能合约交易回执通知
+	SubscribeToNFTTransfer          = "subscribeToNFTTransfer"          //订阅NFT交易数据通知
 )
 
 //OpenwNotificationObject openw-server的通知对象
@@ -28,6 +29,9 @@ type OpenwNotificationObject interface {
 
 	//OpenwNewSmartContractReceiptNotify 智能合约交易回执通知
 	OpenwNewSmartContractReceiptNotify(receipt *SmartContractReceipt, subscribeToken string) (bool, error)
+
+	//OpenwNFTTransferNotify NFT合约交易数据通知
+	OpenwNFTTransferNotify(transfer *NFTTransfer, subscribeToken string) (bool, error)
 }
 
 //ServeNotification 开启监听服务，接收通知
@@ -230,7 +234,6 @@ func (api *APINode) subscribeToSmartContractReceipt(ctx *owtp.Context) {
 		"accepted": accepted,
 	}, owtp.StatusSuccess, msg)
 }
-
 
 func (api *APINode) checkNodeIsOnline(ctx *owtp.Context) {
 	ctx.Response(nil, owtp.StatusSuccess, "success")

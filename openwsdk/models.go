@@ -546,3 +546,23 @@ type FailureSmartContractLog struct {
 	RawTx  *SmartContractRawTransaction `json:"rawTx"`
 	Reason string                       `json:"error"`
 }
+
+// NFTTransfer NFT交易数据
+type NFTTransfer struct {
+	Symbol      string `json:"symbol"`   //@required 主币的symbol
+	Address     string `json:"address"`  // NFT集合地址
+	Token       string `json:"token"`    //@required NFT的symbol
+	Protocol    string `json:"protocol"` // NFT协议, ERC1155 ERC721
+	Name        string `json:"name"`
+	TokenID     string `json:"tokenID"`     // NFT集合mint具体ID
+	From        string `json:"from"`        // 原始拥有者
+	To          string `json:"to"`          // 最新拥有者
+	URI         string `json:"uri"`         // metadata uri
+	Operator    string `json:"operator"`    //required 被授权转账的操作者
+	Amount      string `json:"amount"`      // 转移tokenID数量
+	Fees        string `json:"fees"`        //手续费
+	BlockHash   string `json:"blockHash"`   //@required
+	BlockHeight uint64 `json:"blockHeight"` //@required
+	TxID        string `json:"txID"`        //@required
+	Status      string `json:"status"`      //@required 链上状态，0：失败，1：成功
+}

@@ -6,8 +6,7 @@ import (
 	"testing"
 )
 
-type Subscriber struct {
-}
+type Subscriber struct{}
 
 //OpenwNewTransactionNotify openw新交易单通知
 func (s *Subscriber) OpenwNewTransactionNotify(transaction *Transaction, subscribeToken string) (bool, error) {
@@ -15,7 +14,7 @@ func (s *Subscriber) OpenwNewTransactionNotify(transaction *Transaction, subscri
 	log.Infof("contractID: %+v", transaction.ContractID)
 	log.Infof("blockHash: %+v", transaction.BlockHash)
 	log.Infof("blockHeight: %+v", transaction.BlockHeight)
-	log.Infof("txid: %+v", transaction.Txid)
+	log.Infof("txid: %+v", transaction.TxID)
 	log.Infof("amount: %+v", transaction.Amount)
 	log.Infof("accountID: %+v", transaction.AccountID)
 	log.Infof("fees: %+v", transaction.Fees)
@@ -50,6 +49,11 @@ func (s *Subscriber) OpenwNewSmartContractReceiptNotify(receipt *SmartContractRe
 	return true, nil
 }
 
+////OpenwNFTTransferNotify NFT合约交易数据通知
+func (s *Subscriber) OpenwNFTTransferNotify(transfer *NFTTransfer, subscribeToken string) (bool, error) {
+	return true, nil
+}
+
 func TestAPINode_Subscribe(t *testing.T) {
 
 	var (
@@ -78,8 +82,7 @@ func TestAPINode_Subscribe(t *testing.T) {
 		return
 	}
 
-	subscriber := &Subscriber{}
-	api.AddObserver(subscriber)
+	api.AddObserver(&Subscriber{})
 
 	<-endRunning
 }

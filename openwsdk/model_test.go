@@ -40,7 +40,7 @@ func TestWallet_CreateAccount(t *testing.T) {
 	wallet.RootPath = key.RootPath
 
 	symbol := &Symbol{}
-	symbol.Coin = "BTC"
+	symbol.Symbol = "BTC"
 	symbol.Curve = int64(owcrypt.ECC_CURVE_SECP256K1)
 
 	account, err := wallet.CreateAccount("newacc", symbol, key)

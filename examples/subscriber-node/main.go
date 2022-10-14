@@ -26,7 +26,7 @@ func (s *Subscriber) OpenwNewTransactionNotify(transaction *openwsdk.Transaction
 	log.Infof("contractID: %+v", transaction.ContractID)
 	log.Infof("blockHash: %+v", transaction.BlockHash)
 	log.Infof("blockHeight: %+v", transaction.BlockHeight)
-	log.Infof("txid: %+v", transaction.Txid)
+	log.Infof("txid: %+v", transaction.TxID)
 	log.Infof("amount: %+v", transaction.Amount)
 	log.Infof("accountID: %+v", transaction.AccountID)
 	log.Infof("fees: %+v", transaction.Fees)

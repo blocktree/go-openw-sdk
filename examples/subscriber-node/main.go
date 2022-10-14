@@ -80,6 +80,11 @@ func (s *Subscriber) OpenwNewSmartContractReceiptNotify(receipt *openwsdk.SmartC
 	return true, nil
 }
 
+//OpenwNFTTransferNotify NFT合约交易数据通知
+func (s *Subscriber) OpenwNFTTransferNotify(transfer *openwsdk.NFTTransfer, subscribeToken string) (bool, error) {
+	return true, nil
+}
+
 func main() {
 
 	var (
@@ -166,8 +171,7 @@ func main() {
 		return
 	}
 
-	subscriber := &Subscriber{}
-	api.AddObserver(subscriber)
+	api.AddObserver(&Subscriber{})
 
 	<-endRunning
 

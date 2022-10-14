@@ -22,8 +22,8 @@ func init() {
 
 func testNewAPINode() *APINode {
 
-	confFile := filepath.Join("conf", "node.ini")
-	//confFile := filepath.Join("conf", "test.ini")
+	//confFile := filepath.Join("conf", "node.ini")
+	confFile := filepath.Join("conf", "test.ini")
 	c, err := config.NewConfig("ini", confFile)
 	if err != nil {
 		log.Error("NewConfig error:", err)
@@ -56,7 +56,6 @@ func testNewAPINode() *APINode {
 		return nil
 	}
 	api.BindAppDevice()
-
 	return api
 }
 
@@ -98,7 +97,7 @@ func TestAPINode_GetSymbolList(t *testing.T) {
 		symbolStrArray := make([]string, 0)
 		for _, s := range symbols {
 			fmt.Printf("symbol: %+v\n", s)
-			symbolStrArray = append(symbolStrArray, s.Coin)
+			symbolStrArray = append(symbolStrArray, s.Symbol)
 		}
 		allSymbols := strings.Join(symbolStrArray, ", ")
 		log.Infof("all symbols: %s", allSymbols)
@@ -176,7 +175,7 @@ func TestAPINode_CreateAccount(t *testing.T) {
 	}
 
 	symbol := &Symbol{}
-	symbol.Coin = "ETP"
+	symbol.Symbol = "QUORUM"
 	symbol.Curve = int64(owcrypt.ECC_CURVE_SECP256K1)
 
 	var findWallet *Wallet
@@ -219,9 +218,9 @@ func TestAPINode_CreateAccount(t *testing.T) {
 }
 
 func TestAPINode_FindAccountByWalletID(t *testing.T) {
-	walletID := ""
+	walletID := "W3LxqTNAcXFqW7HGcTuERRLXKdNWu17Ccx"
 	api := testNewAPINode()
-	api.FindAccountByWalletID(walletID, true,
+	api.FindAccountByWalletID("", walletID, 0, 0, true,
 		func(status uint64, msg string, accounts []*Account) {
 
 			if status != owtp.StatusSuccess {
@@ -235,7 +234,7 @@ func TestAPINode_FindAccountByWalletID(t *testing.T) {
 				log.Infof("account[%d] HdPath:%v", i, a.HdPath)
 				log.Infof("account[%d] AccountIndex:%v", i, a.AccountIndex)
 				log.Infof("account[%d] AddressIndex:%v", i, a.AddressIndex)
-				log.Infof("account[%d] Balance:%v", i, a.Balance)
+				//log.Infof("account[%d] Balance:%v", i, a.Balance)
 				log.Infof("------------------------------------------")
 			}
 		})
@@ -244,7 +243,7 @@ func TestAPINode_FindAccountByWalletID(t *testing.T) {
 func TestAPINode_FindAccountByAccountID(t *testing.T) {
 	accountID := "Ey6MU7v5CdPbpy9Ph18d2v4HwgNAG6UDgQEFfKCRmUZE"
 	api := testNewAPINode()
-	api.FindAccountByAccountID(accountID, 0, true,
+	api.FindAccountByAccountID("", accountID, 0, true,
 		func(status uint64, msg string, a *Account) {
 
 			if status != owtp.StatusSuccess {
@@ -257,7 +256,7 @@ func TestAPINode_FindAccountByAccountID(t *testing.T) {
 			log.Infof("account HdPath:%v", a.HdPath)
 			log.Infof("account AccountIndex:%v", a.AccountIndex)
 			log.Infof("account AddressIndex:%v", a.AddressIndex)
-			log.Infof("account Balance:%v", a.Balance)
+			//log.Infof("account Balance:%v", a.Balance)
 			log.Infof("------------------------------------------")
 		})
 }
@@ -266,9 +265,8 @@ func TestAPINode_CreateAddress(t *testing.T) {
 	walletID := "VysrzgpsLsgDpHM2KQMYuPY57fL3BAFU34"
 	accountID := "Aa7Chh2MdaGDejHdCJZAaX7AwvGNmMEMry2kZZTq114a"
 	api := testNewAPINode()
-	api.CreateAddress(walletID, accountID, 2000, true,
+	api.CreateAddress("ETH", walletID, accountID, 2000, true,
 		func(status uint64, msg string, addresses []*Address) {
-
 			if status != owtp.StatusSuccess {
 				return
 			}
@@ -295,9 +293,9 @@ func TestAPINode_CreateBatchAddress(t *testing.T) {
 }
 
 func TestAPINode_FindAddressByAddress(t *testing.T) {
-	addr := "0xc21a2eb0eea50060efb9307627c6d0046ca57d8d"
+	addr := "1QGPMCCtXaop8C2J2mUf3DcofjYgiD8prd"
 	api := testNewAPINode()
-	api.FindAddressByAddress(addr, true,
+	api.FindAddressByAddress("", addr, true,
 		func(status uint64, msg string, address *Address) {
 
 			if status != owtp.StatusSuccess {
@@ -308,73 +306,18 @@ func TestAPINode_FindAddressByAddress(t *testing.T) {
 }
 
 func TestAPINode_FindAddressByAccountID(t *testing.T) {
-	accountID := "5qEpgFJFdbUQnQccXKyZoE8YBYoKSoHCgPCPVcy9mhVL"
+	accountID := "Ey6MU7v5CdPbpy9Ph18d2v4HwgNAG6UDgQEFfKCRmUZE"
 	api := testNewAPINode()
-	api.FindAddressByAccountID(accountID, 7200, 50, true,
+	api.FindAddressByAccountID("", accountID, 0, 10, true,
 		func(status uint64, msg string, addresses []*Address) {
 
 			if status != owtp.StatusSuccess {
 				return
 			}
-			for _, a := range addresses {
-				log.Infof("Address: %s, Index: %d", a.Address, a.AddrIndex)
+			for i, a := range addresses {
+				log.Infof("Address[%d]:%+v", i, a)
 			}
 		})
-}
-
-func testCreateTrade(
-	accountID string,
-	sid string,
-	coin Coin,
-	amount string,
-	address string,
-	feeRate string,
-) (*RawTransaction, error) {
-
-	var (
-		retRawTx *RawTransaction
-		err      error
-	)
-
-	api := testNewAPINode()
-	api.CreateTrade(accountID, sid, coin, amount, address, feeRate, "", "", true,
-		func(status uint64, msg string, rawTx *RawTransaction) {
-			if status != owtp.StatusSuccess {
-				err = fmt.Errorf(msg)
-				return
-			}
-
-			retRawTx = rawTx
-		})
-
-	return retRawTx, err
-}
-
-func testCreateBatchTrade(
-	accountID string,
-	sid string,
-	coin Coin,
-	to map[string]string,
-	feeRate string,
-) (*RawTransaction, error) {
-
-	var (
-		retRawTx *RawTransaction
-		err      error
-	)
-
-	api := testNewAPINode()
-	api.CreateBatchTrade(accountID, sid, coin, to, feeRate, "", "", true,
-		func(status uint64, msg string, rawTx *RawTransaction) {
-			if status != owtp.StatusSuccess {
-				err = fmt.Errorf(msg)
-				return
-			}
-
-			retRawTx = rawTx
-		})
-
-	return retRawTx, err
 }
 
 func testSubmitTrade(
@@ -402,65 +345,65 @@ func testSubmitTrade(
 	return retTx, retFailed, err
 }
 
-func TestAPINode_Send_LTC(t *testing.T) {
-	accountID := "Aa7Chh2MdaGDejHdCJZAaX7AwvGNmMEMry2kZZTq114a"
-	sid := uuid.New().String()
-	amount := "0.001"
-	address := "mkdStRouBPVrDVpYmbE5VUJqhBgxJb3dSS"
-	feeRate := "0.001"
-
-	coin := Coin{
-		Symbol:     "LTC",
-		IsContract: false,
-	}
-
-	rawTx, err := testCreateTrade(accountID, sid, coin, amount, address, feeRate)
-	if err != nil {
-		t.Logf("CreateTrade unexpected error: %v\n", err)
-		return
-	}
-	log.Infof("rawTx: %+v", rawTx)
-
-	key, err := testGetLocalKey()
-	if err != nil {
-		t.Logf("GetKey error: %v\n", err)
-		return
-	}
-
-	//签名交易单
-	err = SignRawTransaction(rawTx, key)
-	if err != nil {
-		t.Logf("SignRawTransaction unexpected error: %v\n", err)
-		return
-	}
-
-	log.Infof("signed rawTx: %+v", rawTx)
-
-	success, fail, err := testSubmitTrade([]*RawTransaction{rawTx})
-	if err != nil {
-		t.Logf("SubmitTrade unexpected error: %v\n", err)
-		return
-	}
-
-	log.Info("============== success ==============")
-
-	for _, tx := range success {
-		log.Infof("tx: %+v", tx)
-	}
-
-	log.Info("")
-
-	log.Info("============== fail ==============")
-
-	for _, tx := range fail {
-		log.Infof("tx: %+v", tx.Reason)
-	}
-}
+//func TestAPINode_Send_LTC(t *testing.T) {
+//	accountID := "Aa7Chh2MdaGDejHdCJZAaX7AwvGNmMEMry2kZZTq114a"
+//	sid := uuid.New().String()
+//	amount := "0.001"
+//	address := "mkdStRouBPVrDVpYmbE5VUJqhBgxJb3dSS"
+//	feeRate := "0.001"
+//
+//	coin := Coin{
+//		Symbol:     "LTC",
+//		IsContract: false,
+//	}
+//
+//	rawTx, err := testCreateTrade(accountID, sid, coin, map[string]string{address: amount}, feeRate)
+//	if err != nil {
+//		t.Logf("CreateTrade unexpected error: %v\n", err)
+//		return
+//	}
+//	log.Infof("rawTx: %+v", rawTx)
+//
+//	key, err := testGetLocalKey()
+//	if err != nil {
+//		t.Logf("GetKey error: %v\n", err)
+//		return
+//	}
+//
+//	//签名交易单
+//	err = SignRawTransaction(rawTx, key)
+//	if err != nil {
+//		t.Logf("SignRawTransaction unexpected error: %v\n", err)
+//		return
+//	}
+//
+//	log.Infof("signed rawTx: %+v", rawTx)
+//
+//	success, fail, err := testSubmitTrade([]*RawTransaction{rawTx})
+//	if err != nil {
+//		t.Logf("SubmitTrade unexpected error: %v\n", err)
+//		return
+//	}
+//
+//	log.Info("============== success ==============")
+//
+//	for _, tx := range success {
+//		log.Infof("tx: %+v", tx)
+//	}
+//
+//	log.Info("")
+//
+//	log.Info("============== fail ==============")
+//
+//	for _, tx := range fail {
+//		log.Infof("tx: %+v", tx.Reason)
+//	}
+//}
 
 func TestAPINode_FindTradeLog(t *testing.T) {
 	api := testNewAPINode()
 	param := map[string]interface{}{
-		"txid": "0x1f99030f19f5adefe522df1f3e2683ee7ad017d22cd1648292ac4d163201fbfa",
+		"txID": "0x1f99030f19f5adefe522df1f3e2683ee7ad017d22cd1648292ac4d163201fbfa",
 	}
 	api.FindTradeLogByParams(param, true,
 		func(status uint64, msg string, tx []*Transaction) {
@@ -486,8 +429,8 @@ func TestAPINode_GetTokenBalanceByAccount(t *testing.T) {
 	accountID := "AUXVkMijFjSh1jCsMV2exNj58qzJX7BN27ANnDfBTcTS"
 	contractID := "vxfK989y7Mg9TcH0xrCFNSQFj/lN5WaGoEbto5WqIVc="
 	api := testNewAPINode()
-	api.GetTokenBalanceByAccount(accountID, contractID, true,
-		func(status uint64, msg string, balance *TokenBalance) {
+	api.GetBalanceByAccount("", accountID, contractID, true,
+		func(status uint64, msg string, balance *BalanceResult) {
 			log.Infof("balance: %+v", balance)
 		})
 }
@@ -514,117 +457,117 @@ func TestAPINode_GetFeeRate(t *testing.T) {
 		})
 }
 
-func TestAPINode_Send_TRC10(t *testing.T) {
-	accountID := "EaUEnCH9mjDPeqrsfi9q3K3jkTezZCt4cee3RTpgScJ3"
-	sid := uuid.New().String()
-	amount := "5"
-	address := "TBwVUW7Qa2jb2z2q3RMVpg8yLaBsGFvueG"
-	feeRate := ""
-
-	coin := Coin{
-		Symbol:     "TRX",
-		IsContract: true,
-		ContractID: "jKyfOtbSvdY57WhDZXJj885A4bs0np5eRdYcwS3ip2I=",
-	}
-
-	rawTx, err := testCreateTrade(accountID, sid, coin, amount, address, feeRate)
-	if err != nil {
-		t.Logf("CreateTrade unexpected error: %v\n", err)
-		return
-	}
-	log.Infof("rawTx: %+v", rawTx)
-
-	key, err := testGetLocalKey()
-	if err != nil {
-		t.Logf("GetKey error: %v\n", err)
-		return
-	}
-
-	//签名交易单
-	err = SignRawTransaction(rawTx, key)
-	if err != nil {
-		t.Logf("SignRawTransaction unexpected error: %v\n", err)
-		return
-	}
-
-	log.Infof("signed rawTx: %+v", rawTx)
-
-	success, fail, err := testSubmitTrade([]*RawTransaction{rawTx})
-	if err != nil {
-		t.Logf("SubmitTrade unexpected error: %v\n", err)
-		return
-	}
-
-	log.Info("============== success ==============")
-
-	for _, tx := range success {
-		log.Infof("tx: %+v", tx)
-	}
-
-	log.Info("")
-
-	log.Info("============== fail ==============")
-
-	for _, tx := range fail {
-		log.Infof("tx: %+v", tx.Reason)
-	}
-}
-
-func TestAPINode_Send_TRC20(t *testing.T) {
-	accountID := "EaUEnCH9mjDPeqrsfi9q3K3jkTezZCt4cee3RTpgScJ3"
-	sid := uuid.New().String()
-	amount := "5"
-	address := "TBwVUW7Qa2jb2z2q3RMVpg8yLaBsGFvueG"
-	feeRate := ""
-
-	coin := Coin{
-		Symbol:     "TRX",
-		IsContract: true,
-		ContractID: "BEGDiEC5toNC8dyG7G40/vSPHk1FGv6JcCmyf16QOa0=",
-	}
-
-	rawTx, err := testCreateTrade(accountID, sid, coin, amount, address, feeRate)
-	if err != nil {
-		t.Logf("CreateTrade unexpected error: %v\n", err)
-		return
-	}
-	log.Infof("rawTx: %+v", rawTx)
-
-	key, err := testGetLocalKey()
-	if err != nil {
-		t.Logf("GetKey error: %v\n", err)
-		return
-	}
-
-	//签名交易单
-	err = SignRawTransaction(rawTx, key)
-	if err != nil {
-		t.Logf("SignRawTransaction unexpected error: %v\n", err)
-		return
-	}
-
-	log.Infof("signed rawTx: %+v", rawTx)
-
-	success, fail, err := testSubmitTrade([]*RawTransaction{rawTx})
-	if err != nil {
-		t.Logf("SubmitTrade unexpected error: %v\n", err)
-		return
-	}
-
-	log.Info("============== success ==============")
-
-	for _, tx := range success {
-		log.Infof("tx: %+v", tx)
-	}
-
-	log.Info("")
-
-	log.Info("============== fail ==============")
-
-	for _, tx := range fail {
-		log.Infof("tx: %+v", tx.Reason)
-	}
-}
+//func TestAPINode_Send_TRC10(t *testing.T) {
+//	accountID := "EaUEnCH9mjDPeqrsfi9q3K3jkTezZCt4cee3RTpgScJ3"
+//	sid := uuid.New().String()
+//	amount := "5"
+//	address := "TBwVUW7Qa2jb2z2q3RMVpg8yLaBsGFvueG"
+//	feeRate := ""
+//
+//	coin := Coin{
+//		Symbol:     "TRX",
+//		IsContract: true,
+//		ContractID: "jKyfOtbSvdY57WhDZXJj885A4bs0np5eRdYcwS3ip2I=",
+//	}
+//
+//	rawTx, err := testCreateTrade(accountID, sid, coin, amount, address, feeRate)
+//	if err != nil {
+//		t.Logf("CreateTrade unexpected error: %v\n", err)
+//		return
+//	}
+//	log.Infof("rawTx: %+v", rawTx)
+//
+//	key, err := testGetLocalKey()
+//	if err != nil {
+//		t.Logf("GetKey error: %v\n", err)
+//		return
+//	}
+//
+//	//签名交易单
+//	err = SignRawTransaction(rawTx, key)
+//	if err != nil {
+//		t.Logf("SignRawTransaction unexpected error: %v\n", err)
+//		return
+//	}
+//
+//	log.Infof("signed rawTx: %+v", rawTx)
+//
+//	success, fail, err := testSubmitTrade([]*RawTransaction{rawTx})
+//	if err != nil {
+//		t.Logf("SubmitTrade unexpected error: %v\n", err)
+//		return
+//	}
+//
+//	log.Info("============== success ==============")
+//
+//	for _, tx := range success {
+//		log.Infof("tx: %+v", tx)
+//	}
+//
+//	log.Info("")
+//
+//	log.Info("============== fail ==============")
+//
+//	for _, tx := range fail {
+//		log.Infof("tx: %+v", tx.Reason)
+//	}
+//}
+//
+//func TestAPINode_Send_TRC20(t *testing.T) {
+//	accountID := "EaUEnCH9mjDPeqrsfi9q3K3jkTezZCt4cee3RTpgScJ3"
+//	sid := uuid.New().String()
+//	amount := "5"
+//	address := "TBwVUW7Qa2jb2z2q3RMVpg8yLaBsGFvueG"
+//	feeRate := ""
+//
+//	coin := Coin{
+//		Symbol:     "TRX",
+//		IsContract: true,
+//		ContractID: "BEGDiEC5toNC8dyG7G40/vSPHk1FGv6JcCmyf16QOa0=",
+//	}
+//
+//	rawTx, err := testCreateTrade(accountID, sid, coin, amount, address, feeRate)
+//	if err != nil {
+//		t.Logf("CreateTrade unexpected error: %v\n", err)
+//		return
+//	}
+//	log.Infof("rawTx: %+v", rawTx)
+//
+//	key, err := testGetLocalKey()
+//	if err != nil {
+//		t.Logf("GetKey error: %v\n", err)
+//		return
+//	}
+//
+//	//签名交易单
+//	err = SignRawTransaction(rawTx, key)
+//	if err != nil {
+//		t.Logf("SignRawTransaction unexpected error: %v\n", err)
+//		return
+//	}
+//
+//	log.Infof("signed rawTx: %+v", rawTx)
+//
+//	success, fail, err := testSubmitTrade([]*RawTransaction{rawTx})
+//	if err != nil {
+//		t.Logf("SubmitTrade unexpected error: %v\n", err)
+//		return
+//	}
+//
+//	log.Info("============== success ==============")
+//
+//	for _, tx := range success {
+//		log.Infof("tx: %+v", tx)
+//	}
+//
+//	log.Info("")
+//
+//	log.Info("============== fail ==============")
+//
+//	for _, tx := range fail {
+//		log.Infof("tx: %+v", tx.Reason)
+//	}
+//}
 
 func TestAPINode_GetFeeRateList(t *testing.T) {
 	api := testNewAPINode()
@@ -656,29 +599,6 @@ func TestAPINode_GetAllTokenBalanceByAddress(t *testing.T) {
 				log.Infof("balance: %+v", b)
 			}
 		})
-}
-
-func TestAPINode_GetAllTokenBalanceOfAddressByAccountID(t *testing.T) {
-	accountID := "HDGv4GwxfRcGWZBn8Xfp3bJ4zJTTGrajWbjQrRTvMDsG"
-	api := testNewAPINode()
-	getAddrs := make([]*Address, 0)
-	api.FindAddressByAccountID(accountID, 800, 200, true,
-		func(status uint64, msg string, addresses []*Address) {
-
-			if status != owtp.StatusSuccess {
-				return
-			}
-			getAddrs = addresses
-		})
-	for _, a := range getAddrs {
-		api.GetAllTokenBalanceByAddress(accountID, a.Address, "XWC", true,
-			func(status uint64, msg string, balance []*TokenBalance) {
-				for _, b := range balance {
-					log.Infof("address: %s, index: %d, token: %s, balance: %s", a.Address, a.AddrIndex, b.Token, b.Balance.Balance)
-				}
-			})
-	}
-
 }
 
 func TestAPINode_ImportAccount(t *testing.T) {
@@ -780,19 +700,18 @@ func TestAPINode_FindWalletByParams(t *testing.T) {
 func TestAPINode_FindAddressByParams(t *testing.T) {
 	api := testNewAPINode()
 	param := map[string]interface{}{
-		"walletIDs":  []string{"WLVEGBFFSevB5tfsdgKPVGw9zFwccYtafn"},
-		"accountIDs": []string{"5qEpgFJFdbUQnQccXKyZoE8YBYoKSoHCgPCPVcy9mhVL"},
-		"symbol":     "BSC",
+		"walletIDs": []string{"W3LxqTNAcXFqW7HGcTuERRLXKdNWu17Ccx"},
+		"symbol":    "QUORUM",
 	}
-	api.FindAddressByParams(param, 7250, 50, true,
+	api.FindAddressByParams(param, 0, 100, true,
 		func(status uint64, msg string, addresses []*Address) {
 			if status != owtp.StatusSuccess {
 				t.Errorf(msg)
 				return
 			}
-			log.Infof("total addresses: %d", len(addresses))
+
 			for _, a := range addresses {
-				log.Infof("address: %s, index: %d", a.Address, a.AddrIndex)
+				log.Infof("address: %+v", a)
 			}
 		})
 }
@@ -806,23 +725,14 @@ func TestAPINode_CreateSummaryTx(t *testing.T) {
 	)
 
 	api := testNewAPINode()
-	accountID := "HDGv4GwxfRcGWZBn8Xfp3bJ4zJTTGrajWbjQrRTvMDsG"
-	sumAddress := "XWCNjAfoTwK77dJw58VthU5YKKG9kUfLHvcbK"
+	accountID := ""
+	sumAddress := ""
 	coin := Coin{
-		Symbol:          "XWC",
-		IsContract:      true,
-		ContractID:      "BJftiCFBOsJ3Vu54QfSHXnqwhDbTzQDzF+e62mUsBe8=",
-		ContractAddress: "1.3.0",
+		Symbol:     "",
+		IsContract: false,
 	}
 
-	//feeSupport := &FeesSupportAccount{
-	//	AccountID:         "7dSaDccksuj75DEhtw3LwSCQbybRfVPhxPv8DGDD4M9o",
-	//	LowBalanceWarning: "0.001",
-	//	LowBalanceStop:    "0.0001",
-	//	FeesScale:         "2",
-	//}
-
-	api.FindAccountByAccountID(accountID, 0, true,
+	api.FindAccountByAccountID("", accountID, 0, true,
 		func(status uint64, msg string, account *Account) {
 			if status != owtp.StatusSuccess {
 				retErr = openwallet.Errorf(status, msg)
@@ -835,10 +745,7 @@ func TestAPINode_CreateSummaryTx(t *testing.T) {
 		t.Errorf("error: %v", retErr)
 		return
 	}
-	if retAccountInfo == nil {
-		t.Errorf("retAccountInfo is nil")
-		return
-	}
+
 	log.Infof("total address = %d", retAccountInfo.AddressIndex+1)
 
 	for i := 0; i <= int(retAccountInfo.AddressIndex); i = i + addressLimit {
@@ -847,24 +754,12 @@ func TestAPINode_CreateSummaryTx(t *testing.T) {
 		log.Infof("sid = %s", sid)
 		api.CreateSummaryTx(accountID, sumAddress, coin,
 			"", "0", "0",
-			i, addressLimit, 1,
+			i, addressLimit, 0,
 			sid, nil, "", true,
 			func(status uint64, msg string, rawTxs []*RawTransaction) {
-				if status != owtp.StatusSuccess {
-					log.Errorf(msg)
-					return
-				}
 				for _, tx := range rawTxs {
-					//log.Infof("from: %+v", tx.Signatures[accountID][0].Address)
-					log.Infof("tx: %+v", tx)
-					for _, sigs := range tx.Signatures {
-						for _, sig := range sigs {
-							log.Infof("address: %s, nonce: %s", sig.Address, sig.Nonce)
-						}
-					}
-					if tx.ErrorMsg != nil && tx.ErrorMsg.Code != 0 {
-						log.Warning(tx.ErrorMsg.Err)
-					}
+					log.Infof("from: %+v", tx.Signatures[accountID][0].Address)
+					//log.Infof("tx: %+v", tx)
 				}
 			})
 	}
@@ -888,13 +783,13 @@ func TestAPINode_VerifyAddress(t *testing.T) {
 
 func TestAPINode_CallSmartContractABI(t *testing.T) {
 	api := testNewAPINode()
-	accountID := "AVrCpwbnGRHEk2HCHTGJ3abFkMARLzarCLCaDpH56H3H"
+	accountID := "5kTzFGuAH9UkB9yhZdmXtF8hGPh6iPt4hf8Q3DVy3Xo3"
 	coin := Coin{
-		Symbol:     "TDEX",
+		Symbol:     "QUORUM",
 		IsContract: true,
-		ContractID: "VVLWoJe++pOGMU8oxp174T+66n3BrP7vG6Mcyqogtqk=",
+		ContractID: "dl8WD7bM7xk4ZxRybuHCo3JDDtZn2ugPusapoKnQEWA=",
 	}
-	abiParam := []string{"balanceOf", "0x941f298dc3ec1728e21065e84237159958a5b20a"}
+	abiParam := []string{"balanceOf", "0xe6a9cc4fe66e7b726e3e8ef8e32c308ce74c0996"}
 	api.CallSmartContractABI(accountID, coin, abiParam, "", 0,
 		true, func(status uint64, msg string, callResult *SmartContractCallResult) {
 			if status != owtp.StatusSuccess {
@@ -1101,90 +996,4 @@ func TestAPINode_CreateSmartContractTradeMulti(t *testing.T) {
 
 	wait.Wait()
 
-}
-
-func TestAPINode_CreateBatchTrade(t *testing.T) {
-	accountID := "BtbecAGzVMFX4PT1QjKpQ1cDKhWtJcFqPoLP5CVi2gVt"
-	sid := uuid.New().String()
-	feeRate := ""
-
-	coin := Coin{
-		Symbol:     "ETP",
-		IsContract: true,
-		ContractID: "q7OtI9+EP6Ze8LNvJDGStyS15mzhnntduQ3wcphv9Zc=",
-	}
-
-	receivers := map[string]string{
-		"M8zhymCjZD9ZzSR9skirEhJnNDEdcJBb6c": "1",
-		"MC3byQPhQS9dQYkY4ME5R94j5GksWvDYTR": "1",
-		"MDgW56oXUFMRfSuRhPcyoWcGwSyj81hUnM": "1",
-		"MHr2w1nQ2aiGuh7McpAvi5TMvqmzVLJeNC": "1",
-		"MMRbpJdtxXeNmdwRZa4JjNgraL2XKUeg4e": "1",
-		"MNVJdDfesiRdPMWz1QCnyvAXTbTcfdaBun": "1",
-	}
-
-	rawTx, err := testCreateBatchTrade(accountID, sid, coin, receivers, feeRate)
-	if err != nil {
-		t.Logf("CreateTrade unexpected error: %v\n", err)
-		return
-	}
-	log.Infof("rawTx: %+v", rawTx)
-
-	key, err := testGetLocalKey()
-	if err != nil {
-		t.Logf("GetKey error: %v\n", err)
-		return
-	}
-
-	//签名交易单
-	err = SignRawTransaction(rawTx, key)
-	if err != nil {
-		t.Logf("SignRawTransaction unexpected error: %v\n", err)
-		return
-	}
-
-	log.Infof("signed rawTx: %+v", rawTx)
-
-	success, fail, err := testSubmitTrade([]*RawTransaction{rawTx})
-	if err != nil {
-		t.Logf("SubmitTrade unexpected error: %v\n", err)
-		return
-	}
-
-	log.Info("============== success ==============")
-
-	for _, tx := range success {
-		log.Infof("tx: %+v", tx)
-	}
-
-	log.Info("")
-
-	log.Info("============== fail ==============")
-
-	for _, tx := range fail {
-		log.Infof("tx: %+v", tx.Reason)
-	}
-}
-
-func TestAPINode_CreateTrade(t *testing.T) {
-	accountID := "B6UbwNZrz82QqUPBsSCPUkEJ1CjxSzSwnewziCseCt4c"
-	sid := uuid.New().String()
-	amount := "3266824611.6667"
-	address := "MQFXFvYmVmr7LTCPMs61wLiZvrgg2vnN75"
-	feeRate := ""
-
-	coin := Coin{
-		Symbol:          "ETP",
-		IsContract:      true,
-		ContractID:      "q7OtI9+EP6Ze8LNvJDGStyS15mzhnntduQ3wcphv9Zc=",
-		ContractAddress: "DNA",
-		ContractABI:     "",
-	}
-
-	rawTx, err := testCreateTrade(accountID, sid, coin, amount, address, feeRate)
-	if err != nil {
-		t.Logf("CreateTrade unexpected error: %v\n", err)
-		return
-	}
-	log.Infof("rawTx: %+v", rawTx)
 }

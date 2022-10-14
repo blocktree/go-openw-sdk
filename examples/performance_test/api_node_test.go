@@ -2,11 +2,8 @@ package performance_test
 
 import (
 	"fmt"
-	"github.com/astaxie/beego/config"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk"
-	"github.com/blocktree/openwallet/v2/log"
 	"github.com/blocktree/openwallet/v2/owtp"
-	"path/filepath"
 	"reflect"
 	"runtime"
 	"sort"
@@ -15,27 +12,34 @@ import (
 	"time"
 )
 
+const (
+	sslkey = "FXJXCtxAfHWhAvnpsnciEfVCkThn7NGMA1kBofYRECRe"
+	host   = "127.0.0.1:8422"
+	appid  = "e10adc3949ba59abbe56e057f20f883e"
+	appkey = "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92"
+)
+
 func testNewAPINode() *openwsdk.APINode {
 
-	confFile := filepath.Join("conf", "node.ini")
+	//confFile := filepath.Join("conf", "node.ini")
+	//
+	//c, err := config.NewConfig("ini", confFile)
+	//if err != nil {
+	//	log.Error("NewConfig error:", err)
+	//	return nil
+	//}
 
-	c, err := config.NewConfig("ini", confFile)
-	if err != nil {
-		log.Error("NewConfig error:", err)
-		return nil
-	}
+	//PrivateKey := c.String("PrivateKey")
+	//AppID := c.String("AppID")
+	//AppKey := c.String("AppKey")
+	//Host := c.String("Host")
 
-	PrivateKey := c.String("PrivateKey")
-	AppID := c.String("AppID")
-	AppKey := c.String("AppKey")
-	Host := c.String("Host")
-
-	cert, _ := owtp.NewCertificate(PrivateKey)
+	cert, _ := owtp.NewCertificate(sslkey)
 
 	config := &openwsdk.APINodeConfig{
-		AppID:              AppID,
-		AppKey:             AppKey,
-		Host:               Host,
+		AppID:              appid,
+		AppKey:             appkey,
+		Host:               "127.0.0.1:8422",
 		Cert:               cert,
 		ConnectType:        owtp.HTTP,
 		EnableSignature:    false,
@@ -69,6 +73,22 @@ func testNewAPINode() *openwsdk.APINode {
 //
 //	return key, nil
 //}
+
+//RandomPrivateKey 生成随机私钥
+//func RandomPrivateKey() string {
+//	buf := make([]byte, 32)
+//	_, err := rand.Read(buf)
+//	if err != nil {
+//		return ""
+//	}
+//
+//	key := base58.Encode(buf)
+//	return key
+//}
+
+func TestNewAPINode(t *testing.T) {
+	testNewAPINode()
+}
 
 func TestAPINode(t *testing.T) {
 	api := testNewAPINode()

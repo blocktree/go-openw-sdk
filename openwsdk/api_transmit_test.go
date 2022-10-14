@@ -431,7 +431,7 @@ func TestTransmitNode_SignTransactionViaTrustNode(t *testing.T) {
 		)
 
 		api, _ := transmitNode.APINode()
-		api.CreateTrade(accountID, sid, coin, "0.01", address, "", "", "", true,
+		api.CreateTrade(accountID, sid, coin, map[string]string{address: "0.01"}, "", "", "", true,
 			func(status uint64, msg string, rawTx *RawTransaction) {
 				if status != owtp.StatusSuccess {
 					err = fmt.Errorf(msg)
@@ -514,7 +514,6 @@ func TestTransmitNode_TriggerABIViaTrustNode(t *testing.T) {
 	})
 }
 
-
 func TestTransmitNode_SignHashViaTrustNode(t *testing.T) {
 
 	testServeTransmitNode(func(transmitNode *TransmitNode, nodeInfo *TrustNodeInfo) {
@@ -551,14 +550,14 @@ func TestTransmitNode_SignHashViaTrustNode(t *testing.T) {
 
 func TestServeTransmitNode(t *testing.T) {
 
-	testRunTimeTask := func (tn *TransmitNode) {
+	testRunTimeTask := func(tn *TransmitNode) {
 		for {
 			//log.Debugf("call time task")
 			nodeID := "2Thz4GfdwRqj4zmtfhqrzARWUP5FwFmzyFr68xaWKLXt"
 			tn.UpdateInfoViaTrustNode(nodeID, true,
 				func(status uint64, msg string) {
 					log.Infof("status: %v, msg: %v", status, msg)
-			})
+				})
 			time.Sleep(5 * time.Second)
 		}
 	}
@@ -593,4 +592,3 @@ func TestServeTransmitNode(t *testing.T) {
 	testRunTimeTask(tn)
 
 }
-

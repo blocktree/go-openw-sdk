@@ -5,15 +5,43 @@ import (
 	"fmt"
 	"github.com/blocktree/go-owcrypt"
 	"github.com/blocktree/openwallet/v2/hdkeystore"
+	"github.com/blocktree/openwallet/v2/openwallet"
 )
 
 //SignRawTransaction 签名交易单
 func SignRawTransaction(rawTx *RawTransaction, key *hdkeystore.HDKey) error {
 
 	for accountID, keySignatures := range rawTx.Signatures {
-		//log.Infof("accountID: %s", accountID)
 		if keySignatures != nil {
+
 			for _, keySignature := range keySignatures {
+
+				if keySignature.EccType == owcrypt.ECC_CURVE_BLS12381_G2_XMD_SHA_256_SSWU_RO_AUG {
+
+					childKey, err := key.DerivedKeyWithPath(keySignature.DerivedPath, keySignature.EccType)
+					keyBytes, err := childKey.GetPrivateKeyBytes()
+					if err != nil {
+						return openwallet.NewError(openwallet.ErrSignRawTransactionFailed, err.Error())
+					}
+					message, err := hex.DecodeString(keySignature.Message)
+					if err != nil {
+						return err
+					}
+					key2 := Calculate_synthetic_secret_key(keyBytes)
+					newKey := make([]byte,0)
+					if len(key2) != 32{
+						for i:=0 ;i< 32 - len(key2) ;i++{
+							newKey = append(newKey, 0)
+						}
+					}
+					newKey = append(newKey, key2...)
+					signature, _, sigErr := owcrypt.Signature(newKey, nil, message, keySignature.EccType)
+					if sigErr != owcrypt.SUCCESS {
+						return fmt.Errorf("transaction hash sign failed")
+					}
+					keySignature.Signature = hex.EncodeToString(signature)
+					continue
+				}
 
 				childKey, err := key.DerivedKeyWithPath(keySignature.DerivedPath, keySignature.EccType)
 				keyBytes, err := childKey.GetPrivateKeyBytes()
@@ -56,7 +84,6 @@ func SignRawTransaction(rawTx *RawTransaction, key *hdkeystore.HDKey) error {
 	return nil
 }
 
-
 //SignTxHash 签名交易单Hash
 func SignTxHash(signatures map[string][]*KeySignature, key *hdkeystore.HDKey) (map[string][]*KeySignature, error) {
 
@@ -64,7 +91,33 @@ func SignTxHash(signatures map[string][]*KeySignature, key *hdkeystore.HDKey) (m
 		//log.Infof("accountID: %s", accountID)
 		if keySignatures != nil {
 			for _, keySignature := range keySignatures {
+				if keySignature.EccType == owcrypt.ECC_CURVE_BLS12381_G2_XMD_SHA_256_SSWU_RO_AUG {
 
+					childKey, err := key.DerivedKeyWithPath(keySignature.DerivedPath, keySignature.EccType)
+					keyBytes, err := childKey.GetPrivateKeyBytes()
+					if err != nil {
+						return nil,openwallet.NewError(openwallet.ErrSignRawTransactionFailed, err.Error())
+					}
+					message, err := hex.DecodeString(keySignature.Message)
+					if err != nil {
+						return  nil,err
+					}
+
+					key2 := Calculate_synthetic_secret_key(keyBytes)
+					newKey := make([]byte,0)
+					if len(key2) != 32{
+						for i:=0 ;i< 32 - len(key2) ;i++{
+							newKey = append(newKey, 0)
+						}
+					}
+					newKey = append(newKey, key2...)
+					signature, _, sigErr := owcrypt.Signature(newKey, nil, message, keySignature.EccType)
+					if sigErr != owcrypt.SUCCESS {
+						return  nil,fmt.Errorf("transaction hash sign failed："+keySignature.Message)
+					}
+					keySignature.Signature = hex.EncodeToString(signature)
+					continue
+				}
 				childKey, err := key.DerivedKeyWithPath(keySignature.DerivedPath, keySignature.EccType)
 				keyBytes, err := childKey.GetPrivateKeyBytes()
 				if err != nil {

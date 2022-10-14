@@ -146,7 +146,7 @@ func TestTransmitNode_SendTransactionViaTrustNode(t *testing.T) {
 		sid := uuid.New().String()
 		log.Infof("sid: %s", sid)
 		transmitNode.SendTransactionViaTrustNode(nodeInfo.NodeID, accountID, password, sid,
-			"", "0.1234", address, "", "", "",
+			"ETH", "", "0.1234", address, "", "", "",
 			true, func(status uint64, msg string, successTx []*Transaction, failedRawTxs []*FailedRawTransaction) {
 				log.Infof("status: %d, msg: %s", status, msg)
 				log.Info("============== success ==============")
@@ -431,7 +431,7 @@ func TestTransmitNode_SignTransactionViaTrustNode(t *testing.T) {
 		)
 
 		api, _ := transmitNode.APINode()
-		api.CreateTrade(accountID, sid, coin, "0.01", address, "", "", "", true,
+		api.CreateTrade(accountID, sid, coin, map[string]string{address: "0.01"}, "", "", "", true,
 			func(status uint64, msg string, rawTx *RawTransaction) {
 				if status != owtp.StatusSuccess {
 					err = fmt.Errorf(msg)
@@ -506,14 +506,13 @@ func TestTransmitNode_TriggerABIViaTrustNode(t *testing.T) {
 		sid := uuid.New().String()
 		log.Infof("sid: %s", sid)
 		transmitNode.TriggerABIViaTrustNode(nodeInfo.NodeID, accountID, password, sid,
-			contractAddress, "", "0", "", abiParam, "", 0,
+			"ETH", contractAddress, "", "0", "", abiParam, "", 0,
 			true, true, func(status uint64, msg string, receipt *SmartContractReceipt) {
 				log.Infof("status: %d, msg: %s", status, msg)
 				log.Infof("receipt: %+v", receipt)
 			})
 	})
 }
-
 
 func TestTransmitNode_SignHashViaTrustNode(t *testing.T) {
 
@@ -547,4 +546,49 @@ func TestTransmitNode_SignHashViaTrustNode(t *testing.T) {
 				log.Infof("signature: %+v", signature)
 			})
 	})
+}
+
+func TestServeTransmitNode(t *testing.T) {
+
+	testRunTimeTask := func(tn *TransmitNode) {
+		for {
+			//log.Debugf("call time task")
+			nodeID := "2Thz4GfdwRqj4zmtfhqrzARWUP5FwFmzyFr68xaWKLXt"
+			tn.UpdateInfoViaTrustNode(nodeID, true,
+				func(status uint64, msg string) {
+					log.Infof("status: %v, msg: %v", status, msg)
+				})
+			time.Sleep(5 * time.Second)
+		}
+	}
+
+	api := testNewAPINode()
+	err := api.ServeTransmitNode("127.0.0.1:9088")
+	if err != nil {
+		log.Errorf("ServeTransmitNode error: %v\n", err)
+		return
+	}
+
+	tn, err := api.TransmitNode()
+	if err != nil {
+		log.Errorf("TransmitNode error: %v\n", err)
+		return
+	}
+
+	proxyNode, err := api.ServeProxyNode(":7088")
+	if err != nil {
+		log.Errorf("ServeProxyNode error: %v\n", err)
+		return
+	}
+
+	proxyNode.SetProxyRequestHandler(func(ctx *owtp.Context) bool {
+		return true
+	})
+
+	proxyNode.SetProxyResponseHandler(func(ctx *owtp.Context) bool {
+		return true
+	})
+
+	testRunTimeTask(tn)
+
 }

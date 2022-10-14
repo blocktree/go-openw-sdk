@@ -39,7 +39,7 @@ type APINodeConfig struct {
 	TimeoutSEC         int              `json:"timeoutSEC"`
 }
 
-//APINode APINode通信节点
+// APINode APINode通信节点
 type APINode struct {
 	mu            sync.RWMutex //读写锁
 	node          *owtp.OWTPNode
@@ -50,7 +50,7 @@ type APINode struct {
 	subscribeInfo *CallbackNode                    `json:"subscribeInfo"`
 }
 
-//NewAPINodeWithError 创建API节点
+// NewAPINodeWithError 创建API节点
 func NewAPINodeWithError(config *APINodeConfig) (*APINode, error) {
 	connectCfg := owtp.ConnectConfig{}
 	connectCfg.Address = config.Host
@@ -84,7 +84,7 @@ func NewAPINodeWithError(config *APINodeConfig) (*APINode, error) {
 	return &api, nil
 }
 
-//NewAPINode 创建API节点
+// NewAPINode 创建API节点
 func NewAPINode(config *APINodeConfig) *APINode {
 	api, err := NewAPINodeWithError(config)
 	if err != nil {
@@ -93,7 +93,7 @@ func NewAPINode(config *APINodeConfig) *APINode {
 	return api
 }
 
-//OWTPNode
+// OWTPNode
 func (api *APINode) OWTPNode() *owtp.OWTPNode {
 	if api == nil {
 		return nil
@@ -101,7 +101,7 @@ func (api *APINode) OWTPNode() *owtp.OWTPNode {
 	return api.node
 }
 
-//NodeID
+// NodeID
 func (api *APINode) NodeID() string {
 	if api == nil {
 		return ""
@@ -109,7 +109,7 @@ func (api *APINode) NodeID() string {
 	return api.node.NodeID()
 }
 
-//Subscribe 订阅
+// Subscribe 订阅
 func (api *APINode) Subscribe(subscribeMethod []string, listenAddr string, callbackMode int, callbackNode CallbackNode, subscribeToken string) error {
 
 	if api == nil {
@@ -205,7 +205,7 @@ func RandNonce() string {
 	return strconv.FormatInt(n, 10)
 }
 
-//signAppDevice 生成登记节点的签名
+// signAppDevice 生成登记节点的签名
 func (api *APINode) signAppDevice(appID, nodID, nonce, appkey string, accessTime int64) string {
 	// 校验签名
 	plainText := fmt.Sprintf("%s%s%s%d", appID, nodID, nonce, accessTime)
@@ -213,8 +213,8 @@ func (api *APINode) signAppDevice(appID, nodID, nonce, appkey string, accessTime
 	return signature
 }
 
-//BindAppDevice 绑定通信节点
-//绑定节点ID成功，才能获得授权通信
+// BindAppDevice 绑定通信节点
+// 绑定节点ID成功，才能获得授权通信
 func (api *APINode) BindAppDevice() error {
 
 	if api == nil {
@@ -248,7 +248,7 @@ func (api *APINode) BindAppDevice() error {
 	return nil
 }
 
-//GetSymbolList 获取主链列表
+// GetSymbolList 获取主链列表
 func (api *APINode) GetSymbolList(symbol string, offset, limit, hasRole int, sync bool, reqFunc func(status uint64, msg string, total int, symbols []*Symbol)) error {
 
 	if api == nil {
@@ -268,11 +268,11 @@ func (api *APINode) GetSymbolList(symbol string, offset, limit, hasRole int, syn
 		if err := json.Unmarshal([]byte(resp.JsonData().Raw), &result); err != nil {
 			log.Error("json unmarshal failed: ", err)
 		}
-		reqFunc(resp.Status, resp.Msg, 0, nil)
+		reqFunc(resp.Status, resp.Msg, 0, result)
 	})
 }
 
-//CreateWallet 创建钱包
+// CreateWallet 创建钱包
 func (api *APINode) CreateWallet(wallet *Wallet, sync bool, reqFunc func(status uint64, msg string, wallet *Wallet)) error {
 
 	if api == nil {
@@ -302,7 +302,7 @@ func (api *APINode) CreateWallet(wallet *Wallet, sync bool, reqFunc func(status 
 	})
 }
 
-//FindWalletByWalletID 通过钱包ID获取钱包信息
+// FindWalletByWalletID 通过钱包ID获取钱包信息
 func (api *APINode) FindWalletByWalletID(walletID string, sync bool, reqFunc func(status uint64, msg string, wallet *Wallet)) error {
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
@@ -320,7 +320,7 @@ func (api *APINode) FindWalletByWalletID(walletID string, sync bool, reqFunc fun
 	})
 }
 
-//CreateAccount 创建资产账户
+// CreateAccount 创建资产账户
 func (api *APINode) CreateNormalAccount(
 	accountParam *Account,
 	sync bool,
@@ -354,7 +354,7 @@ func (api *APINode) CreateNormalAccount(
 	})
 }
 
-//FindAccountByAccountID 通过资产账户ID获取资产账户信息
+// FindAccountByAccountID 通过资产账户ID获取资产账户信息
 func (api *APINode) FindAccountByAccountID(symbol, accountID string, refresh int, sync bool, reqFunc func(status uint64, msg string, account *Account)) error {
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
@@ -374,7 +374,7 @@ func (api *APINode) FindAccountByAccountID(symbol, accountID string, refresh int
 	})
 }
 
-//FindAccountByWalletID 通过钱包ID获取资产账户列表信息
+// FindAccountByWalletID 通过钱包ID获取资产账户列表信息
 func (api *APINode) FindAccountByWalletID(symbol, walletID string, lastID, limit int64, sync bool, reqFunc func(status uint64, msg string, accounts []*Account)) error {
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
@@ -395,7 +395,7 @@ func (api *APINode) FindAccountByWalletID(symbol, walletID string, lastID, limit
 	})
 }
 
-//CreateAddress 创建资产账户的地址
+// CreateAddress 创建资产账户的地址
 func (api *APINode) CreateAddress(
 	symbol string,
 	walletID string,
@@ -422,7 +422,7 @@ func (api *APINode) CreateAddress(
 	})
 }
 
-//CreateBatchAddress 批量创建资产账户的地址
+// CreateBatchAddress 批量创建资产账户的地址
 func (api *APINode) CreateBatchAddress(
 	walletID string,
 	accountID string,
@@ -451,7 +451,7 @@ func (api *APINode) CreateBatchAddress(
 	})
 }
 
-//FindAddressByAddress 通获取具体交易地址信息
+// FindAddressByAddress 通获取具体交易地址信息
 func (api *APINode) FindAddressByAddress(symbol, address string, sync bool, reqFunc func(status uint64, msg string, address *Address)) error {
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
@@ -470,7 +470,7 @@ func (api *APINode) FindAddressByAddress(symbol, address string, sync bool, reqF
 	})
 }
 
-//FindAccountByWalletID 通过资产账户ID获取交易地址列表
+// FindAccountByWalletID 通过资产账户ID获取交易地址列表
 func (api *APINode) FindAddressByAccountID(symbol, accountID string, lastID, limit int64, sync bool, reqFunc func(status uint64, msg string, addresses []*Address)) error {
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
@@ -491,7 +491,7 @@ func (api *APINode) FindAddressByAccountID(symbol, accountID string, lastID, lim
 	})
 }
 
-//CreateTrade 创建转账交易订单
+// CreateTrade 创建转账交易订单
 func (api *APINode) CreateTrade(
 	accountID string,
 	sid string,
@@ -533,7 +533,7 @@ func (api *APINode) CreateTrade(
 	})
 }
 
-//CreateBatchTrade 创建批量转账交易订单
+// CreateBatchTrade 创建批量转账交易订单
 func (api *APINode) CreateBatchTrade(
 	accountID string,
 	sid string,
@@ -580,7 +580,7 @@ func (api *APINode) CreateBatchTrade(
 	})
 }
 
-//SubmitTrade 广播转账交易订单
+// SubmitTrade 广播转账交易订单
 func (api *APINode) SubmitTrade(
 	rawTx []*RawTransaction,
 	sync bool,
@@ -624,7 +624,7 @@ func (api *APINode) FindTradeLogByParams(
 
 }
 
-//FindTradeLog 获取转账交易订单日志
+// FindTradeLog 获取转账交易订单日志
 func (api *APINode) FindTradeLog(
 	walletID string,
 	accountID string,
@@ -684,7 +684,7 @@ func (api *APINode) FindTradeLog(
 	})
 }
 
-//GetContracts 获取智能合约
+// GetContracts 获取智能合约
 func (api *APINode) GetContracts(
 	symbol, contractID string,
 	lastID, limit int,
@@ -709,7 +709,7 @@ func (api *APINode) GetContracts(
 	})
 }
 
-//GetBalanceByAccount 获取accountID主币/合约余额
+// GetBalanceByAccount 获取accountID主币/合约余额
 func (api *APINode) GetBalanceByAccount(
 	symbol string,
 	accountID string,
@@ -734,7 +734,7 @@ func (api *APINode) GetBalanceByAccount(
 	})
 }
 
-//GetBalanceByAddress 获取address主币/合约余额
+// GetBalanceByAddress 获取address主币/合约余额
 func (api *APINode) GetBalanceByAddress(
 	symbol string,
 	address string,
@@ -759,7 +759,7 @@ func (api *APINode) GetBalanceByAddress(
 	})
 }
 
-//GetAllTokenBalanceByAccount 获取账户所有token余额接口
+// GetAllTokenBalanceByAccount 获取账户所有token余额接口
 func (api *APINode) GetAllTokenBalanceByAccount(
 	accountID string,
 	symbol string,
@@ -788,7 +788,7 @@ func (api *APINode) GetAllTokenBalanceByAccount(
 	})
 }
 
-//GetAllTokenBalanceByAddress 获取地址的token余额接口
+// GetAllTokenBalanceByAddress 获取地址的token余额接口
 func (api *APINode) GetAllTokenBalanceByAddress(
 	accountID string,
 	address string,
@@ -819,7 +819,7 @@ func (api *APINode) GetAllTokenBalanceByAddress(
 	})
 }
 
-//GetFeeRate 获取推荐手续费率接口
+// GetFeeRate 获取推荐手续费率接口
 func (api *APINode) GetFeeRate(
 	symbol string,
 	sync bool,
@@ -841,7 +841,6 @@ func (api *APINode) GetFeeRate(
 	})
 }
 
-//
 func (api *APINode) GetFeeRateList(
 	sync bool,
 	reqFunc func(status uint64, msg string, feeRates []SupportFeeRate),
@@ -869,7 +868,7 @@ func (api *APINode) GetFeeRateList(
 	})
 }
 
-//CreateSummaryTx 创建汇总交易单
+// CreateSummaryTx 创建汇总交易单
 func (api *APINode) CreateSummaryTx(
 	accountID string,
 	sumAddress string,
@@ -912,7 +911,7 @@ func (api *APINode) CreateSummaryTx(
 	})
 }
 
-//ServeTransmitNode 启动转发服务节点
+// ServeTransmitNode 启动转发服务节点
 func (api *APINode) ServeTransmitNode(address string) error {
 
 	if api.transmitNode != nil {
@@ -938,7 +937,7 @@ func (api *APINode) ServeTransmitNode(address string) error {
 	return nil
 }
 
-//StopTransmitNode 停止转发服务节点
+// StopTransmitNode 停止转发服务节点
 func (api *APINode) StopTransmitNode(port int) error {
 
 	if api.transmitNode == nil {
@@ -951,7 +950,7 @@ func (api *APINode) StopTransmitNode(port int) error {
 	return nil
 }
 
-//TransmitNode 转发节点
+// TransmitNode 转发节点
 func (api *APINode) TransmitNode() (*TransmitNode, error) {
 	if api.transmitNode == nil {
 		return nil, fmt.Errorf("transmit node is not inited")
@@ -959,7 +958,7 @@ func (api *APINode) TransmitNode() (*TransmitNode, error) {
 	return api.transmitNode, nil
 }
 
-//GetSymbolBlockList 获取币种最大高度
+// GetSymbolBlockList 获取币种最大高度
 func (api *APINode) GetSymbolBlockList(
 	symbol string,
 	sync bool,
@@ -1301,7 +1300,7 @@ func (api *APINode) CreateSmartContractTrade(
 	})
 }
 
-//SubmitSmartContractTrade 广播转账交易订单
+// SubmitSmartContractTrade 广播转账交易订单
 func (api *APINode) SubmitSmartContractTrade(
 	rawTx []*SmartContractRawTransaction,
 	sync bool,

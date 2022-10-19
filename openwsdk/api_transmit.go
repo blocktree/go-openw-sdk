@@ -676,6 +676,7 @@ func (transmit *TransmitNode) TriggerABIViaTrustNode(
 // @param address 必填 地址
 // @param symbol 可选 主链标识
 // @param hdPath 可选 子密钥路径
+// @param rsv 必填 是否rsv模式
 // @param sync 必填 是否同步线程
 // @param reqFunc 必填 回调函数处理
 func (transmit *TransmitNode) SignHashViaTrustNode(
@@ -687,6 +688,7 @@ func (transmit *TransmitNode) SignHashViaTrustNode(
 	password string,
 	symbol string,
 	hdPath string,
+	rsv bool,
 	sync bool,
 	reqFunc func(status uint64, msg string, signature string),
 ) error {
@@ -707,6 +709,7 @@ func (transmit *TransmitNode) SignHashViaTrustNode(
 		"password":  password,
 		"symbol":    symbol,
 		"hdPath":    hdPath,
+		"rsv":       rsv,
 	}
 
 	return transmit.node.Call(nodeID, "signHashViaTrustNode", params, sync, func(resp owtp.Response) {

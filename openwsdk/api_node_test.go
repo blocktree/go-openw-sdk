@@ -17,7 +17,7 @@ import (
 )
 
 func init() {
-	owtp.Debug = false
+	owtp.Debug = true
 }
 
 func testNewAPINode() *APINode {
@@ -220,7 +220,7 @@ func TestAPINode_CreateAccount(t *testing.T) {
 func TestAPINode_FindAccountByWalletID(t *testing.T) {
 	walletID := "W1iymivnBrjxtQdbm9esyheuy3mLeJWHto"
 	api := testNewAPINode()
-	api.FindAccountByWalletID("ETH", walletID, 0, 0, true,
+	api.FindAccountByWalletID("", walletID, 0, 0, true,
 		func(status uint64, msg string, accounts []*Account) {
 
 			if status != owtp.StatusSuccess {
@@ -814,23 +814,24 @@ func TestAPINode_FollowSmartContractRecepit(t *testing.T) {
 func TestAPINode_CreateSmartContractTrade(t *testing.T) {
 
 	var (
-		retRawTx  *SmartContractRawTransaction
-		retTx     []*SmartContractReceipt
-		retFailed []*FailureSmartContractLog
-		err       error
-		key       *hdkeystore.HDKey
-		accountID = "5kTzFGuAH9UkB9yhZdmXtF8hGPh6iPt4hf8Q3DVy3Xo3"
+		retRawTx *SmartContractRawTransaction
+		//retTx     []*SmartContractReceipt
+		//retFailed []*FailureSmartContractLog
+		err error
+		//key       *hdkeystore.HDKey
+		accountID = "Eh2ALZguch6DS2JaoFz97ZspvBvv56FjB79CVVkqc1aA"
 		sid       = uuid.New().String()
 		coin      = Coin{
-			Symbol:     "QUORUM",
+			Symbol:     "MATIC",
 			IsContract: true,
-			ContractID: "dl8WD7bM7xk4ZxRybuHCo3JDDtZn2ugPusapoKnQEWA=",
+			ContractID: openwallet.GenContractID("MATIC", "0x9866c45224667061f8c9e66db38d9316a8d68951"),
 		}
-		abiParam = []string{"transfer", "0x19a4b5d6ea319a5d5ad1d4cc00a5e2e28cac5ec3", "123"}
+		//abiParam = []string{"transfer", "0x19a4b5d6ea319a5d5ad1d4cc00a5e2e28cac5ec3", "123"}
+		raw = "{\"gas\":\"0x11118\",\"from\":\"0x282425dd54156902ead4a99ec7e80a21213d878d\",\"to\":\"0x9faef544a1c9a3ccab003174bb62a32e3aaab719\",\"data\":\"0xa22cb4650000000000000000000000000c58c1170f1ded633862a1166f52107490a9c5940000000000000000000000000000000000000000000000000000000000000001\"}"
 	)
 
 	api := testNewAPINode()
-	api.CreateSmartContractTrade(sid, accountID, coin, abiParam, "", 0, "", "1", true,
+	err = api.CreateSmartContractTrade(sid, accountID, coin, nil, raw, openwallet.TxRawTypeJSON, "", "0", true,
 		func(status uint64, msg string, rawTx *SmartContractRawTransaction) {
 			if status != owtp.StatusSuccess {
 				err = fmt.Errorf(msg)
@@ -838,54 +839,60 @@ func TestAPINode_CreateSmartContractTrade(t *testing.T) {
 			}
 			retRawTx = rawTx
 		})
+	if err != nil {
+		t.Logf("CreateSmartContractTrade error: %v\n", err)
+		return
+	}
 	log.Infof("rawTx: %+v", retRawTx)
 
-	key, err = testGetLocalKey()
-	if err != nil {
-		t.Logf("GetKey error: %v\n", err)
-		return
-	}
+	/*
+		key, err = testGetLocalKey()
+		if err != nil {
+			t.Logf("GetKey error: %v\n", err)
+			return
+		}
 
-	//签名交易单
-	signatures, signErr := SignTxHash(retRawTx.Signatures, key)
-	if signErr != nil {
-		t.Logf("SignRawTransaction unexpected error: %v\n", signErr)
-		return
-	}
-
-	retRawTx.Signatures = signatures
-	retRawTx.AwaitResult = true
-
-	log.Infof("signed rawTx: %+v", retRawTx)
-
-	api.SubmitSmartContractTrade([]*SmartContractRawTransaction{retRawTx}, true,
-		func(status uint64, msg string, successTx []*SmartContractReceipt, failedRawTxs []*FailureSmartContractLog) {
-			if status != owtp.StatusSuccess {
-				err = fmt.Errorf(msg)
+			//签名交易单
+			signatures, signErr := SignTxHash(retRawTx.Signatures, key)
+			if signErr != nil {
+				t.Logf("SignRawTransaction unexpected error: %v\n", signErr)
 				return
 			}
 
-			retTx = successTx
-			retFailed = failedRawTxs
-		})
+			retRawTx.Signatures = signatures
+			retRawTx.AwaitResult = true
 
-	log.Info("============== success ==============")
+			log.Infof("signed rawTx: %+v", retRawTx)
 
-	for _, tx := range retTx {
-		log.Infof("tx: %+v", tx)
+			api.SubmitSmartContractTrade([]*SmartContractRawTransaction{retRawTx}, true,
+				func(status uint64, msg string, successTx []*SmartContractReceipt, failedRawTxs []*FailureSmartContractLog) {
+					if status != owtp.StatusSuccess {
+						err = fmt.Errorf(msg)
+						return
+					}
 
-		for i, event := range tx.Events {
-			log.Std.Notice("events[%d]: %+v", i, event)
-		}
-	}
+					retTx = successTx
+					retFailed = failedRawTxs
+				})
 
-	log.Info("")
+			log.Info("============== success ==============")
 
-	log.Info("============== fail ==============")
+			for _, tx := range retTx {
+				log.Infof("tx: %+v", tx)
 
-	for _, tx := range retFailed {
-		log.Infof("tx: %+v", tx.Reason)
-	}
+				for i, event := range tx.Events {
+					log.Std.Notice("events[%d]: %+v", i, event)
+				}
+			}
+
+			log.Info("")
+
+			log.Info("============== fail ==============")
+
+			for _, tx := range retFailed {
+				log.Infof("tx: %+v", tx.Reason)
+			}
+	*/
 }
 
 func TestAPINode_FindSmartContractReceiptByParams(t *testing.T) {

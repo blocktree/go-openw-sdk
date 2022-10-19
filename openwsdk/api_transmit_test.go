@@ -541,6 +541,7 @@ func TestTransmitNode_SignHashViaTrustNode(t *testing.T) {
 			password,
 			symbol,
 			hdPath,
+			true,
 			true, func(status uint64, msg string, signature string) {
 				log.Infof("status: %d, msg: %s", status, msg)
 				log.Infof("signature: %+v", signature)

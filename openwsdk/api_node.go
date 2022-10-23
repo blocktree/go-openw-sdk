@@ -80,6 +80,7 @@ func NewAPINodeWithError(config *APINodeConfig) (*APINode, error) {
 	api.node.HandleFunc("subscribeToTrade", api.subscribeToTrade)
 	api.node.HandleFunc("subscribeToBlock", api.subscribeToBlock)
 	api.node.HandleFunc("subscribeToSmartContractReceipt", api.subscribeToSmartContractReceipt)
+	api.node.HandleFunc("subscribeToNFTTransfer", api.subscribeToNFTTransfer)
 
 	return &api, nil
 }

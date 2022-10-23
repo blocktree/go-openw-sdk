@@ -294,9 +294,10 @@ func TestAPINode_CreateBatchAddress(t *testing.T) {
 }
 
 func TestAPINode_FindAddressByAddress(t *testing.T) {
-	addr := "1QGPMCCtXaop8C2J2mUf3DcofjYgiD8prd"
+	addr := "0x282425dd54156902ead4a99ec7e80a21213d878d"
+	symbol := "MATIC"
 	api := testNewAPINode()
-	api.FindAddressByAddress("", addr, true,
+	api.FindAddressByAddress(symbol, addr, true,
 		func(status uint64, msg string, address *Address) {
 
 			if status != owtp.StatusSuccess {

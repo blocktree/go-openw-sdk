@@ -15,7 +15,7 @@ const (
 	SubscribeToNFTTransfer          = "subscribeToNFTTransfer"          //订阅NFT交易数据通知
 )
 
-//OpenwNotificationObject openw-server的通知对象
+// OpenwNotificationObject openw-server的通知对象
 type OpenwNotificationObject interface {
 
 	//OpenwNewTransactionNotify openw新交易单通知
@@ -34,7 +34,7 @@ type OpenwNotificationObject interface {
 	OpenwNFTTransferNotify(transfer *NFTTransfer, subscribeToken string) (bool, error)
 }
 
-//ServeNotification 开启监听服务，接收通知
+// ServeNotification 开启监听服务，接收通知
 func (api *APINode) ServeNotification(listenAddr string, connectType string) error {
 
 	if api == nil {
@@ -49,13 +49,13 @@ func (api *APINode) ServeNotification(listenAddr string, connectType string) err
 	})
 }
 
-//StopServeNotification 关闭监听通知
+// StopServeNotification 关闭监听通知
 func (api *APINode) StopServeNotification(connectType string) {
 	log.Infof("API Node close listener [%s] connection...", connectType)
 	api.node.CloseListener(connectType)
 }
 
-//AddObserver 添加观测者
+// AddObserver 添加观测者
 func (api *APINode) AddObserver(obj OpenwNotificationObject) error {
 	api.mu.Lock()
 
@@ -74,7 +74,7 @@ func (api *APINode) AddObserver(obj OpenwNotificationObject) error {
 	return nil
 }
 
-//RemoveObserver 移除观测者
+// RemoveObserver 移除观测者
 func (api *APINode) RemoveObserver(obj OpenwNotificationObject) error {
 	api.mu.Lock()
 	defer api.mu.Unlock()
@@ -121,7 +121,7 @@ func (api *APINode) subscribeToAccount(ctx *owtp.Context) {
 
 }
 
-//subscribeToTrade 处理新交易记录通知
+// subscribeToTrade 处理新交易记录通知
 func (api *APINode) subscribeToTrade(ctx *owtp.Context) {
 	data := ctx.Params()
 
@@ -159,7 +159,7 @@ func (api *APINode) subscribeToTrade(ctx *owtp.Context) {
 	}, owtp.StatusSuccess, msg)
 }
 
-//subscribeToBlock 处理新区块头通知
+// subscribeToBlock 处理新区块头通知
 func (api *APINode) subscribeToBlock(ctx *owtp.Context) {
 	data := ctx.Params()
 
@@ -197,7 +197,7 @@ func (api *APINode) subscribeToBlock(ctx *owtp.Context) {
 	}, owtp.StatusSuccess, msg)
 }
 
-//subscribeToSmartContractReceipt 处理新智能合约交易回执通知
+// subscribeToSmartContractReceipt 处理新智能合约交易回执通知
 func (api *APINode) subscribeToSmartContractReceipt(ctx *owtp.Context) {
 	data := ctx.Params()
 
@@ -237,4 +237,42 @@ func (api *APINode) subscribeToSmartContractReceipt(ctx *owtp.Context) {
 
 func (api *APINode) checkNodeIsOnline(ctx *owtp.Context) {
 	ctx.Response(nil, owtp.StatusSuccess, "success")
+}
+
+// subscribeToNFTTransfer 处理NFT相关交易记录通知
+func (api *APINode) subscribeToNFTTransfer(ctx *owtp.Context) {
+	data := ctx.Params()
+
+	var msg string
+	var accepted bool
+	var tx NFTTransfer
+
+	if ctx.Peer.PID() != api.subscribeInfo.notifierNodeID {
+		ctx.Response(map[string]interface{}{
+			"accepted": false,
+		}, owtp.StatusSuccess, msg)
+		log.Warningf("get transaction notify by unknown notifier NodeID: %s", ctx.Peer.PID())
+		return
+	}
+
+	subscribeToken := data.Get("subscribeToken").String()
+	err := json.Unmarshal([]byte(data.Raw), &tx)
+	if err != nil {
+		accepted = false
+	} else {
+		for o, _ := range api.observers {
+			accepted, err = o.OpenwNFTTransferNotify(&tx, subscribeToken)
+			if err != nil {
+				msg = err.Error()
+				accepted = false
+			}
+			if accepted == false {
+				break
+			}
+		}
+	}
+
+	ctx.Response(map[string]interface{}{
+		"accepted": accepted,
+	}, owtp.StatusSuccess, msg)
 }

@@ -573,3 +573,91 @@ type NFTTransfer struct {
 	TxID        string `json:"txID"`        //@required
 	Status      string `json:"status"`      //@required 链上状态，0：失败，1：成功
 }
+
+// TryIntoNFTTransfer 从event解析NFT转账信息
+func (event *SmartContractEvent) TryIntoNFTTransfer() ([]*NFTTransfer, error) {
+	if event == nil {
+		return nil, fmt.Errorf("SmartContractEvent is nil")
+	}
+	var (
+		nftTxs = make([]*NFTTransfer, 0)
+	)
+	obj := gjson.ParseBytes([]byte(event.Value))
+	switch event.Event {
+	case "Transfer":
+		//{"from":"0x1234","to":"0xabcd","tokenId":1414}}
+		operator := obj.Get("from").String()
+		from := obj.Get("from").String()
+		to := obj.Get("to").String()
+		tokenId := obj.Get("tokenId").String()
+		if len(tokenId) == 0 {
+			return nil, fmt.Errorf("event is not NFT Transfer")
+		}
+
+		tx := &NFTTransfer{
+			Symbol:   event.Symbol,
+			Address:  event.ContractAddr,
+			Name:     event.ContractName,
+			TokenID:  tokenId,
+			From:     from,
+			To:       to,
+			Operator: operator,
+			Amount:   "1",
+			Protocol: openwallet.InterfaceTypeERC721,
+		}
+		nftTxs = append(nftTxs, tx)
+	case "TransferSingle":
+
+		operator := obj.Get("operator").String()
+		from := obj.Get("from").String()
+		to := obj.Get("to").String()
+		tokenId := obj.Get("id").String()
+		amount := obj.Get("value").String()
+
+		if len(tokenId) == 0 {
+			return nil, fmt.Errorf("event is not NFT Transfer")
+		}
+
+		tx := &NFTTransfer{
+			Symbol:   event.Symbol,
+			Address:  event.ContractAddr,
+			Name:     event.ContractName,
+			TokenID:  tokenId,
+			From:     from,
+			To:       to,
+			Operator: operator,
+			Amount:   amount,
+			Protocol: openwallet.InterfaceTypeERC1155,
+		}
+		nftTxs = append(nftTxs, tx)
+
+	case "TransferBatch":
+
+		operator := obj.Get("operator").String()
+		from := obj.Get("from").String()
+		to := obj.Get("to").String()
+
+		ids := obj.Get("ids").Array()
+		values := obj.Get("values").Array()
+		for i, id := range ids {
+
+			tx := &NFTTransfer{
+				Symbol:   event.Symbol,
+				Address:  event.ContractAddr,
+				Name:     event.ContractName,
+				TokenID:  id.String(),
+				From:     from,
+				To:       to,
+				Operator: operator,
+				Amount:   values[i].String(),
+				Protocol: openwallet.InterfaceTypeERC1155,
+			}
+			nftTxs = append(nftTxs, tx)
+		}
+
+	default:
+		return nil, fmt.Errorf("event is not NFT Transfer")
+	}
+
+	return nftTxs, nil
+}

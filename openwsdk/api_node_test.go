@@ -899,7 +899,8 @@ func TestAPINode_CreateSmartContractTrade(t *testing.T) {
 func TestAPINode_FindSmartContractReceiptByParams(t *testing.T) {
 	api := testNewAPINode()
 	param := map[string]interface{}{
-		"txid": "0x3d266b3c7e9f09ab8484086fd7db082b5f4a9b756307a067b89bf91320e4edc4",
+		"symbol": "MATIC",
+		"txid":   "0x7c2fffa2a26342b6da3586b38bc1b8bbc4aa4e6c46bd680b4abcd963b40d2543",
 	}
 	api.FindSmartContractReceiptByParams(param, true,
 		func(status uint64, msg string, receipts []*SmartContractReceipt) {
@@ -907,6 +908,12 @@ func TestAPINode_FindSmartContractReceiptByParams(t *testing.T) {
 				log.Infof("receipt[%d]: %+v", i, value)
 				for i, event := range value.Events {
 					log.Std.Notice("events[%d]: %+v", i, event)
+					nftTxs, terr := event.TryIntoNFTTransfer()
+					if terr == nil {
+						for _, tx := range nftTxs {
+							log.Std.Notice("NFT TX[%d]: %+v", i, tx)
+						}
+					}
 				}
 			}
 		})

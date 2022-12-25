@@ -231,7 +231,7 @@ func TestAPINode_GetBalanceByAccount(t *testing.T) {
 }
 
 func TestAPINode_GetBalanceByAddress(t *testing.T) {
-	address := "0xf3d5a26b5e8318aa1432139abf6381e0f8ed8336"
+	address := "0xc27992b757a3c00ed3cb1dfa7dfb1a59d70dbd0f"
 	api.GetBalanceByAddress(symbol, address, "", true, func(status uint64, msg string, balance *openwsdk.BalanceResult) {
 		if status != owtp.StatusSuccess {
 			log.Error(msg)

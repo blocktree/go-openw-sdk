@@ -175,7 +175,7 @@ func TestAPINode_CreateAccount(t *testing.T) {
 	}
 
 	symbol := &Symbol{}
-	symbol.Symbol = "ETH"
+	symbol.Symbol = "MATIC"
 	symbol.Curve = int64(owcrypt.ECC_CURVE_SECP256K1)
 
 	var findWallet *Wallet
@@ -218,7 +218,7 @@ func TestAPINode_CreateAccount(t *testing.T) {
 }
 
 func TestAPINode_FindAccountByWalletID(t *testing.T) {
-	walletID := "W1iymivnBrjxtQdbm9esyheuy3mLeJWHto"
+	walletID := "W4W8i2F27c1YB63rMZswSquVSnS3265MAF"
 	api := testNewAPINode()
 	api.FindAccountByWalletID("", walletID, 0, 0, true,
 		func(status uint64, msg string, accounts []*Account) {
@@ -308,7 +308,7 @@ func TestAPINode_FindAddressByAddress(t *testing.T) {
 }
 
 func TestAPINode_FindAddressByAccountID(t *testing.T) {
-	accountID := "Ey6MU7v5CdPbpy9Ph18d2v4HwgNAG6UDgQEFfKCRmUZE"
+	accountID := "HGxD4XmZ7ZXYcYBC3mENtqRfSXYenXor5rvoGAbaZnef"
 	api := testNewAPINode()
 	api.FindAddressByAccountID("", accountID, 0, 10, true,
 		func(status uint64, msg string, addresses []*Address) {
@@ -347,61 +347,6 @@ func testSubmitTrade(
 	return retTx, retFailed, err
 }
 
-//func TestAPINode_Send_LTC(t *testing.T) {
-//	accountID := "Aa7Chh2MdaGDejHdCJZAaX7AwvGNmMEMry2kZZTq114a"
-//	sid := uuid.New().String()
-//	amount := "0.001"
-//	address := "mkdStRouBPVrDVpYmbE5VUJqhBgxJb3dSS"
-//	feeRate := "0.001"
-//
-//	coin := Coin{
-//		Symbol:     "LTC",
-//		IsContract: false,
-//	}
-//
-//	rawTx, err := testCreateTrade(accountID, sid, coin, map[string]string{address: amount}, feeRate)
-//	if err != nil {
-//		t.Logf("CreateTrade unexpected error: %v\n", err)
-//		return
-//	}
-//	log.Infof("rawTx: %+v", rawTx)
-//
-//	key, err := testGetLocalKey()
-//	if err != nil {
-//		t.Logf("GetKey error: %v\n", err)
-//		return
-//	}
-//
-//	//签名交易单
-//	err = SignRawTransaction(rawTx, key)
-//	if err != nil {
-//		t.Logf("SignRawTransaction unexpected error: %v\n", err)
-//		return
-//	}
-//
-//	log.Infof("signed rawTx: %+v", rawTx)
-//
-//	success, fail, err := testSubmitTrade([]*RawTransaction{rawTx})
-//	if err != nil {
-//		t.Logf("SubmitTrade unexpected error: %v\n", err)
-//		return
-//	}
-//
-//	log.Info("============== success ==============")
-//
-//	for _, tx := range success {
-//		log.Infof("tx: %+v", tx)
-//	}
-//
-//	log.Info("")
-//
-//	log.Info("============== fail ==============")
-//
-//	for _, tx := range fail {
-//		log.Infof("tx: %+v", tx.Reason)
-//	}
-//}
-
 func TestAPINode_FindTradeLog(t *testing.T) {
 	api := testNewAPINode()
 	param := map[string]interface{}{
@@ -438,10 +383,11 @@ func TestAPINode_GetTokenBalanceByAccount(t *testing.T) {
 }
 
 func TestAPINode_GetAllTokenBalanceByAccount(t *testing.T) {
-	accountID := "7u7CQNdkaJXVszoj528Bink88aWgfay3rDxb1rsmDywA"
+	walletID := "W4W8i2F27c1YB63rMZswSquVSnS3265MAF"
+	accountID := "3BSJAseva4A2oZgmEuMEVtdSgnj5UXCunYzyWtK7dj4b"
 	api := testNewAPINode()
-	api.GetAllTokenBalanceByAccount(accountID, "ETH", true,
-		func(status uint64, msg string, balance []*TokenBalance) {
+	api.GetAllTokenBalanceByAccount(walletID, accountID, "MATIC", true,
+		func(status uint64, msg string, balance []*BalanceResult) {
 			for _, b := range balance {
 				log.Infof("balance: %+v", b)
 			}
@@ -592,11 +538,12 @@ func TestAPINode_GetSymbolBlockList(t *testing.T) {
 }
 
 func TestAPINode_GetAllTokenBalanceByAddress(t *testing.T) {
-	accountID := "BBxgBEn7AoRhNqsS7vjD625B5SafFFdY1QMX7Zq8M9jn"
-	address := "WhWV4XcD7UJzt2bAcVe48PN1Cxwh8HAyoi"
+	walletID := "W4W8i2F27c1YB63rMZswSquVSnS3265MAF"
+	accountID := "3BSJAseva4A2oZgmEuMEVtdSgnj5UXCunYzyWtK7dj4b"
+	address := "0xc27992b757a3c00ed3cb1dfa7dfb1a59d70dbd0f"
 	api := testNewAPINode()
-	api.GetAllTokenBalanceByAddress(accountID, address, "WICC", true,
-		func(status uint64, msg string, balance []*TokenBalance) {
+	api.GetAllTokenBalanceByAddress(walletID, accountID, address, "MATIC", true,
+		func(status uint64, msg string, balance []*BalanceResult) {
 			for _, b := range balance {
 				log.Infof("balance: %+v", b)
 			}
@@ -1012,4 +959,133 @@ func TestAPINode_CreateSmartContractTradeMulti(t *testing.T) {
 
 	wait.Wait()
 
+}
+
+func TestAPINode_GetBalanceByAccount(t *testing.T) {
+	api := testNewAPINode()
+	accountID := "3BSJAseva4A2oZgmEuMEVtdSgnj5UXCunYzyWtK7dj4b"
+	api.GetBalanceByAccount("MATIC", accountID, "", true,
+		func(status uint64, msg string, balance *BalanceResult) {
+			if status != owtp.StatusSuccess {
+				log.Error(msg)
+				return
+			}
+			log.Infof("balance: %+v", balance)
+		})
+}
+
+func TestAPINode_GetBalanceByAddress(t *testing.T) {
+	api := testNewAPINode()
+	address := "0x098738e2236cc0d2305814799b788d14d2e02aa1"
+	api.GetBalanceByAddress("MATIC", address, "", true, func(status uint64, msg string, balance *BalanceResult) {
+		if status != owtp.StatusSuccess {
+			log.Error(msg)
+			return
+		}
+		log.Infof("balance: %+v", balance)
+	})
+}
+
+func testCreateTrade(
+	accountID string,
+	sid string,
+	coin Coin,
+	to map[string]string,
+	feeRate string,
+) (*RawTransaction, error) {
+	var (
+		retRawTx *RawTransaction
+		err      error
+	)
+	api := testNewAPINode()
+	api.CreateTrade(accountID, sid, coin, to, feeRate, "", "", true,
+		func(status uint64, msg string, rawTx *RawTransaction) {
+			if status != owtp.StatusSuccess {
+				err = fmt.Errorf(msg)
+				return
+			}
+			retRawTx = rawTx
+		})
+
+	return retRawTx, err
+}
+
+func TestAPINode_Send_Coin(t *testing.T) {
+	accountID := "HGxD4XmZ7ZXYcYBC3mENtqRfSXYenXor5rvoGAbaZnef"
+	sid := uuid.New().String()
+	amount := "0.01"
+	address := "0x8C178b782fab1d0686D88bC16B31F80431098fa1"
+	feeRate := ""
+
+	coin := Coin{
+		Symbol:     "MATIC",
+		IsContract: false,
+	}
+
+	rawTx, err := testCreateTrade(accountID, sid, coin, map[string]string{address: amount}, feeRate)
+	if err != nil {
+		t.Logf("CreateTrade unexpected error: %v\n", err)
+		return
+	}
+	log.Infof("rawTx: %+v", rawTx)
+
+	key, err := testGetLocalKey()
+	if err != nil {
+		t.Logf("GetKey error: %v\n", err)
+		return
+	}
+
+	//签名交易单
+	err = SignRawTransaction(rawTx, key)
+	if err != nil {
+		t.Logf("SignRawTransaction unexpected error: %v\n", err)
+		return
+	}
+
+	log.Infof("signed rawTx: %+v", rawTx)
+
+	success, fail, err := testSubmitTrade([]*RawTransaction{rawTx})
+	if err != nil {
+		t.Logf("SubmitTrade unexpected error: %v\n", err)
+		return
+	}
+
+	log.Info("============== success ==============")
+
+	for _, tx := range success {
+		log.Infof("tx: %+v", tx)
+	}
+
+	log.Info("")
+
+	log.Info("============== fail ==============")
+
+	for _, tx := range fail {
+		log.Infof("tx: %+v", tx.Reason)
+	}
+}
+
+func TestAPINode_GetAccountBalanceList(t *testing.T) {
+	api := testNewAPINode()
+	walletID := "W4W8i2F27c1YB63rMZswSquVSnS3265MAF"
+	accountID := "3BSJAseva4A2oZgmEuMEVtdSgnj5UXCunYzyWtK7dj4b"
+	api.GetAccountBalanceList(walletID, accountID, "", "", 0, 0, 1,
+		true, func(status uint64, msg string, balances []*BalanceResult) {
+			for i, balance := range balances {
+				log.Infof("balance[%d]: %+v", i, balance)
+			}
+		})
+}
+
+func TestAPINode_GetAddressBalanceList(t *testing.T) {
+	api := testNewAPINode()
+	walletID := "W4W8i2F27c1YB63rMZswSquVSnS3265MAF"
+	accountID := "3BSJAseva4A2oZgmEuMEVtdSgnj5UXCunYzyWtK7dj4b"
+	address := ""
+	api.GetAddressBalanceList(walletID, accountID, address, "", "", 0, 0, 1,
+		true, func(status uint64, msg string, balances []*BalanceResult) {
+			for i, balance := range balances {
+				log.Infof("balance[%d]: %+v", i, balance)
+			}
+		})
 }

@@ -340,6 +340,7 @@ func (api *APINode) CreateNormalAccount(
 		"hdPath":       accountParam.HdPath,
 		"reqSigs":      accountParam.ReqSigs,
 		"isTrust":      0,
+		"remark":       accountParam.Symbol,
 	}
 	return api.node.Call(HostNodeID, "createAccount", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
@@ -523,9 +524,9 @@ func (api *APINode) CreateTrade(
 			return
 		}
 		data := resp.JsonData()
-		jsonRawTx := data.Get("rawTx")
+		//jsonRawTx := data.Get("rawTx")
 		var rawTx RawTransaction
-		err := json.Unmarshal([]byte(jsonRawTx.Raw), &rawTx)
+		err := json.Unmarshal([]byte(data.Raw), &rawTx)
 		if err != nil {
 			reqFunc(openwallet.ErrUnknownException, err.Error(), nil)
 			return
@@ -762,28 +763,26 @@ func (api *APINode) GetBalanceByAddress(
 
 // GetAllTokenBalanceByAccount 获取账户所有token余额接口
 func (api *APINode) GetAllTokenBalanceByAccount(
+	walletID string,
 	accountID string,
 	symbol string,
 	sync bool,
-	reqFunc func(status uint64, msg string, balance []*TokenBalance)) error {
+	reqFunc func(status uint64, msg string, balance []*BalanceResult)) error {
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
 	}
 	params := map[string]interface{}{
 		"appID":     api.config.AppID,
+		"walletID":  walletID,
 		"accountID": accountID,
 		"symbol":    symbol,
+		"type":      2, //0: all, 1: native coin, 2: token coin
 	}
 
-	return api.node.Call(HostNodeID, "getAllTokenBalanceByAccount", params, sync, func(resp owtp.Response) {
+	return api.node.Call(HostNodeID, "getAccountBalanceList", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
-		balance := make([]*TokenBalance, 0)
-		if data.IsArray() {
-			for _, s := range data.Array() {
-				t := NewTokenBalance(s)
-				balance = append(balance, t)
-			}
-		}
+		var balance []*BalanceResult
+		json.Unmarshal([]byte(data.Raw), &balance)
 
 		reqFunc(resp.Status, resp.Msg, balance)
 	})
@@ -791,30 +790,28 @@ func (api *APINode) GetAllTokenBalanceByAccount(
 
 // GetAllTokenBalanceByAddress 获取地址的token余额接口
 func (api *APINode) GetAllTokenBalanceByAddress(
+	walletID string,
 	accountID string,
 	address string,
 	symbol string,
 	sync bool,
-	reqFunc func(status uint64, msg string, balance []*TokenBalance)) error {
+	reqFunc func(status uint64, msg string, balance []*BalanceResult)) error {
 	if api == nil {
 		return fmt.Errorf("APINode is not inited")
 	}
 	params := map[string]interface{}{
 		"appID":     api.config.AppID,
+		"walletID":  walletID,
 		"accountID": accountID,
 		"address":   address,
 		"symbol":    symbol,
+		"type":      2, //0: all, 1: native coin, 2: token coin
 	}
 
-	return api.node.Call(HostNodeID, "getAllTokenBalanceByAddress", params, sync, func(resp owtp.Response) {
+	return api.node.Call(HostNodeID, "getAddressBalanceList", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
-		balance := make([]*TokenBalance, 0)
-		if data.IsArray() {
-			for _, s := range data.Array() {
-				t := NewTokenBalance(s)
-				balance = append(balance, t)
-			}
-		}
+		var balance []*BalanceResult
+		json.Unmarshal([]byte(data.Raw), &balance)
 
 		reqFunc(resp.Status, resp.Msg, balance)
 	})
@@ -1395,5 +1392,86 @@ func (api *APINode) FollowSmartContractReceipt(
 	return api.node.Call(HostNodeID, "followSmartContractReceipt", params, sync, func(resp owtp.Response) {
 		reqFunc(resp.Status, resp.Msg)
 	})
+
+}
+
+// GetAccountBalanceList 获取账户余额列表
+func (api *APINode) GetAccountBalanceList(
+	walletID, accountID, symbol, contractID string,
+	opType int,
+	lastID, limit int,
+	sync bool,
+	reqFunc func(status uint64, msg string, balances []*BalanceResult),
+) error {
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+	params := map[string]interface{}{
+		"appID":      api.config.AppID,
+		"walletID":   walletID,
+		"accountID":  accountID,
+		"symbol":     symbol,
+		"contractID": contractID,
+		"type":       opType,
+		"lastID":     lastID,
+		"limit":      limit,
+	}
+	return api.node.Call(HostNodeID, "getAccountBalanceList", params, sync,
+		func(resp owtp.Response) {
+			data := resp.JsonData()
+			var balances []*BalanceResult
+			array := data
+			if array.IsArray() {
+				for _, a := range array.Array() {
+					var b BalanceResult
+					err := json.Unmarshal([]byte(a.Raw), &b)
+					if err == nil {
+						balances = append(balances, &b)
+					}
+				}
+			}
+			reqFunc(resp.Status, resp.Msg, balances)
+		})
+
+}
+
+// GetAddressBalanceList 获取地址余额列表
+func (api *APINode) GetAddressBalanceList(
+	walletID, accountID, address, symbol, contractID string,
+	opType int,
+	lastID, limit int,
+	sync bool,
+	reqFunc func(status uint64, msg string, balances []*BalanceResult),
+) error {
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+	params := map[string]interface{}{
+		"appID":      api.config.AppID,
+		"walletID":   walletID,
+		"accountID":  accountID,
+		"address":    address,
+		"symbol":     symbol,
+		"contractID": contractID,
+		"type":       opType,
+		"lastID":     lastID,
+		"limit":      limit,
+	}
+	return api.node.Call(HostNodeID, "getAddressBalanceList", params, sync,
+		func(resp owtp.Response) {
+			data := resp.JsonData()
+			var balances []*BalanceResult
+			array := data
+			if array.IsArray() {
+				for _, a := range array.Array() {
+					var b BalanceResult
+					err := json.Unmarshal([]byte(a.Raw), &b)
+					if err == nil {
+						balances = append(balances, &b)
+					}
+				}
+			}
+			reqFunc(resp.Status, resp.Msg, balances)
+		})
 
 }

@@ -132,7 +132,8 @@ type Account struct {
 	WalletID        string   `json:"walletID" bson:"walletID"`
 	AccountID       string   `json:"accountID" bson:"accountID"`
 	Alias           string   `json:"alias" bson:"alias"`
-	Symbol          string   `json:"symbol" bson:"mainSymbol"`
+	Symbol          string   `json:"remark" bson:"remark"`
+	MainSymbol      string   `json:"mainSymbol" bson:"mainSymbol"`
 	OtherOwnerKeys  []string `json:"otherOwnerKeys" bson:"otherOwnerKeys"`
 	ReqSigs         int64    `json:"reqSigs" bson:"reqSigs"`
 	IsTrust         int64    `json:"isTrust" bson:"isTrust"`
@@ -205,7 +206,7 @@ type RawTransaction struct {
 }
 
 type ErrorMsg struct {
-	Code uint64 `json:"code"`
+	Code string `json:"code"`
 	Err  string `json:"err"`
 }
 

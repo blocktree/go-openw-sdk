@@ -976,7 +976,7 @@ func TestAPINode_GetBalanceByAccount(t *testing.T) {
 
 func TestAPINode_GetBalanceByAddress(t *testing.T) {
 	api := testNewAPINode()
-	address := "0x098738e2236cc0d2305814799b788d14d2e02aa1"
+	address := "0x4247f631804e9fbd5c9d27428617658bd70fa382"
 	api.GetBalanceByAddress("MATIC", address, "", true, func(status uint64, msg string, balance *BalanceResult) {
 		if status != owtp.StatusSuccess {
 			log.Error(msg)
@@ -1069,7 +1069,7 @@ func TestAPINode_GetAccountBalanceList(t *testing.T) {
 	api := testNewAPINode()
 	walletID := "W4W8i2F27c1YB63rMZswSquVSnS3265MAF"
 	accountID := "3BSJAseva4A2oZgmEuMEVtdSgnj5UXCunYzyWtK7dj4b"
-	api.GetAccountBalanceList(walletID, accountID, "", "", 0, 0, 1,
+	api.GetAccountBalanceList(walletID, accountID, "", "", 2, 0, 1,
 		true, func(status uint64, msg string, balances []*BalanceResult) {
 			for i, balance := range balances {
 				log.Infof("balance[%d]: %+v", i, balance)
@@ -1082,7 +1082,7 @@ func TestAPINode_GetAddressBalanceList(t *testing.T) {
 	walletID := "W4W8i2F27c1YB63rMZswSquVSnS3265MAF"
 	accountID := "3BSJAseva4A2oZgmEuMEVtdSgnj5UXCunYzyWtK7dj4b"
 	address := ""
-	api.GetAddressBalanceList(walletID, accountID, address, "", "", 0, 0, 1,
+	api.GetAddressBalanceList(walletID, accountID, address, "", "", 0, 0, 100,
 		true, func(status uint64, msg string, balances []*BalanceResult) {
 			for i, balance := range balances {
 				log.Infof("balance[%d]: %+v", i, balance)

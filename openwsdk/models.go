@@ -425,6 +425,7 @@ type BalanceResult struct {
 	ConfirmBalance   string `json:"confirmBalance,omitempty"`
 	UnconfirmBalance string `json:"unconfirmBalance,omitempty"`
 	ContractToken    string `json:"contractToken"`
+	ID               int64  `json:"id"`
 }
 
 func NewTokenBalance(result gjson.Result) *TokenBalance {

@@ -1089,3 +1089,14 @@ func TestAPINode_GetAddressBalanceList(t *testing.T) {
 			}
 		})
 }
+
+func TestAPINode_signAppDevice(t *testing.T) {
+	api := testNewAPINode()
+	appID := "1ba5e5c10ad3ebb4b6c830014be971fa"
+	deviceID := "ATeG6EQM7oepdY9ngZ2R5RjnH5foLJ1i55Ri1eEJsM58"
+	nonce := "45869586"
+	accessTime := int64(1679382247264467000)
+	appKey := "a40788a1e13b9c244d72bae6142aca09652eabdb9bfee8ca795b77e486887933"
+	signature := api.signAppDevice(appID, deviceID, nonce, appKey, accessTime)
+	log.Infof("signature: %s", signature)
+}

@@ -178,6 +178,7 @@ func TestTransmitNode_SetSummaryInfoViaTrustNode(t *testing.T) {
 			MinTransfer:     "0.001",
 			RetainedBalance: "0",
 			Confirms:        0,
+			Symbol:          "ETH",
 		}
 
 		transmitNode.SetSummaryInfoViaTrustNode(nodeInfo.NodeID, setting, true, func(status uint64, msg string) {

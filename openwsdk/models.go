@@ -90,6 +90,7 @@ func NewSummarySetting(result gjson.Result) *SummarySetting {
 		MinTransfer:     result.Get("minTransfer").String(),
 		RetainedBalance: result.Get("retainedBalance").String(),
 		Confirms:        result.Get("confirms").Uint(),
+		Symbol:          result.Get("symbol").String(),
 	}
 	return obj
 }

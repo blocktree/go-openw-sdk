@@ -1396,6 +1396,7 @@ func (api *APINode) FollowSmartContractReceipt(
 }
 
 // GetAccountBalanceList 获取账户余额列表
+// opType 0: 所有，1：主币，2：代币
 func (api *APINode) GetAccountBalanceList(
 	walletID, accountID, symbol, contractID string,
 	opType int,
@@ -1436,6 +1437,7 @@ func (api *APINode) GetAccountBalanceList(
 }
 
 // GetAddressBalanceList 获取地址余额列表
+// opType 0: 所有，1：主币，2：代币
 func (api *APINode) GetAddressBalanceList(
 	walletID, accountID, address, symbol, contractID string,
 	opType int,

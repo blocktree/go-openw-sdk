@@ -321,7 +321,7 @@ func (api *APINode) FindWalletByWalletID(walletID string, sync bool, reqFunc fun
 	})
 }
 
-// CreateAccount 创建资产账户
+// CreateNormalAccount 创建资产账户
 func (api *APINode) CreateNormalAccount(
 	accountParam *Account,
 	sync bool,
@@ -341,6 +341,42 @@ func (api *APINode) CreateNormalAccount(
 		"reqSigs":      accountParam.ReqSigs,
 		"isTrust":      0,
 		"remark":       accountParam.Symbol,
+	}
+	return api.node.Call(HostNodeID, "createAccount", params, sync, func(resp owtp.Response) {
+		data := resp.JsonData()
+		var account Account
+		if err := json.Unmarshal([]byte(data.Get("account").Raw), &account); err != nil {
+			log.Error("json unmarshal failed: ", err)
+		}
+		var addresses []*Address
+		if err := json.Unmarshal([]byte(data.Get("addresses").Raw), &addresses); err != nil {
+			log.Error("json unmarshal failed: ", err)
+		}
+		reqFunc(resp.Status, resp.Msg, &account, addresses)
+	})
+}
+
+// CreateImportAccount 创建导入资产账户
+func (api *APINode) CreateImportAccount(
+	accountParam *Account,
+	sync bool,
+	reqFunc func(status uint64, msg string, account *Account, addresses []*Address)) error {
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+	params := map[string]interface{}{
+		"appID":        api.config.AppID,
+		"alias":        accountParam.Alias,
+		"walletID":     accountParam.WalletID,
+		"accountID":    accountParam.AccountID,
+		"symbol":       accountParam.Symbol,
+		"publicKey":    accountParam.PublicKey,
+		"accountIndex": accountParam.AccountIndex,
+		"hdPath":       accountParam.HdPath,
+		"reqSigs":      accountParam.ReqSigs,
+		"isTrust":      0,
+		"remark":       accountParam.Symbol,
+		"onlyAccount":  1,
 	}
 	return api.node.Call(HostNodeID, "createAccount", params, sync, func(resp owtp.Response) {
 		data := resp.JsonData()
@@ -416,6 +452,33 @@ func (api *APINode) CreateAddress(
 		"count":     count,
 	}
 	return api.node.Call(HostNodeID, "createAddress", params, sync, func(resp owtp.Response) {
+		var addresses []*Address
+		if err := json.Unmarshal([]byte(resp.JsonData().Raw), &addresses); err != nil {
+			log.Error("json unmarshal failed: ", err)
+		}
+		reqFunc(resp.Status, resp.Msg, addresses)
+	})
+}
+
+// ImportAddress 导入地址
+func (api *APINode) ImportAddress(
+	symbol string,
+	walletID string,
+	accountID string,
+	address []string,
+	sync bool,
+	reqFunc func(status uint64, msg string, addresses []*Address)) error {
+	if api == nil {
+		return fmt.Errorf("APINode is not inited")
+	}
+	params := map[string]interface{}{
+		"appID":     api.config.AppID,
+		"symbol":    symbol,
+		"walletID":  walletID,
+		"accountID": accountID,
+		"address":   address,
+	}
+	return api.node.Call(HostNodeID, "importAddress", params, sync, func(resp owtp.Response) {
 		var addresses []*Address
 		if err := json.Unmarshal([]byte(resp.JsonData().Raw), &addresses); err != nil {
 			log.Error("json unmarshal failed: ", err)

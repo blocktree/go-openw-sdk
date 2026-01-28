@@ -253,14 +253,74 @@ func TestFindAddressByAccountID(t *testing.T) {
 	fmt.Println(responseData)
 }
 
+// 0x1f8fabe68b9393e25235622ea754e75b37ec3dc8 5000 MTK
+
 func TestCreateTrade(t *testing.T) {
 	requestData := dto.CreateTradeReq{
 		Sid: utils.GetUUID(true),
 		// 0xe5b80a358a7abb340e3126057ad4bf3a44b4b4dd 默认地址
 		AccountID: "2TBCLPTaRQpbG6VwWuTNdPPgQtC8o3tzVnqUgJvTXmGs",
-		Coin:      dto.CoinInfo{Symbol: "BETH"},
+		Coin: dto.CoinInfo{
+			Symbol: "BETH",
+		},
 		To: map[string]string{
 			"0x1f8fabe68b9393e25235622ea754e75b37ec3dc8": "0.9",
+		},
+	}
+	responseData := dto.CreateTradeRes{}
+	if err := httpSDK.PostByAuth("/api/CreateTrade", &requestData, &responseData, true); err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(responseData)
+
+	if err := CheckTxDataSign(appKey, responseData.TxData); err != nil {
+		panic(err)
+	}
+
+	txData := responseData.TxData[0]
+
+	tx := &openwallet.RawTransaction{}
+	if err := utils.JsonUnmarshal(utils.Str2Bytes(txData.Data), tx); err != nil {
+		fmt.Println(err)
+	}
+	key, err := loadWalletFile()
+	if err != nil {
+		panic(err)
+	}
+	txSignerList := map[string]string{}
+	if err := SignRawTransactionExtract(tx, key, txSignerList); err != nil {
+		panic(err)
+	}
+	fmt.Println("txData: ", tx)
+
+	txData.SignerList = txSignerList
+
+	requestSubmitData := dto.SubmitRawTransactionReq{
+		TxData: txData,
+	}
+	responseSubmitData := dto.SubmitRawTransactionRes{}
+	if err := httpSDK.PostByAuth("/api/SubmitTrade", &requestSubmitData, &responseSubmitData, true); err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println("trade result：", responseSubmitData)
+
+}
+
+func TestCreateContractTrade(t *testing.T) {
+	requestData := dto.CreateTradeReq{
+		Sid:       utils.GetUUID(true),
+		AccountID: "2TBCLPTaRQpbG6VwWuTNdPPgQtC8o3tzVnqUgJvTXmGs",
+		Coin: dto.CoinInfo{
+			Symbol:     "BETH",
+			IsContract: true,
+			ContractID: "RDmP/7XxyN0qcgUJfcvCnmSTKXO5Eg8JOSHo9buhAxE=",
+			Contract: dto.SmartCoinInfo{
+				Decimals: 18,
+			},
+		},
+		To: map[string]string{
+			"0xe5b80a358a7abb340e3126057ad4bf3a44b4b4dd": "0.9",
 		},
 	}
 	responseData := dto.CreateTradeRes{}

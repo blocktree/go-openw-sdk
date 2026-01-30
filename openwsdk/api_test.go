@@ -381,3 +381,15 @@ func TestCreateSummaryTx(t *testing.T) {
 		fmt.Println(v.Data)
 	}
 }
+
+func TestCreateSubscribe(t *testing.T) {
+	requestData := dto.CreateSubscribeReq{
+		SubscribeMethod:   []string{"test"},
+		SubscribeContract: []string{"test1111"},
+	}
+	responseData := dto.CreateSubscribeRes{}
+	if err := httpSDK.PostByAuth("/api/CreateSubscribe", &requestData, &responseData, true); err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(responseData)
+}

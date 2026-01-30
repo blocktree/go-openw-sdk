@@ -384,7 +384,7 @@ func TestCreateSummaryTx(t *testing.T) {
 
 func TestCreateSubscribe(t *testing.T) {
 	requestData := dto.CreateSubscribeReq{
-		SubscribeMethod:   []string{"test"},
+		SubscribeMethod:   []string{"Transfer", "Balance"},
 		SubscribeContract: []string{"test1111"},
 	}
 	responseData := dto.CreateSubscribeRes{}

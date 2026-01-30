@@ -31,6 +31,12 @@ func easyjsonB0fe1dfcDecodeGithubComOpenserverOpenStdrpcApiMainDto(in *jlexer.Le
 		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		switch key {
+		case "sid":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.Sid = string(in.String())
+			}
 		case "data":
 			if in.IsNull() {
 				in.Skip()
@@ -90,8 +96,13 @@ func easyjsonB0fe1dfcEncodeGithubComOpenserverOpenStdrpcApiMainDto(out *jwriter.
 	first := true
 	_ = first
 	{
-		const prefix string = ",\"data\":"
+		const prefix string = ",\"sid\":"
 		out.RawString(prefix[1:])
+		out.String(string(in.Sid))
+	}
+	{
+		const prefix string = ",\"data\":"
+		out.RawString(prefix)
 		out.String(string(in.Data))
 	}
 	{

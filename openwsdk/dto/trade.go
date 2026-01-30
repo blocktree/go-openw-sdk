@@ -171,6 +171,7 @@ type CreateTradeReq struct {
 
 //easyjson:json
 type TxData struct {
+	Sid        string            `json:"sid"`
 	Data       string            `json:"data"`
 	DataSign   string            `json:"dataSign"`
 	Code       string            `json:"code"`
@@ -183,19 +184,39 @@ type CreateTradeRes struct {
 	TxData []*TxData `json:"txData"`
 }
 
+// CreateSummaryTxReq 用于创建汇总交易（归集交易）的请求结构体。
+//
 //easyjson:json
 type CreateSummaryTxReq struct {
-	common.BaseReq
-	AccountID          string             `json:"accountID"`
-	MinTransfer        string             `json:"minTransfer"`
-	RetainedBalance    string             `json:"retainedBalance"`
-	Address            string             `json:"address"`
-	Coin               CoinInfo           `json:"coin"`
-	FeeRate            string             `json:"feeRate"`
-	AddressStartIndex  int64              `json:"addressStartIndex"`
-	AddressLimit       int64              `json:"addressLimit"`
-	Confirms           int64              `json:"confirms"`
+	common.BaseReq // 嵌入基础请求字段，通常包含通用参数如签名、时间戳等。
+	// AccountID 是发起归集操作的账户唯一标识符。
+	AccountID string `json:"accountID"`
+	// MinTransfer 表示只有当地址余额大于等于此值时，才会被纳入归集范围。
+	// 通常以最小单位（如 satoshi、wei）表示，字符串类型避免精度丢失。
+	MinTransfer string `json:"minTransfer"`
+	// RetainedBalance 表示在每个被归集的地址上保留的最小余额（不归集的部分）。
+	// 同样以最小单位表示，字符串类型。
+	RetainedBalance string `json:"retainedBalance"`
+	// Address 是目标归集地址，即所有满足条件的资金将被发送到该地址。
+	Address string `json:"address"`
+	// Coin 指定要归集的币种信息，包括币种名称、链类型等。
+	Coin CoinInfo `json:"coin"`
+	// FeeRate 是交易手续费率，通常以每字节/每虚拟字节（vByte）或 Gas Price 形式表示。
+	// 具体格式取决于底层链（如 BTC 用 sat/vB，ETH 用 Gwei）。
+	FeeRate string `json:"feeRate"`
+	// AddressStartIndex 用于分页扫描地址时的起始索引（通常用于 HD 钱包派生地址）。
+	AddressStartIndex int64 `json:"addressStartIndex"`
+	// AddressLimit 表示本次归集操作最多扫描的地址数量，用于控制批量处理规模。
+	AddressLimit int64 `json:"addressLimit"`
+	// Confirms 表示只归集已确认数大于等于该值的 UTXO 或交易输出（主要用于 UTXO 链如 BTC）。
+	// 例如，Confirms=6 表示只归集经过 6 个区块确认的资金。
+	Confirms int64 `json:"confirms"`
+	// FeesSupportAccount 指定用于支付交易手续费的账户信息（可选）。
+	// 在某些场景下，归集资金账户本身可能不支付手续费，而是由另一个账户代付。
 	FeesSupportAccount FeesSupportAccount `json:"feesSupportAccount"`
-	Memo               string             `json:"memo"`
-	Sid                string             `json:"sid"`
+	// Memo 是附加的备注信息，某些链（如 XRP、Stellar、Cosmos）支持在交易中携带 memo。
+	// 用于标识交易目的或关联业务信息。
+	Memo string `json:"memo"`
+	// Sid 是客户端生成的唯一请求 ID，用于幂等性控制，防止重复提交相同请求。
+	Sid string `json:"sid"`
 }

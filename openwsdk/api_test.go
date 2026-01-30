@@ -264,7 +264,7 @@ func TestCreateTrade(t *testing.T) {
 			Symbol: "BETH",
 		},
 		To: map[string]string{
-			"0x1f8fabe68b9393e25235622ea754e75b37ec3dc8": "0.9",
+			"0x4f8abf232ffd006a49a9426ed9a2ab377ce4bdce": "0.1",
 		},
 	}
 	responseData := dto.CreateTradeRes{}
@@ -304,6 +304,7 @@ func TestCreateTrade(t *testing.T) {
 	}
 
 	fmt.Println("trade result：", responseSubmitData)
+	fmt.Println("txID: ", responseSubmitData.Txid, responseSubmitData.From[0], responseSubmitData.To[0])
 
 }
 

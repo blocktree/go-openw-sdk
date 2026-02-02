@@ -173,7 +173,8 @@ type CreateTradeReq struct {
 type TxData struct {
 	Sid        string            `json:"sid"`
 	Data       string            `json:"data"`
-	DataSign   string            `json:"dataSign"`
+	DataSign   string            `json:"dataSign"`  // 业务系统进行校验签名
+	TradeSign  string            `json:"tradeSign"` // CLI系统进行校验签名
 	Code       string            `json:"code"`
 	Message    string            `json:"message"`
 	SignerList map[string]string `json:"signerList"`

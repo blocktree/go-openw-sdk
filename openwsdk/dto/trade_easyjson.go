@@ -49,6 +49,12 @@ func easyjsonB0fe1dfcDecodeGithubComOpenserverOpenStdrpcApiMainDto(in *jlexer.Le
 			} else {
 				out.DataSign = string(in.String())
 			}
+		case "tradeSign":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.TradeSign = string(in.String())
+			}
 		case "code":
 			if in.IsNull() {
 				in.Skip()
@@ -109,6 +115,11 @@ func easyjsonB0fe1dfcEncodeGithubComOpenserverOpenStdrpcApiMainDto(out *jwriter.
 		const prefix string = ",\"dataSign\":"
 		out.RawString(prefix)
 		out.String(string(in.DataSign))
+	}
+	{
+		const prefix string = ",\"tradeSign\":"
+		out.RawString(prefix)
+		out.String(string(in.TradeSign))
 	}
 	{
 		const prefix string = ",\"code\":"

@@ -17,9 +17,10 @@ func printJSON(data interface{}) {
 }
 
 const (
-	domain = "http://localhost:8422"
-	appID  = "e6a06259193fb8476ffd83a87c4fc300"
-	appKey = "43cb8a4f8c795c74426aed363aa9c12af0d065ca33b472c6ec7ce5cf7bc47c7c"
+	domain   = "http://localhost:8422"
+	appID    = "e6a06259193fb8476ffd83a87c4fc300"
+	appKey   = "43cb8a4f8c795c74426aed363aa9c12af0d065ca33b472c6ec7ce5cf7bc47c7c"
+	tradeKey = "381f6b35d9acad1e744a0b75e0f64f3ccfc3802a0197a7a39d77dacd58ed7d6a"
 )
 
 var httpSDK = NewHttpSDK(domain, appID, appKey)
@@ -60,8 +61,25 @@ func CheckTxDataSign(appKey string, txData []*dto.TxData) error {
 	}
 	for _, v := range txData {
 		checkSign := utils.HMAC_SHA256_BASE(utils.Str2Bytes(v.Data), h)
-		if v.DataSign != hex.EncodeToString(checkSign) {
+		if v.DataSign != utils.Base64Encode(checkSign) {
 			return errors.New(fmt.Sprintf("tx data check sign invalid: %s", v.Data))
+		}
+	}
+	return nil
+}
+
+func CheckTxTradeSign(tradeKey string, txData []*dto.TxData) error {
+	if len(txData) == 0 {
+		return errors.New("tx data is nil")
+	}
+	h, err := hex.DecodeString(tradeKey)
+	if err != nil {
+		return err
+	}
+	for _, v := range txData {
+		checkSign := utils.HMAC_SHA256_BASE(utils.Str2Bytes(v.Data), h)
+		if v.TradeSign != utils.Base64Encode(checkSign) {
+			return errors.New(fmt.Sprintf("tx data check trade sign invalid: %s", v.Data))
 		}
 	}
 	return nil
@@ -264,7 +282,7 @@ func TestCreateTrade(t *testing.T) {
 			Symbol: "BETH",
 		},
 		To: map[string]string{
-			"0x4f8abf232ffd006a49a9426ed9a2ab377ce4bdce": "0.1",
+			"0x4f8abf232ffd006a49a9426ed9a2ab377ce4bdce": "0.5",
 		},
 	}
 	responseData := dto.CreateTradeRes{}
@@ -274,6 +292,10 @@ func TestCreateTrade(t *testing.T) {
 	fmt.Println(responseData)
 
 	if err := CheckTxDataSign(appKey, responseData.TxData); err != nil {
+		panic(err)
+	}
+
+	if err := CheckTxTradeSign(tradeKey, responseData.TxData); err != nil {
 		panic(err)
 	}
 
@@ -315,13 +337,10 @@ func TestCreateContractTrade(t *testing.T) {
 		Coin: dto.CoinInfo{
 			Symbol:     "BETH",
 			IsContract: true,
-			ContractID: "RDmP/7XxyN0qcgUJfcvCnmSTKXO5Eg8JOSHo9buhAxE=",
-			Contract: dto.SmartCoinInfo{
-				Decimals: 18,
-			},
+			ContractID: "ZA+oTwXimYwVFJ5Tk7ACU6tD+6ycw7u2UsdHLVof8kg=",
 		},
 		To: map[string]string{
-			"0xe5b80a358a7abb340e3126057ad4bf3a44b4b4dd": "0.9",
+			"0xe5b80a358a7abb340e3126057ad4bf3a44b4b4dd": "0.2",
 		},
 	}
 	responseData := dto.CreateTradeRes{}
@@ -385,10 +404,42 @@ func TestCreateSummaryTx(t *testing.T) {
 func TestCreateSubscribe(t *testing.T) {
 	requestData := dto.CreateSubscribeReq{
 		SubscribeMethod:   []string{"Transfer", "Balance"},
-		SubscribeContract: []string{"test1111"},
+		SubscribeContract: []string{},
 	}
 	responseData := dto.CreateSubscribeRes{}
 	if err := httpSDK.PostByAuth("/api/CreateSubscribe", &requestData, &responseData, true); err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(responseData)
+}
+
+func TestFindTradePushList(t *testing.T) {
+	requestData := dto.FindTradePushListReq{}
+	requestData.Limit = 1
+	responseData := dto.FindTradePushListRes{}
+	if err := httpSDK.PostByAuth("/api/FindTradePushList", &requestData, &responseData, true); err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(responseData)
+}
+
+func TestFindTradeBalancePushList(t *testing.T) {
+	requestData := dto.FindTradeBalancePushListReq{}
+	requestData.Limit = 1
+	responseData := dto.FindTradeBalancePushListRes{}
+	if err := httpSDK.PostByAuth("/api/FindTradeBalancePushList", &requestData, &responseData, true); err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(responseData)
+}
+
+func TestConfirmPushData(t *testing.T) {
+	requestData := dto.ConfirmPushDataReq{
+		DataType: "Balance",
+		DataList: []int64{2017887484863578112},
+	}
+	responseData := dto.ConfirmPushDataRes{}
+	if err := httpSDK.PostByAuth("/api/ConfirmPushData", &requestData, &responseData, true); err != nil {
 		fmt.Println(err)
 	}
 	fmt.Println(responseData)

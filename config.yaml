@@ -1,0 +1,40 @@
+server:
+  cli_main:
+    debug: false
+    gc_limit_mb: 512
+    gc_percent: 30
+    port: 9422
+    keys:
+      - name: 1
+        public_key: "BNlt+QZ0StVPUuVlY5SLEijB0J51PvtMYK/F3Nd4HSs7khBFQhvyUosm/DG1mmspYiOS0Zd/yCFd4uyWQR7YWEI="
+        private_key: "x97SIkFTlNUpTsNAdsHURjFQZ3BLL/iQ8bBW+hHV7mk="
+
+jwt:
+  cli_main:
+    token_key: "7798959a278acb81e35d798fcc38329cfdc80a84db89a5eb471ec5c671e78b6f"
+    token_alg: "HS256"
+    token_typ: "JWT"
+    token_exp: 1209600 # 两周，单位秒
+
+logger:
+  master:
+    layout: 0
+    location: "Asia/Shanghai"
+    level: "error"
+    console: true
+    file_config:
+      filename: ""
+      max_size: 50
+      max_backups: 10
+      max_age: 7
+      compress: false
+
+# 扩展参数
+extract:
+  appID: "e6a06259193fb8476ffd83a87c4fc300"
+  appKey: "43cb8a4f8c795c74426aed363aa9c12af0d065ca33b472c6ec7ce5cf7bc47c7c"
+  walletDir: "openwsdk/keys"
+  walletPassword: # 解锁钱包map[string]string集合，不建议配置这里
+  signerBlacklist: # 签名黑名单，拒绝签名
+  summaryWhitelist: # 汇总白名单
+    - ""

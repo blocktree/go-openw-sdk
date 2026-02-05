@@ -340,7 +340,7 @@ func TestCreateContractTrade(t *testing.T) {
 			ContractID: "ZA+oTwXimYwVFJ5Tk7ACU6tD+6ycw7u2UsdHLVof8kg=",
 		},
 		To: map[string]string{
-			"0xe5b80a358a7abb340e3126057ad4bf3a44b4b4dd": "0.2",
+			"0xdAb9c307B8B23A8fD8559f75C71F0694Da30D9F6": "0.2",
 		},
 	}
 	responseData := dto.CreateTradeRes{}
@@ -421,6 +421,15 @@ func TestFindTradePushList(t *testing.T) {
 		fmt.Println(err)
 	}
 	fmt.Println(responseData)
+	for _, v := range responseData.Result {
+		sign, err := SignTradePush(appKey, v)
+		if err != nil {
+			panic(err)
+		}
+		if sign != v.DataSign {
+			panic("trade push data sign invalid")
+		}
+	}
 }
 
 func TestFindTradeBalancePushList(t *testing.T) {
@@ -431,6 +440,15 @@ func TestFindTradeBalancePushList(t *testing.T) {
 		fmt.Println(err)
 	}
 	fmt.Println(responseData)
+	for _, v := range responseData.Result {
+		sign, err := SignTradeBalancePush(appKey, v)
+		if err != nil {
+			panic(err)
+		}
+		if sign != v.DataSign {
+			panic("trade balance push data sign invalid")
+		}
+	}
 }
 
 func TestConfirmPushData(t *testing.T) {

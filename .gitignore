@@ -6,3 +6,4 @@ go.sum
 *.key
 build
 *.txt
+cli-http.log

@@ -37,10 +37,21 @@ type FindWalletListRes struct {
 //easyjson:json
 type UnlockWalletReq struct {
 	common.BaseReq
-	WalletList map[string]string `json:"walletList"`
 }
 
 //easyjson:json
 type UnlockWalletRes struct {
-	Failed []string `json:"failed"`
+	KeyID string `json:"keyID"`
+}
+
+//easyjson:json
+type CreateWalletReq struct {
+	common.BaseReq
+	Alias string `json:"alias"`
+	Auth  string `json:"auth"`
+}
+
+//easyjson:json
+type CreateWalletRes struct {
+	KeyID string `json:"keyID"`
 }

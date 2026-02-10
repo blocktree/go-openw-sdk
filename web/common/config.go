@@ -15,6 +15,7 @@ type Extract struct {
 	WalletPassword   map[string]string `yaml:"walletPassword" json:"walletPassword"`     // 钱包密码集合
 	SubmitBlacklist  []string          `yaml:"submitBlacklist" json:"submitBlacklist"`   // 签名黑名单
 	SummaryWhitelist []string          `yaml:"summaryWhitelist" json:"summaryWhitelist"` // 汇总白名单
+	RemoteWhitelist  []string          `yaml:"remoteWhitelist" json:"remoteWhitelist"`   // 请求白名单
 }
 
 type YamlConfigExtract struct {

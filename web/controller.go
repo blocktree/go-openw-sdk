@@ -77,6 +77,8 @@ func StartHttpNode() {
 	web.POST(api("PublicKey"), web.PublicKey, &node.RouterConfig{Guest: true})
 	web.POST(api("Login"), web.Login, &node.RouterConfig{UseRSA: true})
 	web.POST(api("FindWalletList"), web.FindWalletList, &node.RouterConfig{AesRequest: true, AesResponse: true})
+	web.POST(api("CreateWallet"), web.CreateWallet, &node.RouterConfig{Guest: true})
+	web.POST(api("UnlockWallet"), web.UnlockWallet, &node.RouterConfig{Guest: true})
 
 	web.StartServer(addr())
 }

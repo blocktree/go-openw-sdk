@@ -34,7 +34,9 @@ extract:
   appID: "e6a06259193fb8476ffd83a87c4fc300"
   appKey: "43cb8a4f8c795c74426aed363aa9c12af0d065ca33b472c6ec7ce5cf7bc47c7c"
   walletDir: "openwsdk/keys"
-  walletPassword: # 解锁钱包map[string]string集合，不建议配置这里
+  remoteWhitelist: # 请求白名单
+    - "127.0.0.1"
+    - "localhost"
   signerBlacklist: # 签名黑名单，拒绝签名
   summaryWhitelist: # 汇总白名单
     - ""

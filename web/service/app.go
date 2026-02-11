@@ -14,6 +14,7 @@ import (
 	"github.com/godaddy-x/freego/utils"
 	"github.com/godaddy-x/freego/utils/jwt"
 	"github.com/godaddy-x/freego/zlog"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -41,8 +42,8 @@ var (
 	}
 )
 
-func (s *AppService) UnlockWallet(filename string, auth []byte, res *dto.UnlockWalletRes) error {
-	// === 参数校验 ===
+func (s *AppService) UnlockWallet(filename string, res *dto.UnlockWalletRes) error {
+	// === 1. 校验 filename 格式（保留原有逻辑）===
 	if strings.TrimSpace(filename) == "" {
 		return ex.Throw{Code: ex.BIZ, Msg: "filename is required"}
 	}
@@ -51,7 +52,6 @@ func (s *AppService) UnlockWallet(filename string, auth []byte, res *dto.UnlockW
 		return ex.Throw{Code: ex.BIZ, Msg: fmt.Sprintf("filename length must be between %d and %d", minAliasLength+len(".key"), maxAliasLength+len("-")+maxAliasLength+len(".key"))}
 	}
 
-	// 校验 filename 格式: alias-keyID.key
 	if !strings.HasSuffix(filename, ".key") {
 		return ex.Throw{Code: ex.BIZ, Msg: "filename must end with .key"}
 	}
@@ -67,86 +67,112 @@ func (s *AppService) UnlockWallet(filename string, auth []byte, res *dto.UnlockW
 		return ex.Throw{Code: ex.BIZ, Msg: "alias and keyID cannot be empty"}
 	}
 
-	if len(aliasPart) < minAliasLength || len(aliasPart) > maxAliasLength {
-		return ex.Throw{Code: ex.BIZ, Msg: fmt.Sprintf("alias length must be between %d and %d", minAliasLength, maxAliasLength)}
-	}
-
-	if len(keyIDPart) < minAliasLength || len(keyIDPart) > maxAliasLength {
-		return ex.Throw{Code: ex.BIZ, Msg: fmt.Sprintf("keyID length must be between %d and %d", minAliasLength, maxAliasLength)}
+	if len(aliasPart) < minAliasLength || len(aliasPart) > maxAliasLength ||
+		len(keyIDPart) < minAliasLength || len(keyIDPart) > maxAliasLength {
+		return ex.Throw{Code: ex.BIZ, Msg: fmt.Sprintf("alias/keyID length must be between %d and %d", minAliasLength, maxAliasLength)}
 	}
 
 	alphaNum := regexp.MustCompile(`^[a-zA-Z0-9]+$`)
-	if !alphaNum.MatchString(aliasPart) {
-		return ex.Throw{Code: ex.BIZ, Msg: "alias must contain only letters and digits"}
-	}
-	if !alphaNum.MatchString(keyIDPart) {
-		return ex.Throw{Code: ex.BIZ, Msg: "keyID must contain only letters and digits"}
+	if !alphaNum.MatchString(aliasPart) || !alphaNum.MatchString(keyIDPart) {
+		return ex.Throw{Code: ex.BIZ, Msg: "alias and keyID must contain only letters and digits"}
 	}
 
-	if len(auth) < minAuthLength || len(auth) > maxAuthLength {
-		return ex.Throw{Code: ex.BIZ, Msg: fmt.Sprintf("auth password length must be between %d and %d", minAuthLength, maxAuthLength)}
+	// === 2. 并发控制 ===
+	if !s.pending.CompareAndSwap(false, true) {
+		return ex.Throw{Code: ex.BIZ, Msg: "operation in progress"}
+	}
+	defer s.pending.Store(false)
+
+	// === 3. 读取统一密码文件（关键：固定路径）===
+	pwd := common.GetAllConfig().Extract.PasswordKey // 复用 CreateWallet 的配置
+	if pwd == "" {
+		return ex.Throw{Code: ex.BIZ, Msg: "password file path not configured"}
 	}
 
-	// === 并发控制：单槽位拒绝式 ===
-	if s.pending.CompareAndSwap(false, true) {
-		defer s.pending.Store(false)
+	file, err := os.Open(pwd)
+	if err != nil {
+		return ex.Throw{Code: ex.BIZ, Msg: "password file not ready"}
+	}
+	defer file.Close()
 
-		ks := &hdkeystore.HDKeystore{}
-		path := ks.JoinDirPath(filepath.Join(".", common.GetAllConfig().Extract.WalletDir), filename)
-		authBuf := memguard.NewBufferFromBytes(auth)
-		defer authBuf.Destroy()
+	// === 4. 安全加载到锁定内存 ===
+	authBuf, err := memguard.NewBufferFromEntireReader(file)
+	if err != nil {
+		zlog.Error("failed to load unlock password into secure memory", 0,
+			zlog.String("filename", filename))
+		return ex.Throw{Code: ex.BIZ, Msg: "password file read error"}
+	}
+	defer authBuf.Destroy()
 
-		key, err := ks.GetLockerKey(path, authBuf, aadCall)
-		if err != nil {
-			zlog.Error("unlock wallet error", 0, zlog.String("errMsg", err.Error()))
-			return ex.Throw{Code: ex.BIZ, Msg: err.Error()}
-		}
-		openwsdk.AddUnlockWallet(key)
-		res.KeyID = key.KeyID
-		return nil
+	if authBuf.Size() < minAuthLength || authBuf.Size() > maxAuthLength {
+		return ex.Throw{Code: ex.BIZ, Msg: "password length must be between 20 and 256 characters"}
 	}
 
-	return ex.Throw{Code: ex.BIZ, Msg: "wallet in progress"}
+	// === 5. 执行解锁 ===
+	ks := &hdkeystore.HDKeystore{}
+	walletPath := ks.JoinDirPath(filepath.Join(".", common.GetAllConfig().Extract.WalletDir), filename)
+
+	key, err := ks.GetLockerKey(walletPath, authBuf, aadCall)
+	if err != nil {
+		zlog.Error("unlock wallet failed", 0,
+			zlog.String("filename", filename))
+		// 不暴露具体原因（防侧信道）
+		return ex.Throw{Code: ex.BIZ, Msg: "unlock failed: incorrect password or invalid wallet"}
+	}
+
+	openwsdk.AddUnlockWallet(key)
+	res.KeyID = key.KeyID
+	return nil
 }
 
-func (s *AppService) CreateWallet(alias string, auth []byte, res *dto.CreateWalletRes) error {
-	// === 参数校验 ===
-	if strings.TrimSpace(alias) == "" {
-		return ex.Throw{Code: ex.BIZ, Msg: "alias is required"}
+func (s *AppService) CreateWallet(alias string, res *dto.CreateWalletRes) error {
+	// === 参数校验（alias）===
+	if strings.TrimSpace(alias) == "" || !regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString(alias) {
+		return ex.Throw{Code: ex.BIZ, Msg: "invalid alias"}
 	}
 
-	if len(alias) < minAliasLength || len(alias) > maxAliasLength {
-		return ex.Throw{Code: ex.BIZ, Msg: fmt.Sprintf("alias length must be between %d and %d", minAliasLength, maxAliasLength)}
+	// === 并发控制 ===
+	if !s.pending.CompareAndSwap(false, true) {
+		return ex.Throw{Code: ex.BIZ, Msg: "operation in progress"}
+	}
+	defer s.pending.Store(false)
+
+	pwd := common.GetAllConfig().Extract.PasswordKey
+	if pwd == "" {
+		return ex.Throw{Code: ex.BIZ, Msg: "password file path is nil"}
+	}
+	// 1. 打开文件
+	file, err := os.Open(pwd)
+	if err != nil {
+		return ex.Throw{Code: ex.BIZ, Msg: "password file not found"}
+	}
+	defer file.Close()
+
+	// 3. 直接读入锁定内存
+	authBuf, err := memguard.NewBufferFromEntireReader(file)
+	if err != nil {
+		// 注意：不记录原始 err 的完整文本，防止泄露路径等敏感信息
+		zlog.Error("failed to load password into secure memory", 0,
+			zlog.String("alias", alias))
+		return ex.Throw{Code: ex.BIZ, Msg: "password file read error"}
+	}
+	defer authBuf.Destroy()
+
+	if authBuf.Size() < minAuthLength || authBuf.Size() > maxAuthLength {
+		return ex.Throw{Code: ex.BIZ, Msg: "password length must be between 20 and 256 characters"}
 	}
 
-	if !regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString(alias) {
-		return ex.Throw{Code: ex.BIZ, Msg: "alias must contain only letters and digits"}
+	// === 4. 执行创建逻辑 ===
+	config := common.GetAllConfig()
+	path := filepath.Join(".", config.Extract.WalletDir)
+	rootID, err := hdkeystore.StoreLockerHDKey(path, alias, authBuf)
+	if err != nil {
+		zlog.Error("create wallet failed", 0, zlog.AddError(err))
+		return ex.Throw{Code: ex.BIZ, Msg: err.Error()}
 	}
 
-	if len(auth) < minAuthLength || len(auth) > maxAuthLength {
-		return ex.Throw{Code: ex.BIZ, Msg: fmt.Sprintf("auth password length must be between %d and %d", minAuthLength, maxAuthLength)}
-	}
-
-	// === 并发控制：单槽位拒绝式 ===
-	if s.pending.CompareAndSwap(false, true) {
-		defer s.pending.Store(false)
-
-		config := common.GetAllConfig()
-		path := filepath.Join(".", config.Extract.WalletDir)
-		authBuf := memguard.NewBufferFromBytes(auth)
-		defer authBuf.Destroy()
-
-		rootID, err := hdkeystore.StoreLockerHDKey(path, alias, authBuf)
-		if err != nil {
-			zlog.Error("create wallet error", 0, zlog.String("errMsg", err.Error()))
-			return ex.Throw{Code: ex.BIZ, Msg: err.Error()}
-		}
-
-		res.KeyID = rootID
-		return nil
-	}
-
-	return ex.Throw{Code: ex.BIZ, Msg: "wallet in progress"}
+	res.KeyID = rootID
+	return nil
 }
 
 func (s *AppService) AppLogin(req *dto.AppLoginReq, res *dto.AppLoginRes) error {

@@ -194,6 +194,12 @@ func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto2(in *jlexer.Lexer,
 		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		switch key {
+		case "filename":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.Filename = string(in.String())
+			}
 		case "cmd":
 			if in.IsNull() {
 				in.Skip()
@@ -245,13 +251,13 @@ func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto2(out *jwriter.Writ
 	first := true
 	_ = first
 	{
+		const prefix string = ",\"filename\":"
+		out.RawString(prefix[1:])
+		out.String(string(in.Filename))
+	}
+	{
 		const prefix string = ",\"cmd\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.String(string(in.Cmd))
 	}
 	{
@@ -612,12 +618,6 @@ func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto6(in *jlexer.Lexer,
 			} else {
 				out.Alias = string(in.String())
 			}
-		case "auth":
-			if in.IsNull() {
-				in.Skip()
-			} else {
-				out.Auth = string(in.String())
-			}
 		case "cmd":
 			if in.IsNull() {
 				in.Skip()
@@ -672,11 +672,6 @@ func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto6(out *jwriter.Writ
 		const prefix string = ",\"alias\":"
 		out.RawString(prefix[1:])
 		out.String(string(in.Alias))
-	}
-	{
-		const prefix string = ",\"auth\":"
-		out.RawString(prefix)
-		out.String(string(in.Auth))
 	}
 	{
 		const prefix string = ",\"cmd\":"

@@ -32,7 +32,7 @@ func (s *WebNode) FindWalletList(ctx *node.Context) error {
 
 func (s *WebNode) CreateWallet(ctx *node.Context) error {
 	res := &dto.CreateWalletRes{}
-	if err := AppService.CreateWallet(ctx.GetHeader("alias"), ctx.RequestCtx.PostBody(), res); err != nil {
+	if err := AppService.CreateWallet(ctx.GetHeader("alias"), res); err != nil {
 		return err
 	}
 	return s.Text(ctx, "wallet create success: "+res.KeyID)
@@ -40,7 +40,7 @@ func (s *WebNode) CreateWallet(ctx *node.Context) error {
 
 func (s *WebNode) UnlockWallet(ctx *node.Context) error {
 	res := &dto.UnlockWalletRes{}
-	if err := AppService.UnlockWallet(ctx.GetHeader("filename"), ctx.RequestCtx.PostBody(), res); err != nil {
+	if err := AppService.UnlockWallet(ctx.GetHeader("filename"), res); err != nil {
 		return err
 	}
 	return s.Text(ctx, "wallet unlock success: "+res.KeyID)

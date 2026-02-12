@@ -9,6 +9,7 @@ import (
 	"github.com/godaddy-x/freego/utils/crypto"
 	"github.com/godaddy-x/freego/utils/jwt"
 	"github.com/godaddy-x/freego/zlog"
+	"net"
 )
 
 const (
@@ -25,6 +26,52 @@ func api(key string) string {
 func addr() string {
 	config := common.GetAllConfig().GetServerConfig(project)
 	return utils.AddStr(config.Addr, ":", config.Port)
+}
+
+type RemoteCheckFilter struct{}
+
+func (self *RemoteCheckFilter) DoFilter(chain node.Filter, ctx *node.Context, args ...interface{}) error {
+	remoteAddr := ctx.RequestCtx.RemoteAddr().String()
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		return ex.Throw{Code: ex.BIZ, Msg: "forbidden"}
+	}
+
+	// 标准化 IPv4-mapped IPv6 地址（如 ::ffff:192.168.1.1 → 1972.168.1.1）
+	if ip := net.ParseIP(host); ip != nil {
+		if ipv4 := ip.To4(); ipv4 != nil {
+			host = ipv4.String()
+		}
+	}
+
+	// 检查是否为本机
+	isLocal := host == "127.0.0.1" || host == "::1"
+	isSensitive := ctx.Path == "/api/CreateWallet" || ctx.Path == "/api/UnlockWallet"
+
+	// 敏感接口：仅限本机访问
+	if isSensitive {
+		if isLocal {
+			return chain.DoFilter(chain, ctx, args...)
+		}
+		zlog.Error("remote access to sensitive API blocked", 0,
+			zlog.String("path", ctx.Path),
+			zlog.String("remote_ip", host))
+		return ex.Throw{Code: ex.BIZ, Msg: "forbidden"}
+	}
+
+	// 检查远程白名单
+	whitelist := common.GetAllConfig().Extract.RemoteWhitelist
+	for _, ip := range whitelist {
+		if host == ip {
+			return chain.DoFilter(chain, ctx, args...)
+		}
+	}
+
+	zlog.Error("remote access blocked: IP not in whitelist", 0,
+		zlog.String("path", ctx.Path),
+		zlog.String("remote_ip", host))
+
+	return ex.Throw{Code: ex.BIZ, Msg: "forbidden"}
 }
 
 func newHTTP() *WebNode {
@@ -62,6 +109,8 @@ func newHTTP() *WebNode {
 		zlog.Error("AddErrorHandle catcher", 0, zlog.String("path", ctx.Path), zlog.String("bizMsg", throw.Msg), zlog.String("errMsg", errMsg))
 		return nil
 	})
+
+	web.AddFilter(&node.FilterObject{Name: "RemoteCheckFilter", Order: 100, Filter: &RemoteCheckFilter{}, MatchPattern: []string{"/*"}})
 
 	return web
 }

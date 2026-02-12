@@ -19,7 +19,7 @@ type AppLoginRes struct {
 //easyjson:json
 type WalletResult struct {
 	Alias    string `json:"alias"`
-	KeyID    string `json:"keyID"`
+	WalletID string `json:"walletID"`
 	RootPath string `json:"rootPath"`
 	Version  int    `json:"version"`
 }
@@ -42,7 +42,7 @@ type UnlockWalletReq struct {
 
 //easyjson:json
 type UnlockWalletRes struct {
-	KeyID string `json:"keyID"`
+	WalletID string `json:"walletID"`
 }
 
 //easyjson:json
@@ -53,5 +53,16 @@ type CreateWalletReq struct {
 
 //easyjson:json
 type CreateWalletRes struct {
-	KeyID string `json:"keyID"`
+	WalletID string `json:"walletID"`
+}
+
+//easyjson:json
+type CreateAccountReq struct {
+	common.BaseReq
+	WalletID string `json:"walletID"`
+}
+
+//easyjson:json
+type CreateAccountRes struct {
+	AccountID string `json:"accountID"`
 }

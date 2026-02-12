@@ -35,7 +35,7 @@ func (s *WebNode) CreateWallet(ctx *node.Context) error {
 	if err := AppService.CreateWallet(ctx.GetHeader("alias"), res); err != nil {
 		return err
 	}
-	return s.Text(ctx, "wallet create success: "+res.KeyID)
+	return s.Text(ctx, "wallet create success: "+res.WalletID)
 }
 
 func (s *WebNode) UnlockWallet(ctx *node.Context) error {
@@ -43,7 +43,7 @@ func (s *WebNode) UnlockWallet(ctx *node.Context) error {
 	if err := AppService.UnlockWallet(ctx.GetHeader("filename"), res); err != nil {
 		return err
 	}
-	return s.Text(ctx, "wallet unlock success: "+res.KeyID)
+	return s.Text(ctx, "wallet unlock success: "+res.WalletID)
 }
 
 func (s *WebNode) Login(ctx *node.Context) error {

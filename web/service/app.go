@@ -121,7 +121,7 @@ func (s *AppService) UnlockWallet(filename string, res *dto.UnlockWalletRes) err
 	}
 
 	openwsdk.AddUnlockWallet(key)
-	res.KeyID = key.KeyID
+	res.WalletID = key.KeyID
 	return nil
 }
 
@@ -171,7 +171,7 @@ func (s *AppService) CreateWallet(alias string, res *dto.CreateWalletRes) error 
 		return ex.Throw{Code: ex.BIZ, Msg: err.Error()}
 	}
 
-	res.KeyID = rootID
+	res.WalletID = rootID
 	return nil
 }
 
@@ -214,9 +214,20 @@ func (s *AppService) FindWalletList(req *dto.FindWalletListReq, res *dto.FindWal
 	for _, v := range fileList {
 		res.Result = append(res.Result, dto.WalletResult{
 			Alias:    v.Alias,
-			KeyID:    v.KeyID,
+			WalletID: v.KeyID,
 			RootPath: v.RootPath,
 		})
+	}
+	return nil
+}
+
+func (s *AppService) CreateAccount(req *dto.CreateAccountReq, res *dto.CreateAccountRes) error {
+	if req.WalletID == "" {
+		return ex.Throw{Code: ex.BIZ, Msg: "walletID is nil"}
+	}
+	key := openwsdk.GetUnlockWallet(req.WalletID)
+	if key == nil {
+		return ex.Throw{Code: ex.BIZ, Msg: "walletID is nil or unlock: " + req.WalletID}
 	}
 	return nil
 }

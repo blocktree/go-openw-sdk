@@ -743,11 +743,74 @@ func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto7(in *jlexer.Lexer,
 		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		switch key {
+		case "walletID":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.WalletID = string(in.String())
+			}
 		case "accountID":
 			if in.IsNull() {
 				in.Skip()
 			} else {
 				out.AccountID = string(in.String())
+			}
+		case "otherOwnerKeys":
+			if in.IsNull() {
+				in.Skip()
+				out.OtherOwnerKeys = nil
+			} else {
+				in.Delim('[')
+				if out.OtherOwnerKeys == nil {
+					if !in.IsDelim(']') {
+						out.OtherOwnerKeys = make([]string, 0, 4)
+					} else {
+						out.OtherOwnerKeys = []string{}
+					}
+				} else {
+					out.OtherOwnerKeys = (out.OtherOwnerKeys)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v4 string
+					if in.IsNull() {
+						in.Skip()
+					} else {
+						v4 = string(in.String())
+					}
+					out.OtherOwnerKeys = append(out.OtherOwnerKeys, v4)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "reqSigs":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.ReqSigs = int64(in.Int64())
+			}
+		case "publicKey":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.PublicKey = string(in.String())
+			}
+		case "hdPath":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.HdPath = string(in.String())
+			}
+		case "accountIndex":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.AccountIndex = int64(in.Int64())
+			}
+		case "addressIndex":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.AddressIndex = int64(in.Int64())
 			}
 		default:
 			in.SkipRecursive()
@@ -764,9 +827,55 @@ func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto7(out *jwriter.Writ
 	first := true
 	_ = first
 	{
-		const prefix string = ",\"accountID\":"
+		const prefix string = ",\"walletID\":"
 		out.RawString(prefix[1:])
+		out.String(string(in.WalletID))
+	}
+	{
+		const prefix string = ",\"accountID\":"
+		out.RawString(prefix)
 		out.String(string(in.AccountID))
+	}
+	{
+		const prefix string = ",\"otherOwnerKeys\":"
+		out.RawString(prefix)
+		if in.OtherOwnerKeys == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v5, v6 := range in.OtherOwnerKeys {
+				if v5 > 0 {
+					out.RawByte(',')
+				}
+				out.String(string(v6))
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"reqSigs\":"
+		out.RawString(prefix)
+		out.Int64(int64(in.ReqSigs))
+	}
+	{
+		const prefix string = ",\"publicKey\":"
+		out.RawString(prefix)
+		out.String(string(in.PublicKey))
+	}
+	{
+		const prefix string = ",\"hdPath\":"
+		out.RawString(prefix)
+		out.String(string(in.HdPath))
+	}
+	{
+		const prefix string = ",\"accountIndex\":"
+		out.RawString(prefix)
+		out.Int64(int64(in.AccountIndex))
+	}
+	{
+		const prefix string = ",\"addressIndex\":"
+		out.RawString(prefix)
+		out.Int64(int64(in.AddressIndex))
 	}
 	out.RawByte('}')
 }
@@ -813,6 +922,18 @@ func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto8(in *jlexer.Lexer,
 				in.Skip()
 			} else {
 				out.WalletID = string(in.String())
+			}
+		case "lastIndex":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.LastIndex = int64(in.Int64())
+			}
+		case "curve":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.Curve = int64(in.Int64())
 			}
 		case "cmd":
 			if in.IsNull() {
@@ -868,6 +989,16 @@ func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto8(out *jwriter.Writ
 		const prefix string = ",\"walletID\":"
 		out.RawString(prefix[1:])
 		out.String(string(in.WalletID))
+	}
+	{
+		const prefix string = ",\"lastIndex\":"
+		out.RawString(prefix)
+		out.Int64(int64(in.LastIndex))
+	}
+	{
+		const prefix string = ",\"curve\":"
+		out.RawString(prefix)
+		out.Int64(int64(in.Curve))
 	}
 	{
 		const prefix string = ",\"cmd\":"

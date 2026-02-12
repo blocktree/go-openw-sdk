@@ -2,8 +2,10 @@ package openwsdk
 
 import (
 	"encoding/hex"
+	"fmt"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
 	"github.com/blocktree/openwallet/v2/hdkeystore"
+	"github.com/blocktree/openwallet/v2/openwallet"
 	DIC "github.com/godaddy-x/freego/common"
 	"github.com/godaddy-x/freego/utils"
 	"strings"
@@ -67,4 +69,25 @@ func SignTradeBalancePush(key string, data dto.TradeBalancePushResult) (string, 
 	signData.WriteString("|")
 	signData.WriteString(utils.AnyToStr(data.Ctime))
 	return utils.Base64Encode(utils.HMAC_SHA256_BASE(utils.Str2Bytes(signData.String()), hashKey)), nil
+}
+
+func DerivedAccount(key *hdkeystore.HDKey, lastIndex, curve int64) (*dto.AccountResult, error) {
+	account := &dto.AccountResult{}
+	account.ReqSigs = 1
+	account.AccountIndex = lastIndex + 1
+
+	// root/n' , 使用强化方案
+	account.HdPath = fmt.Sprintf("%s/%d'", key.RootPath, account.AccountIndex)
+
+	childKey, err := key.DerivedKeyWithPath(account.HdPath, uint32(curve))
+	if err != nil {
+		return nil, err
+	}
+
+	account.PublicKey = childKey.GetPublicKey().OWEncode()
+	account.AccountID = openwallet.GenAccountID(account.PublicKey)
+	account.AddressIndex = -1
+	account.WalletID = key.KeyID
+
+	return account, nil
 }

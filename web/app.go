@@ -61,3 +61,15 @@ func (s *WebNode) Login(ctx *node.Context) error {
 	expired := ctx.Subject.Payload.Exp
 	return s.Json(ctx, &sdk.AuthToken{Token: token, Secret: utils.Base64Encode(secret), Expired: expired})
 }
+
+func (s *WebNode) CreateAccount(ctx *node.Context) error {
+	req := &dto.CreateAccountReq{}
+	if err := ctx.Parser(req); err != nil {
+		return err
+	}
+	res := &dto.CreateAccountRes{}
+	if err := AppService.CreateAccount(req, res); err != nil {
+		return err
+	}
+	return s.Json(ctx, res)
+}

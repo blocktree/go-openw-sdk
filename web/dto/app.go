@@ -59,10 +59,19 @@ type CreateWalletRes struct {
 //easyjson:json
 type CreateAccountReq struct {
 	common.BaseReq
-	WalletID string `json:"walletID"`
+	WalletID  string `json:"walletID"`
+	LastIndex int64  `json:"lastIndex"` // 錢包所屬帳戶ID最後索引值
+	Curve     int64  `json:"curve"`
 }
 
 //easyjson:json
 type CreateAccountRes struct {
-	AccountID string `json:"accountID"`
+	WalletID       string   `json:"walletID"`
+	AccountID      string   `json:"accountID"`
+	OtherOwnerKeys []string `json:"otherOwnerKeys"`
+	ReqSigs        int64    `json:"reqSigs"`
+	PublicKey      string   `json:"publicKey"`
+	HdPath         string   `json:"hdPath"`
+	AccountIndex   int64    `json:"accountIndex"`
+	AddressIndex   int64    `json:"addressIndex"`
 }

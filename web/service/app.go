@@ -225,9 +225,27 @@ func (s *AppService) CreateAccount(req *dto.CreateAccountReq, res *dto.CreateAcc
 	if req.WalletID == "" {
 		return ex.Throw{Code: ex.BIZ, Msg: "walletID is nil"}
 	}
+	if req.LastIndex < -1 {
+		return ex.Throw{Code: ex.BIZ, Msg: "lastIndex invalid"}
+	}
+	if req.Curve < 0 {
+		return ex.Throw{Code: ex.BIZ, Msg: "curve invalid"}
+	}
 	key := openwsdk.GetUnlockWallet(req.WalletID)
 	if key == nil {
 		return ex.Throw{Code: ex.BIZ, Msg: "walletID is nil or unlock: " + req.WalletID}
 	}
+	account, err := openwsdk.DerivedAccount(key, req.LastIndex, req.Curve)
+	if err != nil {
+		return ex.Throw{Code: ex.BIZ, Msg: "create account error", Err: err}
+	}
+	res.WalletID = account.WalletID
+	res.AccountID = account.AccountID
+	res.OtherOwnerKeys = account.OtherOwnerKeys
+	res.ReqSigs = account.ReqSigs
+	res.PublicKey = account.PublicKey
+	res.HdPath = account.HdPath
+	res.AccountIndex = account.AccountIndex
+	res.AddressIndex = account.AddressIndex
 	return nil
 }

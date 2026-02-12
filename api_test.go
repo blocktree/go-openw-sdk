@@ -74,3 +74,16 @@ func TestFindWalletList(t *testing.T) {
 	}
 	fmt.Println(responseData)
 }
+
+func TestCreateAccount(t *testing.T) {
+	requestData := dto.CreateAccountReq{
+		WalletID:  "VzYK21Vem6WBXHXZmSRYGN4iaE6n2naF6z",
+		LastIndex: -1,
+		Curve:     3972005888,
+	}
+	responseData := dto.CreateAccountRes{}
+	if err := httpSDK.PostByAuth("/api/CreateAccount", &requestData, &responseData, true); err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(responseData)
+}

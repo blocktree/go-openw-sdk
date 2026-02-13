@@ -2,7 +2,6 @@ package openwsdk
 
 import (
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
 	"github.com/blocktree/openwallet/v2/openwallet"
@@ -49,40 +48,6 @@ func NewHttpSDK(domain, appID, appKey string) *sdk.HttpSDK {
 		return requestData, nil
 	})
 	return newObject
-}
-
-func CheckTxDataSign(appKey string, txData []*dto.TxData) error {
-	if len(txData) == 0 {
-		return errors.New("tx data is nil")
-	}
-	h, err := hex.DecodeString(appKey)
-	if err != nil {
-		return err
-	}
-	for _, v := range txData {
-		checkSign := utils.HMAC_SHA256_BASE(utils.Str2Bytes(v.Data), h)
-		if v.DataSign != utils.Base64Encode(checkSign) {
-			return errors.New(fmt.Sprintf("tx data check sign invalid: %s", v.Data))
-		}
-	}
-	return nil
-}
-
-func CheckTxTradeSign(tradeKey string, txData []*dto.TxData) error {
-	if len(txData) == 0 {
-		return errors.New("tx data is nil")
-	}
-	h, err := hex.DecodeString(tradeKey)
-	if err != nil {
-		return err
-	}
-	for _, v := range txData {
-		checkSign := utils.HMAC_SHA256_BASE(utils.Str2Bytes(v.Data), h)
-		if v.TradeSign != utils.Base64Encode(checkSign) {
-			return errors.New(fmt.Sprintf("tx data check trade sign invalid: %s", v.Data))
-		}
-	}
-	return nil
 }
 
 func TestGetPublicKey(t *testing.T) {
@@ -149,15 +114,7 @@ func TestFindWalletByWalletID(t *testing.T) {
 }
 
 func TestCreateWallet(t *testing.T) {
-	key, err := loadWalletFile()
-	if err != nil {
-		panic(err)
-	}
-	requestData := dto.CreateWalletReq{
-		Alias:    key.Alias,
-		WalletID: key.KeyID,
-		RootPath: key.RootPath,
-	}
+	requestData := dto.CreateWalletReq{}
 	responseData := dto.CreateWalletRes{}
 	if err := httpSDK.PostByAuth("/api/CreateWallet", &requestData, &responseData, true); err != nil {
 		fmt.Println(err)
@@ -185,25 +142,25 @@ func TestFindTradeLog(t *testing.T) {
 
 func TestCreateAccount(t *testing.T) {
 
-	key, err := loadWalletFile()
-	if err != nil {
-		panic(err)
-	}
-
-	account, err := CreateAccount(key, "BETH", "test account 123", -1, 3972005888)
-	if err != nil {
-		panic(err)
-	}
+	//key, err := loadWalletFile()
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//account, err := CreateAccount(key, "BETH", "test account 123", -1, 3972005888)
+	//if err != nil {
+	//	panic(err)
+	//}
 
 	requestData := dto.CreateAccountReq{
-		WalletID:     account.WalletID,
-		AccountID:    account.AccountID,
-		Alias:        account.Alias,
-		Symbol:       account.Symbol,
-		PublicKey:    account.PublicKey,
-		HdPath:       account.HdPath,
-		ReqSigs:      account.ReqSigs,
-		AccountIndex: account.AccountIndex,
+		//WalletID:     account.WalletID,
+		//AccountID:    account.AccountID,
+		//Alias:        account.Alias,
+		//Symbol:       account.Symbol,
+		//PublicKey:    account.PublicKey,
+		//HdPath:       account.HdPath,
+		//ReqSigs:      account.ReqSigs,
+		//AccountIndex: account.AccountIndex,
 	}
 	responseData := dto.CreateAccountRes{}
 	if err := httpSDK.PostByAuth("/api/CreateAccount", &requestData, &responseData, true); err != nil {
@@ -305,17 +262,17 @@ func TestCreateTrade(t *testing.T) {
 	if err := utils.JsonUnmarshal(utils.Str2Bytes(txData.Data), tx); err != nil {
 		fmt.Println(err)
 	}
-	key, err := loadWalletFile()
-	if err != nil {
-		panic(err)
-	}
-	txSignerList := map[string]string{}
-	if err := SignRawTransactionExtract(tx, key, txSignerList); err != nil {
-		panic(err)
-	}
-	fmt.Println("txData: ", tx)
+	//key, err := loadWalletFile()
+	//if err != nil {
+	//	panic(err)
+	//}
+	//txSignerList := map[string]string{}
+	//if err := SignRawTransactionExtract(tx, key, txSignerList); err != nil {
+	//	panic(err)
+	//}
+	//fmt.Println("txData: ", tx)
 
-	txData.SignerList = txSignerList
+	//txData.SignerList = txSignerList
 
 	requestSubmitData := dto.SubmitRawTransactionReq{
 		TxData: txData,
@@ -359,17 +316,17 @@ func TestCreateContractTrade(t *testing.T) {
 	if err := utils.JsonUnmarshal(utils.Str2Bytes(txData.Data), tx); err != nil {
 		fmt.Println(err)
 	}
-	key, err := loadWalletFile()
-	if err != nil {
-		panic(err)
-	}
-	txSignerList := map[string]string{}
-	if err := SignRawTransactionExtract(tx, key, txSignerList); err != nil {
-		panic(err)
-	}
-	fmt.Println("txData: ", tx)
-
-	txData.SignerList = txSignerList
+	//key, err := loadWalletFile()
+	//if err != nil {
+	//	panic(err)
+	//}
+	//txSignerList := map[string]string{}
+	//if err := SignRawTransactionExtract(tx, key, txSignerList); err != nil {
+	//	panic(err)
+	//}
+	//fmt.Println("txData: ", tx)
+	//
+	//txData.SignerList = txSignerList
 
 	requestSubmitData := dto.SubmitRawTransactionReq{
 		TxData: txData,

@@ -2,6 +2,7 @@ package openwsdk
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
 	"github.com/blocktree/openwallet/v2/hdkeystore"
@@ -90,4 +91,53 @@ func DerivedAccount(key *hdkeystore.HDKey, lastIndex, curve int64) (*dto.Account
 	account.WalletID = key.KeyID
 
 	return account, nil
+}
+
+func CheckTxDataSign(appKey string, txData []*dto.TxData) error {
+	if len(txData) == 0 {
+		return errors.New("tx data is nil")
+	}
+	h, err := hex.DecodeString(appKey)
+	if err != nil {
+		return err
+	}
+	for _, v := range txData {
+		checkSign := utils.HMAC_SHA256_BASE(utils.Str2Bytes(v.Data), h)
+		if v.DataSign != utils.Base64Encode(checkSign) {
+			return errors.New(fmt.Sprintf("tx data check sign invalid: %s", v.Data))
+		}
+	}
+	return nil
+}
+
+func CheckTxTradeSign(tradeKey string, txData []*dto.TxData) error {
+	if len(txData) == 0 {
+		return errors.New("tx data is nil")
+	}
+	h, err := hex.DecodeString(tradeKey)
+	if err != nil {
+		return err
+	}
+	for _, v := range txData {
+		checkSign := utils.HMAC_SHA256_BASE(utils.Str2Bytes(v.Data), h)
+		if v.TradeSign != utils.Base64Encode(checkSign) {
+			return errors.New(fmt.Sprintf("tx data check trade sign invalid: %s", v.Data))
+		}
+	}
+	return nil
+}
+
+func CheckOneTxTradeSign(tradeKey, data, sign string) error {
+	if len(data) == 0 {
+		return errors.New("tx data is nil")
+	}
+	h, err := hex.DecodeString(tradeKey)
+	if err != nil {
+		return err
+	}
+	checkSign := utils.HMAC_SHA256_BASE(utils.Str2Bytes(data), h)
+	if sign != utils.Base64Encode(checkSign) {
+		return errors.New(fmt.Sprintf("tx data check trade sign invalid: %s, %s", data, sign))
+	}
+	return nil
 }

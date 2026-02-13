@@ -311,7 +311,102 @@ func (v *UnlockWalletReq) UnmarshalJSON(data []byte) error {
 func (v *UnlockWalletReq) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto2(l, v)
 }
-func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto3(in *jlexer.Lexer, out *FindWalletListRes) {
+func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto3(in *jlexer.Lexer, out *SignTransactionRes) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		switch key {
+		case "signerList":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				out.SignerList = make(map[string]string)
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v1 string
+					if in.IsNull() {
+						in.Skip()
+					} else {
+						v1 = string(in.String())
+					}
+					(out.SignerList)[key] = v1
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto3(out *jwriter.Writer, in SignTransactionRes) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"signerList\":"
+		out.RawString(prefix[1:])
+		if in.SignerList == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v2First := true
+			for v2Name, v2Value := range in.SignerList {
+				if v2First {
+					v2First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v2Name))
+				out.RawByte(':')
+				out.String(string(v2Value))
+			}
+			out.RawByte('}')
+		}
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v SignTransactionRes) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto3(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v SignTransactionRes) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto3(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *SignTransactionRes) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto3(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *SignTransactionRes) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto3(l, v)
+}
+func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto4(in *jlexer.Lexer, out *FindWalletListRes) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -341,13 +436,13 @@ func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto3(in *jlexer.Lexer,
 					out.Result = (out.Result)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v1 WalletResult
+					var v3 WalletResult
 					if in.IsNull() {
 						in.Skip()
 					} else {
-						(v1).UnmarshalEasyJSON(in)
+						(v3).UnmarshalEasyJSON(in)
 					}
-					out.Result = append(out.Result, v1)
+					out.Result = append(out.Result, v3)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -362,7 +457,7 @@ func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto3(in *jlexer.Lexer,
 		in.Consumed()
 	}
 }
-func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto3(out *jwriter.Writer, in FindWalletListRes) {
+func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto4(out *jwriter.Writer, in FindWalletListRes) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -373,11 +468,11 @@ func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto3(out *jwriter.Writ
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v2, v3 := range in.Result {
-				if v2 > 0 {
+			for v4, v5 := range in.Result {
+				if v4 > 0 {
 					out.RawByte(',')
 				}
-				(v3).MarshalEasyJSON(out)
+				(v5).MarshalEasyJSON(out)
 			}
 			out.RawByte(']')
 		}
@@ -388,27 +483,27 @@ func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto3(out *jwriter.Writ
 // MarshalJSON supports json.Marshaler interface
 func (v FindWalletListRes) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto3(&w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto4(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v FindWalletListRes) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto3(w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto4(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *FindWalletListRes) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto3(&r, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto4(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *FindWalletListRes) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto3(l, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto4(l, v)
 }
-func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto4(in *jlexer.Lexer, out *FindWalletListReq) {
+func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto5(in *jlexer.Lexer, out *FindWalletListReq) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -468,7 +563,7 @@ func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto4(in *jlexer.Lexer,
 		in.Consumed()
 	}
 }
-func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto4(out *jwriter.Writer, in FindWalletListReq) {
+func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto5(out *jwriter.Writer, in FindWalletListReq) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -513,27 +608,27 @@ func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto4(out *jwriter.Writ
 // MarshalJSON supports json.Marshaler interface
 func (v FindWalletListReq) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto4(&w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto5(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v FindWalletListReq) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto4(w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto5(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *FindWalletListReq) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto4(&r, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto5(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *FindWalletListReq) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto4(l, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto5(l, v)
 }
-func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto5(in *jlexer.Lexer, out *CreateWalletRes) {
+func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto6(in *jlexer.Lexer, out *CreateWalletRes) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -563,7 +658,7 @@ func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto5(in *jlexer.Lexer,
 		in.Consumed()
 	}
 }
-func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto5(out *jwriter.Writer, in CreateWalletRes) {
+func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto6(out *jwriter.Writer, in CreateWalletRes) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -578,27 +673,27 @@ func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto5(out *jwriter.Writ
 // MarshalJSON supports json.Marshaler interface
 func (v CreateWalletRes) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto5(&w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto6(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v CreateWalletRes) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto5(w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto6(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *CreateWalletRes) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto5(&r, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto6(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *CreateWalletRes) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto5(l, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto6(l, v)
 }
-func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto6(in *jlexer.Lexer, out *CreateWalletReq) {
+func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto7(in *jlexer.Lexer, out *CreateWalletReq) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -664,7 +759,7 @@ func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto6(in *jlexer.Lexer,
 		in.Consumed()
 	}
 }
-func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto6(out *jwriter.Writer, in CreateWalletReq) {
+func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto7(out *jwriter.Writer, in CreateWalletReq) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -709,27 +804,27 @@ func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto6(out *jwriter.Writ
 // MarshalJSON supports json.Marshaler interface
 func (v CreateWalletReq) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto6(&w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto7(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v CreateWalletReq) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto6(w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto7(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *CreateWalletReq) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto6(&r, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto7(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *CreateWalletReq) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto6(l, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto7(l, v)
 }
-func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto7(in *jlexer.Lexer, out *CreateAccountRes) {
+func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto8(in *jlexer.Lexer, out *CreateAccountRes) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -771,13 +866,13 @@ func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto7(in *jlexer.Lexer,
 					out.OtherOwnerKeys = (out.OtherOwnerKeys)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v4 string
+					var v6 string
 					if in.IsNull() {
 						in.Skip()
 					} else {
-						v4 = string(in.String())
+						v6 = string(in.String())
 					}
-					out.OtherOwnerKeys = append(out.OtherOwnerKeys, v4)
+					out.OtherOwnerKeys = append(out.OtherOwnerKeys, v6)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -822,7 +917,7 @@ func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto7(in *jlexer.Lexer,
 		in.Consumed()
 	}
 }
-func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto7(out *jwriter.Writer, in CreateAccountRes) {
+func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto8(out *jwriter.Writer, in CreateAccountRes) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -843,11 +938,11 @@ func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto7(out *jwriter.Writ
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v5, v6 := range in.OtherOwnerKeys {
-				if v5 > 0 {
+			for v7, v8 := range in.OtherOwnerKeys {
+				if v7 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v6))
+				out.String(string(v8))
 			}
 			out.RawByte(']')
 		}
@@ -883,27 +978,27 @@ func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto7(out *jwriter.Writ
 // MarshalJSON supports json.Marshaler interface
 func (v CreateAccountRes) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto7(&w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto8(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v CreateAccountRes) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto7(w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto8(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *CreateAccountRes) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto7(&r, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto8(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *CreateAccountRes) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto7(l, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto8(l, v)
 }
-func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto8(in *jlexer.Lexer, out *CreateAccountReq) {
+func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto9(in *jlexer.Lexer, out *CreateAccountReq) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -981,7 +1076,7 @@ func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto8(in *jlexer.Lexer,
 		in.Consumed()
 	}
 }
-func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto8(out *jwriter.Writer, in CreateAccountReq) {
+func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto9(out *jwriter.Writer, in CreateAccountReq) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -1036,27 +1131,27 @@ func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto8(out *jwriter.Writ
 // MarshalJSON supports json.Marshaler interface
 func (v CreateAccountReq) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto8(&w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto9(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v CreateAccountReq) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto8(w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto9(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *CreateAccountReq) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto8(&r, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto9(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *CreateAccountReq) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto8(l, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto9(l, v)
 }
-func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto9(in *jlexer.Lexer, out *AppLoginRes) {
+func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto10(in *jlexer.Lexer, out *AppLoginRes) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -1086,7 +1181,7 @@ func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto9(in *jlexer.Lexer,
 		in.Consumed()
 	}
 }
-func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto9(out *jwriter.Writer, in AppLoginRes) {
+func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto10(out *jwriter.Writer, in AppLoginRes) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -1101,27 +1196,27 @@ func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto9(out *jwriter.Writ
 // MarshalJSON supports json.Marshaler interface
 func (v AppLoginRes) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto9(&w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto10(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v AppLoginRes) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto9(w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto10(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *AppLoginRes) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto9(&r, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto10(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *AppLoginRes) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto9(l, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto10(l, v)
 }
-func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto10(in *jlexer.Lexer, out *AppLoginReq) {
+func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto11(in *jlexer.Lexer, out *AppLoginReq) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -1205,7 +1300,7 @@ func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto10(in *jlexer.Lexer
 		in.Consumed()
 	}
 }
-func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto10(out *jwriter.Writer, in AppLoginReq) {
+func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto11(out *jwriter.Writer, in AppLoginReq) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -1265,23 +1360,23 @@ func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto10(out *jwriter.Wri
 // MarshalJSON supports json.Marshaler interface
 func (v AppLoginReq) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto10(&w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto11(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v AppLoginReq) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto10(w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2WebDto11(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *AppLoginReq) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto10(&r, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto11(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *AppLoginReq) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto10(l, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2WebDto11(l, v)
 }

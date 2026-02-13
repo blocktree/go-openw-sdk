@@ -9,6 +9,7 @@ import (
 	"github.com/blocktree/go-openw-sdk/v2/web/common"
 	"github.com/blocktree/go-openw-sdk/v2/web/dto"
 	"github.com/blocktree/openwallet/v2/hdkeystore"
+	"github.com/blocktree/openwallet/v2/openwallet"
 	DIC "github.com/godaddy-x/freego/common"
 	"github.com/godaddy-x/freego/ex"
 	"github.com/godaddy-x/freego/utils"
@@ -21,7 +22,7 @@ import (
 	"sync/atomic"
 )
 
-type AppService struct {
+type CliService struct {
 	pending atomic.Bool
 }
 
@@ -42,7 +43,7 @@ var (
 	}
 )
 
-func (s *AppService) UnlockWallet(filename string, res *dto.UnlockWalletRes) error {
+func (s *CliService) UnlockWallet(filename string, res *dto.UnlockWalletRes) error {
 	// === 1. 校验 filename 格式（保留原有逻辑）===
 	if strings.TrimSpace(filename) == "" {
 		return ex.Throw{Code: ex.BIZ, Msg: "filename is required"}
@@ -125,7 +126,7 @@ func (s *AppService) UnlockWallet(filename string, res *dto.UnlockWalletRes) err
 	return nil
 }
 
-func (s *AppService) CreateWallet(alias string, res *dto.CreateWalletRes) error {
+func (s *CliService) CreateWallet(alias string, res *dto.CreateWalletRes) error {
 	// === 参数校验（alias）===
 	if strings.TrimSpace(alias) == "" || !regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString(alias) {
 		return ex.Throw{Code: ex.BIZ, Msg: "invalid alias"}
@@ -175,7 +176,7 @@ func (s *AppService) CreateWallet(alias string, res *dto.CreateWalletRes) error 
 	return nil
 }
 
-func (s *AppService) AppLogin(req *dto.AppLoginReq, res *dto.AppLoginRes) error {
+func (s *CliService) AppLogin(req *dto.AppLoginReq, res *dto.AppLoginRes) error {
 	if len(req.AppID) == 0 {
 		return ex.Throw{Code: ex.BIZ, Msg: "appID is empty"}
 	}
@@ -204,7 +205,7 @@ func (s *AppService) AppLogin(req *dto.AppLoginReq, res *dto.AppLoginRes) error 
 	return nil
 }
 
-func (s *AppService) FindWalletList(req *dto.FindWalletListReq, res *dto.FindWalletListRes) error {
+func (s *CliService) FindWalletList(req *dto.FindWalletListReq, res *dto.FindWalletListRes) error {
 	config := common.GetAllConfig().Extract
 	fileList, err := common.ReadAllFilesInDir(config.WalletDir)
 	if err != nil {
@@ -221,7 +222,7 @@ func (s *AppService) FindWalletList(req *dto.FindWalletListReq, res *dto.FindWal
 	return nil
 }
 
-func (s *AppService) CreateAccount(req *dto.CreateAccountReq, res *dto.CreateAccountRes) error {
+func (s *CliService) CreateAccount(req *dto.CreateAccountReq, res *dto.CreateAccountRes) error {
 	if req.WalletID == "" {
 		return ex.Throw{Code: ex.BIZ, Msg: "walletID is nil"}
 	}
@@ -247,5 +248,61 @@ func (s *AppService) CreateAccount(req *dto.CreateAccountReq, res *dto.CreateAcc
 	res.HdPath = account.HdPath
 	res.AccountIndex = account.AccountIndex
 	res.AddressIndex = account.AddressIndex
+	return nil
+}
+
+func (s *CliService) SignTransaction(req *dto.SignTransactionReq, res *dto.SignTransactionRes) error {
+	if req.Data == "" {
+		return ex.Throw{Code: ex.BIZ, Msg: "data is nil"}
+	}
+	if req.TradeSign == "" {
+		return ex.Throw{Code: ex.BIZ, Msg: "tradeSign is nil"}
+	}
+
+	if err := openwsdk.CheckOneTxTradeSign(common.GetAllConfig().Extract.TradeKey, req.Data, req.TradeSign); err != nil {
+		return ex.Throw{Code: ex.BIZ, Msg: "trade sign invalid", Err: err}
+	}
+
+	tx := &openwallet.RawTransaction{}
+	if err := utils.JsonUnmarshal(utils.Str2Bytes(req.Data), tx); err != nil {
+		return ex.Throw{Code: ex.BIZ, Msg: "tx decode error", Err: err}
+	}
+
+	if utils.UnixMilli()-tx.CreateTime > 86400000 {
+		return ex.Throw{Code: ex.BIZ, Msg: "tx create time invalid"}
+	}
+
+	if tx.TxType == 0 { // 普通交易单，校验黑名单
+		blacklist := common.GetAllConfig().Extract.SubmitBlacklist
+		for to, _ := range tx.To {
+			if utils.CheckStr(to, blacklist...) {
+				return ex.Throw{Code: ex.BIZ, Msg: "tx submit blacklist invalid: " + to}
+			}
+		}
+	} else if tx.TxType == 1 { // 汇总交易单，校验白名单
+		if len(tx.To) > 1 {
+			return ex.Throw{Code: ex.BIZ, Msg: "tx submit target address > 1 invalid"}
+		}
+		whitelist := common.GetAllConfig().Extract.SummaryWhitelist
+		for to, _ := range tx.To {
+			if !utils.CheckStr(to, whitelist...) {
+				return ex.Throw{Code: ex.BIZ, Msg: "tx submit blacklist invalid: " + to}
+			}
+		}
+	} else {
+		return ex.Throw{Code: ex.BIZ, Msg: "tx type invalid"}
+	}
+
+	key := openwsdk.GetUnlockWallet(tx.Account.WalletID)
+	if key == nil {
+		return ex.Throw{Code: ex.BIZ, Msg: "walletID is nil or unlock: " + tx.Account.WalletID}
+	}
+
+	txSignerList := map[string]string{}
+	if err := openwsdk.SignRawTransactionExtract(tx, key, txSignerList); err != nil {
+		return ex.Throw{Code: ex.BIZ, Msg: "sign tx error: " + tx.Account.WalletID, Err: err}
+	}
+	res.SignerList = txSignerList
+
 	return nil
 }

@@ -75,3 +75,15 @@ type CreateAccountRes struct {
 	AccountIndex   int64    `json:"accountIndex"`
 	AddressIndex   int64    `json:"addressIndex"`
 }
+
+type SignTransactionReq struct {
+	common.BaseReq
+	Data       string            `json:"data"`
+	TradeSign  string            `json:"tradeSign"` // CLI系统进行校验签名
+	SignerList map[string]string `json:"signerList"`
+}
+
+//easyjson:json
+type SignTransactionRes struct {
+	SignerList map[string]string `json:"signerList"`
+}

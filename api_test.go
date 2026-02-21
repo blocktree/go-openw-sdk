@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/blocktree/go-openw-sdk/v2/web/dto"
+	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
 	"github.com/godaddy-x/freego/utils"
 	"github.com/godaddy-x/freego/utils/sdk"
 	"testing"
@@ -67,8 +67,8 @@ func TestUserLogin(t *testing.T) {
 }
 
 func TestFindWalletList(t *testing.T) {
-	requestData := dto.FindWalletListReq{}
-	responseData := dto.FindWalletListRes{}
+	requestData := dto.CliFindWalletListReq{}
+	responseData := dto.CliFindWalletListRes{}
 	if err := httpSDK.PostByAuth("/api/FindWalletList", &requestData, &responseData, true); err != nil {
 		fmt.Println(err)
 	}
@@ -76,7 +76,7 @@ func TestFindWalletList(t *testing.T) {
 }
 
 func TestCreateAccount(t *testing.T) {
-	requestData := dto.CreateAccountReq{
+	requestData := dto.CliCreateAccountReq{
 		WalletID:  "VzYK21Vem6WBXHXZmSRYGN4iaE6n2naF6z",
 		LastIndex: -1,
 		Curve:     3972005888,

@@ -9,9 +9,46 @@ import (
 	"github.com/blocktree/openwallet/v2/openwallet"
 	DIC "github.com/godaddy-x/freego/common"
 	"github.com/godaddy-x/freego/utils"
+	"github.com/godaddy-x/freego/utils/sdk"
 	"strings"
 	"sync"
 )
+
+type SdkConfig struct {
+	Domain    string `json:"domain"`
+	AppID     string `json:"appID"`
+	AppKey    string `json:"appKey"`
+	ClientPrk string `json:"clientPrk"`
+	ServerPub string `json:"serverPub"`
+	ClientNo  int64  `json:"clientNo"`
+	TradeKey  string `json:"tradeKey"`
+}
+
+func NewHttpSDK(config SdkConfig) *sdk.HttpSDK {
+	newObject := &sdk.HttpSDK{
+		Domain:    config.Domain,
+		KeyPath:   "/api/PublicKey",
+		LoginPath: "/api/Login",
+	}
+	clientPrk := config.ClientPrk
+	serverPub := config.ServerPub
+	newObject.SetClientNo(1)
+	_ = newObject.SetECDSAObject(newObject.ClientNo, clientPrk, serverPub)
+	newObject.AuthObject(func() (interface{}, error) {
+		requestData := dto.AppLoginReq{
+			AppID: config.AppID,
+			Nonce: utils.Base64Encode(utils.GetRandomSecure(32)),
+			Time:  utils.UnixSecond(),
+		}
+		h, err := hex.DecodeString(config.AppKey)
+		if err != nil {
+			return nil, err
+		}
+		requestData.Sign = utils.Base64Encode(utils.HMAC_SHA256_BASE(h, utils.Str2Bytes(utils.AddStr(requestData.Nonce, requestData.Time))))
+		return requestData, nil
+	})
+	return newObject
+}
 
 type unlockWallet struct {
 	mu     sync.Mutex

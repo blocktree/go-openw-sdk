@@ -117,9 +117,6 @@ func newHTTP() *WebNode {
 
 func StartHttpNode() {
 
-	// 初始化配置文件
-	common.NewBaseConfig("cli-http")
-
 	// 创建API服务
 	web := newHTTP()
 
@@ -129,6 +126,7 @@ func StartHttpNode() {
 	web.POST(api("UnlockWallet"), web.UnlockWallet, &node.RouterConfig{Guest: true})
 	web.POST(api("FindWalletList"), web.FindWalletList, &node.RouterConfig{AesRequest: true, AesResponse: true})
 	web.POST(api("CreateAccount"), web.CreateAccount, &node.RouterConfig{AesRequest: true, AesResponse: true})
+	web.POST(api("SignTransaction"), web.SignTransaction, &node.RouterConfig{AesRequest: true, AesResponse: true})
 
 	web.StartServer(addr())
 }

@@ -1,7 +1,7 @@
 package webapp
 
 import (
-	"github.com/blocktree/go-openw-sdk/v2/web/dto"
+	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
 	impl "github.com/blocktree/go-openw-sdk/v2/web/service"
 	"github.com/godaddy-x/freego/node"
 	"github.com/godaddy-x/freego/utils"
@@ -19,11 +19,11 @@ func (s *WebNode) PublicKey(ctx *node.Context) error {
 }
 
 func (s *WebNode) FindWalletList(ctx *node.Context) error {
-	req := &dto.FindWalletListReq{}
+	req := &dto.CliFindWalletListReq{}
 	if err := ctx.Parser(req); err != nil {
 		return err
 	}
-	res := &dto.FindWalletListRes{}
+	res := &dto.CliFindWalletListRes{}
 	if err := CliService.FindWalletList(req, res); err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func (s *WebNode) CreateWallet(ctx *node.Context) error {
 }
 
 func (s *WebNode) UnlockWallet(ctx *node.Context) error {
-	res := &dto.UnlockWalletRes{}
+	res := &dto.CliUnlockWalletRes{}
 	if err := CliService.UnlockWallet(ctx.GetHeader("filename"), res); err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func (s *WebNode) Login(ctx *node.Context) error {
 		return err
 	}
 	res := &dto.AppLoginRes{}
-	if err := CliService.AppLogin(req, res); err != nil {
+	if err := CliService.CliLogin(req, res); err != nil {
 		return err
 	}
 	config := ctx.GetJwtConfig()
@@ -63,12 +63,24 @@ func (s *WebNode) Login(ctx *node.Context) error {
 }
 
 func (s *WebNode) CreateAccount(ctx *node.Context) error {
-	req := &dto.CreateAccountReq{}
+	req := &dto.CliCreateAccountReq{}
 	if err := ctx.Parser(req); err != nil {
 		return err
 	}
-	res := &dto.CreateAccountRes{}
+	res := &dto.CliCreateAccountRes{}
 	if err := CliService.CreateAccount(req, res); err != nil {
+		return err
+	}
+	return s.Json(ctx, res)
+}
+
+func (s *WebNode) SignTransaction(ctx *node.Context) error {
+	req := &dto.CliSignTransactionReq{}
+	if err := ctx.Parser(req); err != nil {
+		return err
+	}
+	res := &dto.CliSignTransactionRes{}
+	if err := CliService.SignTransaction(req, res); err != nil {
 		return err
 	}
 	return s.Json(ctx, res)

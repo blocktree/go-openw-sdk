@@ -3,21 +3,7 @@ package dto
 import "github.com/godaddy-x/freego/node/common"
 
 //easyjson:json
-type AppLoginReq struct {
-	common.BaseReq
-	AppID string `json:"appID"`
-	Sign  string `json:"sign"`
-	Nonce string `json:"nonce"`
-	Time  int64  `json:"time"`
-}
-
-//easyjson:json
-type AppLoginRes struct {
-	Subject string `json:"subject"`
-}
-
-//easyjson:json
-type WalletResult struct {
+type CliWalletResult struct {
 	Alias    string `json:"alias"`
 	WalletID string `json:"walletID"`
 	RootPath string `json:"rootPath"`
@@ -25,39 +11,39 @@ type WalletResult struct {
 }
 
 //easyjson:json
-type FindWalletListReq struct {
+type CliFindWalletListReq struct {
 	common.BaseReq
 }
 
 //easyjson:json
-type FindWalletListRes struct {
+type CliFindWalletListRes struct {
 	Result []WalletResult `json:"result"`
 }
 
 //easyjson:json
-type UnlockWalletReq struct {
+type CliUnlockWalletReq struct {
 	common.BaseReq
 	Filename string `json:"filename"`
 }
 
 //easyjson:json
-type UnlockWalletRes struct {
+type CliUnlockWalletRes struct {
 	WalletID string `json:"walletID"`
 }
 
 //easyjson:json
-type CreateWalletReq struct {
+type CliCreateWalletReq struct {
 	common.BaseReq
 	Alias string `json:"alias"`
 }
 
 //easyjson:json
-type CreateWalletRes struct {
+type CliCreateWalletRes struct {
 	WalletID string `json:"walletID"`
 }
 
 //easyjson:json
-type CreateAccountReq struct {
+type CliCreateAccountReq struct {
 	common.BaseReq
 	WalletID  string `json:"walletID"`
 	LastIndex int64  `json:"lastIndex"` // 錢包所屬帳戶ID最後索引值
@@ -65,7 +51,7 @@ type CreateAccountReq struct {
 }
 
 //easyjson:json
-type CreateAccountRes struct {
+type CliCreateAccountRes struct {
 	WalletID       string   `json:"walletID"`
 	AccountID      string   `json:"accountID"`
 	OtherOwnerKeys []string `json:"otherOwnerKeys"`
@@ -76,14 +62,14 @@ type CreateAccountRes struct {
 	AddressIndex   int64    `json:"addressIndex"`
 }
 
-type SignTransactionReq struct {
+//easyjson:json
+type CliSignTransactionReq struct {
 	common.BaseReq
-	Data       string            `json:"data"`
-	TradeSign  string            `json:"tradeSign"` // CLI系统进行校验签名
-	SignerList map[string]string `json:"signerList"`
+	Data      string `json:"data"`
+	TradeSign string `json:"tradeSign"` // CLI系统进行校验签名
 }
 
 //easyjson:json
-type SignTransactionRes struct {
+type CliSignTransactionRes struct {
 	SignerList map[string]string `json:"signerList"`
 }

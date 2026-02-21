@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"github.com/awnumar/memguard"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk"
+	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
 	"github.com/blocktree/go-openw-sdk/v2/web/common"
-	"github.com/blocktree/go-openw-sdk/v2/web/dto"
 	"github.com/blocktree/openwallet/v2/hdkeystore"
 	"github.com/blocktree/openwallet/v2/openwallet"
 	DIC "github.com/godaddy-x/freego/common"
@@ -43,7 +43,7 @@ var (
 	}
 )
 
-func (s *CliService) UnlockWallet(filename string, res *dto.UnlockWalletRes) error {
+func (s *CliService) UnlockWallet(filename string, res *dto.CliUnlockWalletRes) error {
 	// === 1. 校验 filename 格式（保留原有逻辑）===
 	if strings.TrimSpace(filename) == "" {
 		return ex.Throw{Code: ex.BIZ, Msg: "filename is required"}
@@ -176,7 +176,7 @@ func (s *CliService) CreateWallet(alias string, res *dto.CreateWalletRes) error 
 	return nil
 }
 
-func (s *CliService) AppLogin(req *dto.AppLoginReq, res *dto.AppLoginRes) error {
+func (s *CliService) CliLogin(req *dto.AppLoginReq, res *dto.AppLoginRes) error {
 	if len(req.AppID) == 0 {
 		return ex.Throw{Code: ex.BIZ, Msg: "appID is empty"}
 	}
@@ -205,7 +205,7 @@ func (s *CliService) AppLogin(req *dto.AppLoginReq, res *dto.AppLoginRes) error 
 	return nil
 }
 
-func (s *CliService) FindWalletList(req *dto.FindWalletListReq, res *dto.FindWalletListRes) error {
+func (s *CliService) FindWalletList(req *dto.CliFindWalletListReq, res *dto.CliFindWalletListRes) error {
 	config := common.GetAllConfig().Extract
 	fileList, err := common.ReadAllFilesInDir(config.WalletDir)
 	if err != nil {
@@ -222,7 +222,7 @@ func (s *CliService) FindWalletList(req *dto.FindWalletListReq, res *dto.FindWal
 	return nil
 }
 
-func (s *CliService) CreateAccount(req *dto.CreateAccountReq, res *dto.CreateAccountRes) error {
+func (s *CliService) CreateAccount(req *dto.CliCreateAccountReq, res *dto.CliCreateAccountRes) error {
 	if req.WalletID == "" {
 		return ex.Throw{Code: ex.BIZ, Msg: "walletID is nil"}
 	}
@@ -251,7 +251,7 @@ func (s *CliService) CreateAccount(req *dto.CreateAccountReq, res *dto.CreateAcc
 	return nil
 }
 
-func (s *CliService) SignTransaction(req *dto.SignTransactionReq, res *dto.SignTransactionRes) error {
+func (s *CliService) SignTransaction(req *dto.CliSignTransactionReq, res *dto.CliSignTransactionRes) error {
 	if req.Data == "" {
 		return ex.Throw{Code: ex.BIZ, Msg: "data is nil"}
 	}

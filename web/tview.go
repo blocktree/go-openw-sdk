@@ -220,6 +220,9 @@ func showWalletList(app *tview.Application) {
 	walletList.SetSelectedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		selected := res.Result[index]
 
+		// 标记是否解锁成功
+		unlockedSuccessfully := false
+
 		app.Suspend(func() {
 			fmt.Printf("\n🔐 Unlocking wallet: %s-%s\n", selected.Alias, selected.WalletID)
 			fmt.Print("Enter password (input is HIDDEN): ")
@@ -227,17 +230,18 @@ func showWalletList(app *tview.Application) {
 			password, err := gopass.GetPasswd()
 			if err != nil {
 				fmt.Printf("Input error: %v\n", err)
+				fmt.Print("Press Enter to return to wallet list...")
+				fmt.Scanln()
 				return
 			}
 
-			// 调用服务解锁钱包
 			res := &dto.CliUnlockWalletRes{}
 			err = CliService.UnlockWallet(fmt.Sprintf("%s-%s.key", selected.Alias, selected.WalletID), password, res)
 			clearPassword(password)
 
 			if err != nil {
 				fmt.Printf("\n❌ Unlock failed: %v\n", ex.Catch(err).Msg)
-				fmt.Print("Press Enter to return to main menu...")
+				fmt.Print("Press Enter to return to wallet list...")
 				fmt.Scanln()
 				return
 			}
@@ -245,9 +249,16 @@ func showWalletList(app *tview.Application) {
 			fmt.Println("✅ Wallet unlocked successfully!")
 			fmt.Print("Press Enter to return to main menu...")
 			fmt.Scanln()
+
+			// 标记成功（注意：不能在这里 SetRoot！）
+			unlockedSuccessfully = true
 		})
 
-		showMainMenu(app)
+		// Suspend 已结束，现在可以安全切换界面
+		if unlockedSuccessfully {
+			showMainMenu(app)
+		}
+		// 如果失败，什么也不做 → 自动留在钱包列表
 	})
 
 	// ESC 返回主菜单（保留原有逻辑）

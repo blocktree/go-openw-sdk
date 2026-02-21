@@ -30,21 +30,21 @@ func (s *WebNode) FindWalletList(ctx *node.Context) error {
 	return s.Json(ctx, res)
 }
 
-func (s *WebNode) CreateWallet(ctx *node.Context) error {
-	res := &dto.CreateWalletRes{}
-	if err := CliService.CreateWallet(ctx.GetHeader("alias"), res); err != nil {
-		return err
-	}
-	return s.Text(ctx, "wallet create success: "+res.WalletID)
-}
-
-func (s *WebNode) UnlockWallet(ctx *node.Context) error {
-	res := &dto.CliUnlockWalletRes{}
-	if err := CliService.UnlockWallet(ctx.GetHeader("filename"), res); err != nil {
-		return err
-	}
-	return s.Text(ctx, "wallet unlock success: "+res.WalletID)
-}
+//func (s *WebNode) CreateWallet(ctx *node.Context) error {
+//	res := &dto.CliCreateWalletRes{}
+//	if err := CliService.CreateWallet(ctx.GetHeader("alias"), res); err != nil {
+//		return err
+//	}
+//	return s.Text(ctx, "wallet create success: "+res.WalletID)
+//}
+//
+//func (s *WebNode) UnlockWallet(ctx *node.Context) error {
+//	res := &dto.CliUnlockWalletRes{}
+//	if err := CliService.UnlockWallet(ctx.GetHeader("filename"), res); err != nil {
+//		return err
+//	}
+//	return s.Text(ctx, "wallet unlock success: "+res.WalletID)
+//}
 
 func (s *WebNode) Login(ctx *node.Context) error {
 	req := &dto.AppLoginReq{}

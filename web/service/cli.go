@@ -3,7 +3,6 @@ package impl
 import (
 	"bytes"
 	"encoding/hex"
-	"fmt"
 	"github.com/awnumar/memguard"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
@@ -15,7 +14,6 @@ import (
 	"github.com/godaddy-x/freego/utils"
 	"github.com/godaddy-x/freego/utils/jwt"
 	"github.com/godaddy-x/freego/zlog"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -32,7 +30,7 @@ const (
 	maxAliasLength = 255
 
 	// 设置认证(auth)密码的最大最小长度
-	minAuthLength = 20
+	minAuthLength = 8
 	maxAuthLength = 256 // 根据你的业务需求调整这个值
 )
 
@@ -43,40 +41,7 @@ var (
 	}
 )
 
-func (s *CliService) UnlockWallet(filename string, res *dto.CliUnlockWalletRes) error {
-	// === 1. 校验 filename 格式（保留原有逻辑）===
-	if strings.TrimSpace(filename) == "" {
-		return ex.Throw{Code: ex.BIZ, Msg: "filename is required"}
-	}
-
-	if len(filename) < minAliasLength+len(".key") || len(filename) > maxAliasLength+len("-")+maxAliasLength+len(".key") {
-		return ex.Throw{Code: ex.BIZ, Msg: fmt.Sprintf("filename length must be between %d and %d", minAliasLength+len(".key"), maxAliasLength+len("-")+maxAliasLength+len(".key"))}
-	}
-
-	if !strings.HasSuffix(filename, ".key") {
-		return ex.Throw{Code: ex.BIZ, Msg: "filename must end with .key"}
-	}
-
-	namePart := strings.TrimSuffix(filename, ".key")
-	parts := strings.Split(namePart, "-")
-	if len(parts) != 2 {
-		return ex.Throw{Code: ex.BIZ, Msg: "filename must be in format: alias-keyID.key"}
-	}
-
-	aliasPart, keyIDPart := parts[0], parts[1]
-	if aliasPart == "" || keyIDPart == "" {
-		return ex.Throw{Code: ex.BIZ, Msg: "alias and keyID cannot be empty"}
-	}
-
-	if len(aliasPart) < minAliasLength || len(aliasPart) > maxAliasLength ||
-		len(keyIDPart) < minAliasLength || len(keyIDPart) > maxAliasLength {
-		return ex.Throw{Code: ex.BIZ, Msg: fmt.Sprintf("alias/keyID length must be between %d and %d", minAliasLength, maxAliasLength)}
-	}
-
-	alphaNum := regexp.MustCompile(`^[a-zA-Z0-9]+$`)
-	if !alphaNum.MatchString(aliasPart) || !alphaNum.MatchString(keyIDPart) {
-		return ex.Throw{Code: ex.BIZ, Msg: "alias and keyID must contain only letters and digits"}
-	}
+func (s *CliService) UnlockWallet(filename string, password []byte, res *dto.CliUnlockWalletRes) error {
 
 	// === 2. 并发控制 ===
 	if !s.pending.CompareAndSwap(false, true) {
@@ -84,29 +49,13 @@ func (s *CliService) UnlockWallet(filename string, res *dto.CliUnlockWalletRes) 
 	}
 	defer s.pending.Store(false)
 
-	// === 3. 读取统一密码文件（关键：固定路径）===
-	pwd := common.GetAllConfig().Extract.PasswordKey // 复用 CreateWallet 的配置
-	if pwd == "" {
-		return ex.Throw{Code: ex.BIZ, Msg: "password file path not configured"}
-	}
-
-	file, err := os.Open(pwd)
-	if err != nil {
-		return ex.Throw{Code: ex.BIZ, Msg: "password file not ready"}
-	}
-	defer file.Close()
-
 	// === 4. 安全加载到锁定内存 ===
-	authBuf, err := memguard.NewBufferFromEntireReader(file)
-	if err != nil {
-		zlog.Error("failed to load unlock password into secure memory", 0,
-			zlog.String("filename", filename))
-		return ex.Throw{Code: ex.BIZ, Msg: "password file read error"}
-	}
+	authBuf := memguard.NewBufferFromBytes(password)
 	defer authBuf.Destroy()
+	DIC.ClearData(password)
 
 	if authBuf.Size() < minAuthLength || authBuf.Size() > maxAuthLength {
-		return ex.Throw{Code: ex.BIZ, Msg: "password length must be between 20 and 256 characters"}
+		return ex.Throw{Code: ex.BIZ, Msg: "password length must be between 8 and 256 characters"}
 	}
 
 	// === 5. 执行解锁 ===
@@ -126,7 +75,7 @@ func (s *CliService) UnlockWallet(filename string, res *dto.CliUnlockWalletRes) 
 	return nil
 }
 
-func (s *CliService) CreateWallet(alias string, res *dto.CreateWalletRes) error {
+func (s *CliService) CreateWallet(alias string, password []byte, res *dto.CliCreateWalletRes) error {
 	// === 参数校验（alias）===
 	if strings.TrimSpace(alias) == "" || !regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString(alias) {
 		return ex.Throw{Code: ex.BIZ, Msg: "invalid alias"}
@@ -138,29 +87,13 @@ func (s *CliService) CreateWallet(alias string, res *dto.CreateWalletRes) error 
 	}
 	defer s.pending.Store(false)
 
-	pwd := common.GetAllConfig().Extract.PasswordKey
-	if pwd == "" {
-		return ex.Throw{Code: ex.BIZ, Msg: "password file path is nil"}
-	}
-	// 1. 打开文件
-	file, err := os.Open(pwd)
-	if err != nil {
-		return ex.Throw{Code: ex.BIZ, Msg: "password file not found"}
-	}
-	defer file.Close()
-
 	// 3. 直接读入锁定内存
-	authBuf, err := memguard.NewBufferFromEntireReader(file)
-	if err != nil {
-		// 注意：不记录原始 err 的完整文本，防止泄露路径等敏感信息
-		zlog.Error("failed to load password into secure memory", 0,
-			zlog.String("alias", alias))
-		return ex.Throw{Code: ex.BIZ, Msg: "password file read error"}
-	}
+	authBuf := memguard.NewBufferFromBytes(password)
 	defer authBuf.Destroy()
+	DIC.ClearData(password)
 
 	if authBuf.Size() < minAuthLength || authBuf.Size() > maxAuthLength {
-		return ex.Throw{Code: ex.BIZ, Msg: "password length must be between 20 and 256 characters"}
+		return ex.Throw{Code: ex.BIZ, Msg: "password length must be between 8 and 256 characters"}
 	}
 
 	// === 4. 执行创建逻辑 ===

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	webapp "github.com/blocktree/go-openw-sdk/v2/web"
 	"github.com/blocktree/go-openw-sdk/v2/web/common"
 )
@@ -17,8 +16,7 @@ func main() {
 	// 初始化配置文件
 	common.NewBaseConfig("cli-http")
 
-	fmt.Println("--- config init success ---")
-
+	// 启动交互式控制台
 	webapp.RunApplication()
 
 	//webapp.StartHttpNode()

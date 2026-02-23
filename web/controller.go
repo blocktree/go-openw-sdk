@@ -1,6 +1,8 @@
 package webapp
 
 import (
+	"net"
+
 	"github.com/blocktree/go-openw-sdk/v2/web/common"
 	"github.com/godaddy-x/freego/ex"
 	ballast "github.com/godaddy-x/freego/gc"
@@ -9,7 +11,6 @@ import (
 	"github.com/godaddy-x/freego/utils/crypto"
 	"github.com/godaddy-x/freego/utils/jwt"
 	"github.com/godaddy-x/freego/zlog"
-	"net"
 )
 
 const (
@@ -42,21 +43,6 @@ func (self *RemoteCheckFilter) DoFilter(chain node.Filter, ctx *node.Context, ar
 		if ipv4 := ip.To4(); ipv4 != nil {
 			host = ipv4.String()
 		}
-	}
-
-	// 检查是否为本机
-	isLocal := host == "127.0.0.1" || host == "::1"
-	isSensitive := ctx.Path == "/api/CreateWallet" || ctx.Path == "/api/UnlockWallet"
-
-	// 敏感接口：仅限本机访问
-	if isSensitive {
-		if isLocal {
-			return chain.DoFilter(chain, ctx, args...)
-		}
-		zlog.Error("remote access to sensitive API blocked", 0,
-			zlog.String("path", ctx.Path),
-			zlog.String("remote_ip", host))
-		return ex.Throw{Code: ex.BIZ, Msg: "forbidden"}
 	}
 
 	// 检查远程白名单
@@ -122,8 +108,6 @@ func StartHttpNode() {
 
 	web.POST(api("PublicKey"), web.PublicKey, &node.RouterConfig{Guest: true})
 	web.POST(api("Login"), web.Login, &node.RouterConfig{UseRSA: true})
-	//web.POST(api("CreateWallet"), web.CreateWallet, &node.RouterConfig{Guest: true})
-	//web.POST(api("UnlockWallet"), web.UnlockWallet, &node.RouterConfig{Guest: true})
 	web.POST(api("FindWalletList"), web.FindWalletList, &node.RouterConfig{AesRequest: true, AesResponse: true})
 	web.POST(api("CreateAccount"), web.CreateAccount, &node.RouterConfig{AesRequest: true, AesResponse: true})
 	web.POST(api("SignTransaction"), web.SignTransaction, &node.RouterConfig{AesRequest: true, AesResponse: true})

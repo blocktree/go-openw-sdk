@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/blocktree/go-openw-sdk/v2/web/common"
 	DIC "github.com/godaddy-x/freego/common"
+	"github.com/godaddy-x/freego/utils/crypto"
 	"log"
 	"os"
 	"strings"
@@ -87,8 +88,9 @@ func showMainMenu(app *tview.Application) {
 
 	list.AddItem("Create Wallet", "Generate new cryptographic keys", '1', nil)
 	list.AddItem("Unlock Wallet", "Load and decrypt an existing wallet", '2', nil)
-	list.AddItem("Start Service"+status, "Launch HTTP signing API", '3', nil)
-	list.AddItem("Exit", "Quit the application", '4', nil)
+	list.AddItem("Generate ECDSA", "Print base64-encoded ECDSA key pair to terminal", '3', nil) // ← 新增
+	list.AddItem("Start Service"+status, "Launch HTTP signing API", '4', nil)
+	list.AddItem("Exit", "Quit the application", '5', nil)
 
 	list.SetSelectedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
 		switch index {
@@ -97,8 +99,10 @@ func showMainMenu(app *tview.Application) {
 		case 1:
 			showWalletList(app)
 		case 2:
-			showHttpService(app)
+			showGenerateECDSA(app)
 		case 3:
+			showHttpService(app)
+		case 4:
 			app.Stop()
 			os.Exit(0)
 		}
@@ -335,4 +339,32 @@ func showHttpService(app *tview.Application) {
 		})
 		showMainMenu(app)
 	}
+}
+
+// ==================== 生成临时 ECDSA 密钥对（Base64 输出） ====================
+func showGenerateECDSA(app *tview.Application) {
+	// 生成 ECDSA 密钥对 (P-256)
+	o := &crypto.EcdsaObject{}
+	if err := o.CreateS256ECDSA(); err != nil {
+		app.Suspend(func() {
+			fmt.Printf("\n❌ Failed to generate ECDSA key: %v\n", err)
+			fmt.Print("Press Enter to return to main menu...")
+			fmt.Scanln()
+		})
+		showMainMenu(app)
+		return
+	}
+
+	// 安全输出到终端
+	app.Suspend(func() {
+		fmt.Println("\n🔐 Temporary ECDSA Key Pair (Base64-encoded)")
+		fmt.Println("──────────────────────────────────────────────")
+		fmt.Printf("Public Key (Base64):\n%s\n\n", o.PublicKeyBase64)
+		fmt.Printf("Private Key (Base64):\n%s\n\n", o.PrivateKeyBase64)
+		fmt.Println("💡 You can copy these for testing. Keys are NOT saved.")
+		fmt.Print("Press Enter to return to main menu...")
+		fmt.Scanln()
+	})
+
+	showMainMenu(app)
 }

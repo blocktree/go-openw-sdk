@@ -70,9 +70,9 @@ func InitLogger(config *DIC.ZapConfig, fileName string) {
 }
 
 // NewBaseConfig projectName：项目名称对应yaml配置节点 logFileName：日志输出文件名
-func NewBaseConfig(logFileName string) {
+func NewBaseConfig(configName, logFileName string) {
 	// 初始化配置文件
-	if err := InitAllConfig("config.yaml"); err != nil {
+	if err := InitAllConfig(configName); err != nil {
 		panic(errors.New("read config error: " + err.Error()))
 	}
 	config := GetAllConfig()

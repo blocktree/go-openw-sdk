@@ -5,21 +5,60 @@ package webapp
 import (
 	"bytes"
 	"fmt"
-	"strings"
-	"unicode"
-
-	"github.com/godaddy-x/freego/ex"
-
+	"github.com/blocktree/go-openw-sdk/v2/web/common"
+	DIC "github.com/godaddy-x/freego/common"
 	"log"
 	"os"
+	"strings"
+	"sync"
+	"unicode"
 
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
+	"github.com/godaddy-x/freego/ex"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/howeyc/gopass"
 	"github.com/rivo/tview"
 )
 
+// === 全局 HTTP 服务状态管理 ===
+var (
+	httpServerMu     sync.Mutex
+	isServiceRunning bool
+)
+
+// 启动 HTTP 服务（仅当未运行时）
+func startHTTPService() error {
+	httpServerMu.Lock()
+	defer httpServerMu.Unlock()
+
+	if isServiceRunning {
+		return fmt.Errorf("service already running")
+	}
+
+	web := NewHTTP()
+
+	go func() {
+		defer func() {
+			httpServerMu.Lock()
+			isServiceRunning = false
+			httpServerMu.Unlock()
+
+			if r := recover(); r != nil {
+				log.Printf("[ERROR] Panic in StartHttpNode: %v", r)
+			}
+			log.Println("[Service] HTTP service exited")
+		}()
+
+		StartHttpNode(web)
+	}()
+
+	isServiceRunning = true
+	log.Println("[Service] HTTP service started successfully")
+	return nil
+}
+
+// ==================== 应用入口 ====================
 func RunApplication() {
 	app := tview.NewApplication()
 	showMainMenu(app)
@@ -28,21 +67,27 @@ func RunApplication() {
 	}
 }
 
+// ==================== 主菜单 ====================
 func showMainMenu(app *tview.Application) {
-	// === 创建主菜单标题和提示 ===
 	header := tview.NewTextView()
 	header.SetText("🔐 OpenWallet CLI – Manage your cryptographic wallets\n( Use ↑↓ to navigate, Enter to select, or press 1–4 )")
 	header.SetTextColor(tcell.ColorYellow)
 	header.SetDynamicColors(true)
 	header.SetBorder(false)
 
-	// === 创建菜单列表 ===
 	list := tview.NewList()
 	list.SetBorder(false)
 
+	status := ""
+	httpServerMu.Lock()
+	if isServiceRunning {
+		status = " (running)"
+	}
+	httpServerMu.Unlock()
+
 	list.AddItem("Create Wallet", "Generate new cryptographic keys", '1', nil)
 	list.AddItem("Unlock Wallet", "Load and decrypt an existing wallet", '2', nil)
-	list.AddItem("Start Service", "Launch HTTP signing API", '3', nil)
+	list.AddItem("Start Service"+status, "Launch HTTP signing API", '3', nil)
 	list.AddItem("Exit", "Quit the application", '4', nil)
 
 	list.SetSelectedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
@@ -52,34 +97,27 @@ func showMainMenu(app *tview.Application) {
 		case 1:
 			showWalletList(app)
 		case 2:
-			log.Println("[Action] Start Service")
-			// TODO: startHTTPService()
+			showHttpService(app)
 		case 3:
 			app.Stop()
 			os.Exit(0)
 		}
 	})
 
-	// ESC 也可返回（虽然已经是主菜单，但保持一致性）
 	list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
-			// 主菜单按 ESC 直接退出（可选），或忽略
-			// 这里我们选择忽略，或你也可以退出
-			// app.Stop(); os.Exit(0)
-			return event // 允许默认行为（无操作）
+			return event
 		}
 		return event
 	})
 
-	// === 布局：顶部提示 + 菜单列表 ===
 	layout := tview.NewFlex().SetDirection(tview.FlexRow)
-	layout.AddItem(header, 3, 1, false) // 固定 3 行高
-	layout.AddItem(list, 0, 1, true)    // 剩余空间给列表
-
+	layout.AddItem(header, 3, 1, false)
+	layout.AddItem(list, 0, 1, true)
 	app.SetRoot(layout, true)
 }
 
-// 校验 alias：非空且仅包含字母和数字
+// ==================== 创建钱包 ====================
 func isValidAlias(alias string) bool {
 	if len(alias) == 0 {
 		return false
@@ -92,10 +130,9 @@ func isValidAlias(alias string) bool {
 	return true
 }
 
-// 安全创建钱包流程（使用 gopass，无回显）
+// ==================== 创建钱包列表 ====================
 func showCreateWallet(app *tview.Application) {
 	app.Suspend(func() {
-		// === 清晰的标题和说明 ===
 		fmt.Print("\n")
 		fmt.Println("🔐 Create New Wallet")
 		fmt.Println("────────────────────")
@@ -126,7 +163,7 @@ func showCreateWallet(app *tview.Application) {
 		fmt.Print("Confirm password (input is HIDDEN): ")
 		password2, err := gopass.GetPasswd()
 		if err != nil {
-			clearPassword(password1)
+			DIC.ClearData(password1)
 			fmt.Printf("\nInput error: %v\n", err)
 			fmt.Print("Press Enter to return to main menu...")
 			fmt.Scanln()
@@ -135,28 +172,25 @@ func showCreateWallet(app *tview.Application) {
 
 		if !bytes.Equal(password1, password2) {
 			fmt.Println("\n❌ Error: Passwords do not match.")
-			clearPassword(password1)
-			clearPassword(password2)
+			DIC.ClearData(password1)
+			DIC.ClearData(password2)
 			fmt.Print("Press Enter to return to main menu...")
 			fmt.Scanln()
 			return
 		}
-
-		clearPassword(password2)
+		DIC.ClearData(password2)
 
 		if len(password1) < 8 {
 			fmt.Println("\n❌ Error: Password must be at least 8 characters.")
-			clearPassword(password1)
-			// password2 已经在前面清零了
+			DIC.ClearData(password1)
 			fmt.Print("Press Enter to return to main menu...")
 			fmt.Scanln()
 			return
 		}
 
-		// 调用服务创建钱包
 		res := &dto.CliCreateWalletRes{}
 		err = CliService.CreateWallet(alias, password1, res)
-		clearPassword(password1)
+		DIC.ClearData(password1)
 
 		if err != nil {
 			fmt.Printf("\n❌ Create failed: %v\n", ex.Catch(err).Msg)
@@ -172,42 +206,40 @@ func showCreateWallet(app *tview.Application) {
 		fmt.Scanln()
 	})
 
-	// 返回主菜单
 	showMainMenu(app)
 }
 
-// 安全清零密码内存
-func clearPassword(p []byte) {
-	if p == nil {
-		return
-	}
-	for i := range p {
-		p[i] = 0
-	}
-}
-
-// ===== 钱包列表 =====
+// ==================== 钱包列表与解锁 ====================
 func showWalletList(app *tview.Application) {
 	req := &dto.CliFindWalletListReq{}
 	res := &dto.CliFindWalletListRes{}
 	if err := CliService.FindWalletList(req, res); err != nil {
-		showMessage(app, fmt.Sprintf("Failed to load wallets: %v", err))
+		app.Suspend(func() {
+			fmt.Printf("\n❌ Failed to load wallets: %v\n", ex.Catch(err).Msg)
+			fmt.Print("Press Enter to return to main menu...")
+			fmt.Scanln()
+		})
+		showMainMenu(app)
 		return
 	}
 
 	if len(res.Result) == 0 {
-		showMessage(app, "No wallets found. Please create one first.")
+		app.Suspend(func() {
+			fmt.Println("\nℹ️  No wallets found.")
+			fmt.Println("Please create one first.")
+			fmt.Print("Press Enter to return to main menu...")
+			fmt.Scanln()
+		})
+		showMainMenu(app)
 		return
 	}
 
-	// === 创建提示文本 ===
 	header := tview.NewTextView()
 	header.SetText("🔐 Select a wallet to unlock\n( Press ESC to return to main menu )\n")
 	header.SetTextColor(tcell.ColorYellow)
 	header.SetDynamicColors(true)
 	header.SetBorder(false)
 
-	// === 创建钱包列表 ===
 	walletList := tview.NewList()
 	walletList.SetBorder(false)
 
@@ -220,8 +252,6 @@ func showWalletList(app *tview.Application) {
 
 	walletList.SetSelectedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		selected := res.Result[index]
-
-		// 标记是否解锁成功
 		unlockedSuccessfully := false
 
 		app.Suspend(func() {
@@ -238,7 +268,7 @@ func showWalletList(app *tview.Application) {
 
 			res := &dto.CliUnlockWalletRes{}
 			err = CliService.UnlockWallet(fmt.Sprintf("%s-%s.key", selected.Alias, selected.WalletID), password, res)
-			clearPassword(password)
+			DIC.ClearData(password)
 
 			if err != nil {
 				fmt.Printf("\n❌ Unlock failed: %v\n", ex.Catch(err).Msg)
@@ -250,19 +280,14 @@ func showWalletList(app *tview.Application) {
 			fmt.Println("✅ Wallet unlocked successfully!")
 			fmt.Print("Press Enter to return to main menu...")
 			fmt.Scanln()
-
-			// 标记成功（注意：不能在这里 SetRoot！）
 			unlockedSuccessfully = true
 		})
 
-		// Suspend 已结束，现在可以安全切换界面
 		if unlockedSuccessfully {
 			showMainMenu(app)
 		}
-		// 如果失败，什么也不做 → 自动留在钱包列表
 	})
 
-	// ESC 返回主菜单（保留原有逻辑）
 	walletList.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			showMainMenu(app)
@@ -271,21 +296,43 @@ func showWalletList(app *tview.Application) {
 		return event
 	})
 
-	// === 布局：顶部提示 + 列表 ===
 	layout := tview.NewFlex().SetDirection(tview.FlexRow)
-	layout.AddItem(header, 3, 1, false)    // 高度 3 行
-	layout.AddItem(walletList, 0, 1, true) // 剩余空间
-
+	layout.AddItem(header, 3, 1, false)
+	layout.AddItem(walletList, 0, 1, true)
 	app.SetRoot(layout, true)
 }
 
-// 显示消息弹窗
-func showMessage(app *tview.Application, message string) {
-	modal := tview.NewModal()
-	modal.SetText(message)
-	modal.AddButtons([]string{"OK"})
-	modal.SetDoneFunc(func(_ int, _ string) {
+// ==================== 启动HTTP服务 ====================
+func showHttpService(app *tview.Application) {
+	// 检查是否已有服务在运行
+	httpServerMu.Lock()
+	alreadyRunning := isServiceRunning
+	httpServerMu.Unlock()
+	if alreadyRunning {
+		app.Suspend(func() {
+			fmt.Println("\n⚠️  Service is already running!")
+			fmt.Print("Press Enter to return to main menu...")
+			fmt.Scanln()
+		})
 		showMainMenu(app)
-	})
-	app.SetRoot(modal, false)
+		return
+	}
+
+	// 启动服务
+	if err := startHTTPService(); err != nil {
+		app.Suspend(func() {
+			fmt.Printf("\n❌ Failed to start service: %v\n", err)
+			fmt.Print("Press Enter to return to main menu...")
+			fmt.Scanln()
+		})
+		showMainMenu(app)
+	} else {
+		app.Suspend(func() {
+			fmt.Println("\n✅ HTTP service started successfully!")
+			fmt.Println(fmt.Sprintf("   Listening on http://localhost:%d", common.GetAllConfig().GetServerConfig(project).Port))
+			fmt.Print("Press Enter to return to main menu...")
+			fmt.Scanln()
+		})
+		showMainMenu(app)
+	}
 }

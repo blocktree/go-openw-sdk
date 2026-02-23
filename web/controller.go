@@ -60,7 +60,7 @@ func (self *RemoteCheckFilter) DoFilter(chain node.Filter, ctx *node.Context, ar
 	return ex.Throw{Code: ex.BIZ, Msg: "forbidden"}
 }
 
-func newHTTP() *WebNode {
+func NewHTTP() *WebNode {
 
 	var web = &WebNode{}
 
@@ -101,11 +101,9 @@ func newHTTP() *WebNode {
 	return web
 }
 
-func StartHttpNode() {
+func StartHttpNode(web *WebNode) {
 
 	// 创建API服务
-	web := newHTTP()
-
 	web.POST(api("PublicKey"), web.PublicKey, &node.RouterConfig{Guest: true})
 	web.POST(api("Login"), web.Login, &node.RouterConfig{UseRSA: true})
 	web.POST(api("FindWalletList"), web.FindWalletList, &node.RouterConfig{AesRequest: true, AesResponse: true})
@@ -113,4 +111,5 @@ func StartHttpNode() {
 	web.POST(api("SignTransaction"), web.SignTransaction, &node.RouterConfig{AesRequest: true, AesResponse: true})
 
 	web.StartServer(addr())
+
 }

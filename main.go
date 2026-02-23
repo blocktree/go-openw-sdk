@@ -12,12 +12,8 @@ import (
 // 客户端公钥： BNlt+QZ0StVPUuVlY5SLEijB0J51PvtMYK/F3Nd4HSs7khBFQhvyUosm/DG1mmspYiOS0Zd/yCFd4uyWQR7YWEI=
 
 func main() {
-
 	// 初始化配置文件
-	common.NewBaseConfig("cli-http")
-
+	common.NewBaseConfig("config.yaml", "cli-http")
 	// 启动交互式控制台
 	webapp.RunApplication()
-
-	//webapp.StartHttpNode()
 }

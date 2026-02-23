@@ -73,6 +73,12 @@ func GetUnlockWallet(keyID string) *hdkeystore.HDKey {
 	return unlocked.wallet[keyID]
 }
 
+func GetUnlockWalletSize() int {
+	unlocked.mu.Lock()
+	defer unlocked.mu.Unlock()
+	return len(unlocked.wallet)
+}
+
 func SignTradePush(key string, data dto.TradePushResult) (string, error) {
 	h, err := hex.DecodeString(key)
 	if err != nil {

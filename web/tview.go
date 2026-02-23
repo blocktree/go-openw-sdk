@@ -5,14 +5,15 @@ package webapp
 import (
 	"bytes"
 	"fmt"
-	"github.com/godaddy-x/freego/ex"
 	"strings"
 	"unicode"
 
-	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
-	impl "github.com/blocktree/go-openw-sdk/v2/web/service"
+	"github.com/godaddy-x/freego/ex"
+
 	"log"
 	"os"
+
+	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/howeyc/gopass"
@@ -146,7 +147,7 @@ func showCreateWallet(app *tview.Application) {
 		if len(password1) < 8 {
 			fmt.Println("\n❌ Error: Password must be at least 8 characters.")
 			clearPassword(password1)
-			clearPassword(password2)
+			// password2 已经在前面清零了
 			fmt.Print("Press Enter to return to main menu...")
 			fmt.Scanln()
 			return
@@ -189,7 +190,7 @@ func clearPassword(p []byte) {
 func showWalletList(app *tview.Application) {
 	req := &dto.CliFindWalletListReq{}
 	res := &dto.CliFindWalletListRes{}
-	if err := new(impl.CliService).FindWalletList(req, res); err != nil {
+	if err := CliService.FindWalletList(req, res); err != nil {
 		showMessage(app, fmt.Sprintf("Failed to load wallets: %v", err))
 		return
 	}

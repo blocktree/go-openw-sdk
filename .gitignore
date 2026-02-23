@@ -7,3 +7,4 @@ go.sum
 build
 *.txt
 cli-http.log
+cli-app

@@ -79,6 +79,14 @@ func GetUnlockWalletSize() int {
 	return len(unlocked.wallet)
 }
 
+func DestroyUnlockWallet() {
+	unlocked.mu.Lock()
+	defer unlocked.mu.Unlock()
+	for _, v := range unlocked.wallet {
+		v.DestroySeed()
+	}
+}
+
 func SignTradePush(key string, data dto.TradePushResult) (string, error) {
 	h, err := hex.DecodeString(key)
 	if err != nil {

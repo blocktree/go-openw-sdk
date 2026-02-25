@@ -420,6 +420,12 @@ func easyjsonC5d09f7cDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto4(in *jlexer
 		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		switch key {
+		case "type":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.Type = int64(in.Int64())
+			}
 		case "data":
 			if in.IsNull() {
 				in.Skip()
@@ -483,8 +489,13 @@ func easyjsonC5d09f7cEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto4(out *jwrit
 	first := true
 	_ = first
 	{
-		const prefix string = ",\"data\":"
+		const prefix string = ",\"type\":"
 		out.RawString(prefix[1:])
+		out.Int64(int64(in.Type))
+	}
+	{
+		const prefix string = ",\"data\":"
+		out.RawString(prefix)
 		out.String(string(in.Data))
 	}
 	{

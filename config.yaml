@@ -41,4 +41,4 @@ extract:
     - "localhost"
   signerBlacklist: # 签名黑名单，拒绝签名
   summaryWhitelist: # 汇总白名单
-    - ""
+    - "0xdAb9c307B8B23A8fD8559f75C71F0694Da30D9F6"

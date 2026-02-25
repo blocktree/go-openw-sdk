@@ -6,6 +6,7 @@ import (
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
 	"github.com/blocktree/openwallet/v2/openwallet"
 	"github.com/godaddy-x/freego/utils"
+	"strings"
 	"testing"
 )
 
@@ -66,19 +67,22 @@ func TestCreateAccount(t *testing.T) {
 // 流程：1.指定帐户ID通过云端创建交易单 2.业务系统验证数据签名和校验业务数据 3.发送交易单给CLI进行验签并签名
 func TestCreateTrade(t *testing.T) {
 
-	// TODO 1.强烈推荐业务系统，首先创建交易单保存到自身系统关键字段：Symbol，Sid，AccountID，To，保证后续校验参数
+	// TODO 1.强烈推荐业务系统，首先创建交易单保存到自身系统关键字段：Symbol，Sid，AccountID，To，ContractID 保证后续校验参数
+	sid := utils.GetUUID(true)
 	symbol := "BETH"
 	accountID := "8K4oVwL3dLQmLzrsj2zXzbeapCsETNsRVFtykmAKBvp6"
-	toAddress := "0x4f8abf232ffd006a49a9426ed9a2ab377ce4bdce"
+	toAddress := "0xdAb9c307B8B23A8fD8559f75C71F0694Da30D9F6"
 	toAmount := "0.1"
+	contractID := "ZA+oTwXimYwVFJ5Tk7ACU6tD+6ycw7u2UsdHLVof8kg=" // 该参数不为空则认为是合约交易单
 
 	// TODO 2.发起交易单构建请求云端系统
 	requestData := dto.CreateTradeReq{
-		Sid: utils.GetUUID(true),
+		Sid: sid,
 		// 0x2346f1ca41d0161d26f46ec2885721c28fbf1375 默认地址
 		AccountID: accountID,
 		Coin: dto.CoinInfo{
-			Symbol: symbol,
+			Symbol:     symbol,
+			ContractID: contractID,
 		},
 		To: map[string]string{
 			toAddress: toAmount,
@@ -99,20 +103,33 @@ func TestCreateTrade(t *testing.T) {
 
 	txData := responseData.TxData[0]
 
-	// TODO 4.反序列交易单对象并进行关键字段校验Symbol，Sid，AccountID，To
+	// TODO 4.反序列交易单对象并进行关键字段校验Symbol，Sid，AccountID，To, ContractID
 	tx := &openwallet.RawTransaction{}
 	if err := utils.JsonUnmarshal(utils.Str2Bytes(txData.Data), tx); err != nil {
 		fmt.Println(err)
 		return
 	}
+
+	if tx.Sid != sid {
+		fmt.Println(errors.New("sid invalid"))
+		return
+	}
+
 	if tx.Coin.Symbol != symbol {
 		fmt.Println(errors.New("symbol invalid"))
 		return
 	}
+
+	if tx.Coin.ContractID != contractID {
+		fmt.Println(errors.New("contractID invalid"))
+		return
+	}
+
 	if tx.Account.AccountID != accountID {
 		fmt.Println(errors.New("accountID invalid"))
 		return
 	}
+
 	for _, v := range tx.TxTo {
 		if v != utils.AddStr(toAddress, ":", toAmount) {
 			fmt.Println(errors.New("toAddress/toAmount invalid"))
@@ -122,6 +139,7 @@ func TestCreateTrade(t *testing.T) {
 
 	// TODO 5.交易单转发到CLI程序签名
 	cliRequestData := dto.CliSignTransactionReq{
+		Type:      0,
 		Data:      txData.Data,
 		TradeSign: txData.TradeSign,
 	}
@@ -151,74 +169,87 @@ func TestCreateTrade(t *testing.T) {
 
 }
 
-func TestCreateContractTrade(t *testing.T) {
-	// 0x1f8fabe68b9393e25235622ea754e75b37ec3dc8 5000 MTK
-	requestData := dto.CreateTradeReq{
-		Sid:       utils.GetUUID(true),
-		AccountID: "2TBCLPTaRQpbG6VwWuTNdPPgQtC8o3tzVnqUgJvTXmGs",
-		Coin: dto.CoinInfo{
-			Symbol:     "BETH",
-			IsContract: true,
-			ContractID: "ZA+oTwXimYwVFJ5Tk7ACU6tD+6ycw7u2UsdHLVof8kg=",
-		},
-		To: map[string]string{
-			"0xdAb9c307B8B23A8fD8559f75C71F0694Da30D9F6": "0.2",
-		},
-	}
-	responseData := dto.CreateTradeRes{}
-	if err := opsHttpSDK.PostByAuth("/api/CreateTrade", &requestData, &responseData, true); err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(responseData)
-
-	if err := CheckTxDataSign(opsConfig.AppKey, responseData.TxData); err != nil {
-		panic(err)
-	}
-
-	txData := responseData.TxData[0]
-
-	tx := &openwallet.RawTransaction{}
-	if err := utils.JsonUnmarshal(utils.Str2Bytes(txData.Data), tx); err != nil {
-		fmt.Println(err)
-	}
-	//key, err := loadWalletFile()
-	//if err != nil {
-	//	panic(err)
-	//}
-	//txSignerList := map[string]string{}
-	//if err := SignRawTransactionExtract(tx, key, txSignerList); err != nil {
-	//	panic(err)
-	//}
-	//fmt.Println("txData: ", tx)
-	//
-	//txData.SignerList = txSignerList
-
-	requestSubmitData := dto.SubmitRawTransactionReq{
-		TxData: txData,
-	}
-	responseSubmitData := dto.SubmitRawTransactionRes{}
-	if err := opsHttpSDK.PostByAuth("/api/SubmitTrade", &requestSubmitData, &responseSubmitData, true); err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Println("trade result：", responseSubmitData)
-
-}
-
 func TestCreateSummaryTx(t *testing.T) {
+
+	// TODO 1.强烈推荐业务系统，首先创建交易单保存到自身系统关键字段：Symbol，Sid，AccountID，To，ContractID 保证后续校验参数
+	sid := utils.GetUUID(true)
+	symbol := "BETH"
+	accountID := "8K4oVwL3dLQmLzrsj2zXzbeapCsETNsRVFtykmAKBvp6"
+	toAddress := "0xdAb9c307B8B23A8fD8559f75C71F0694Da30D9F6"
+	contractID := "ZA+oTwXimYwVFJ5Tk7ACU6tD+6ycw7u2UsdHLVof8kg=" // 该参数不为空则认为是合约交易单
+
+	// TODO 2.发起汇总交易单构建请求云端系统
 	requestData := dto.CreateSummaryTxReq{
-		Sid:             utils.GetUUID(true),
-		AccountID:       "2TBCLPTaRQpbG6VwWuTNdPPgQtC8o3tzVnqUgJvTXmGs",
+		Sid:             sid,
+		AccountID:       accountID,
 		MinTransfer:     "0",
 		RetainedBalance: "0",
-		Address:         "0xa6f4ddc5f8b6b6a07e1e250531f7600daa227138",
-		Coin:            dto.CoinInfo{Symbol: "BETH"},
+		Address:         toAddress,
+		Coin:            dto.CoinInfo{Symbol: symbol, ContractID: contractID},
 	}
 	responseData := dto.CreateTradeRes{}
 	if err := opsHttpSDK.PostByAuth("/api/CreateSummaryTx", &requestData, &responseData, true); err != nil {
 		fmt.Println(err)
 	}
+
+	// TODO 3.进行交易单JSON数据验签
+	if err := CheckTxDataSign(opsConfig.AppKey, responseData.TxData); err != nil {
+		fmt.Println(err)
+		return
+	}
+
 	for _, v := range responseData.TxData {
-		fmt.Println(v.Data)
+		// TODO 4.反序列交易单对象并进行关键字段校验Symbol，Sid，AccountID，To, ContractID
+		txErr := &openwallet.RawTransactionWithError{}
+		if err := utils.JsonUnmarshal(utils.Str2Bytes(v.Data), txErr); err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		tx := txErr.RawTx
+
+		if !strings.HasPrefix(tx.Sid, utils.AddStr(sid, "#")) {
+			fmt.Println(errors.New("sid invalid"))
+			return
+		}
+
+		if tx.Coin.Symbol != symbol {
+			fmt.Println(errors.New("symbol invalid"))
+			return
+		}
+
+		if tx.Coin.ContractID != contractID {
+			fmt.Println(errors.New("contractID invalid"))
+			return
+		}
+
+		if tx.Account.AccountID != accountID {
+			fmt.Println(errors.New("accountID invalid"))
+			return
+		}
+
+		for _, to := range tx.TxTo {
+			if !strings.HasPrefix(to, utils.AddStr(toAddress, ":")) {
+				fmt.Println(errors.New("toAddress/toAmount invalid"))
+				return
+			}
+		}
+
+		// TODO 5.交易单转发到CLI程序签名
+		cliRequestData := dto.CliSignTransactionReq{
+			Type:      1,
+			Data:      v.Data,
+			TradeSign: v.TradeSign,
+		}
+		cliResponseData := dto.CliSignTransactionRes{}
+		if err := cliHttpSDK.PostByAuth("/api/SignTransaction", &cliRequestData, &cliResponseData, true); err != nil {
+			fmt.Println(err)
+			return
+		}
+		if len(cliResponseData.SignerList) == 0 {
+			fmt.Println(errors.New("cli signer is nil"))
+			return
+		}
+
 	}
 }

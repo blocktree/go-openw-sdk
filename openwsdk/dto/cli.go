@@ -65,6 +65,7 @@ type CliCreateAccountRes struct {
 //easyjson:json
 type CliSignTransactionReq struct {
 	common.BaseReq
+	Type      int64  `json:"type"` // 0.普通交易 1.汇总交易
 	Data      string `json:"data"`
 	TradeSign string `json:"tradeSign"` // CLI系统进行校验签名
 }

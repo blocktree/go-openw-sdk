@@ -191,14 +191,35 @@ func (s *CliService) SignTransaction(req *dto.CliSignTransactionReq, res *dto.Cl
 	if req.TradeSign == "" {
 		return ex.Throw{Code: ex.BIZ, Msg: "tradeSign is nil"}
 	}
+	if !utils.CheckInt64(req.Type, 0, 1) {
+		return ex.Throw{Code: ex.BIZ, Msg: "type invalid"}
+	}
 
 	if err := openwsdk.CheckOneTxTradeSign(common.GetAllConfig().Extract.TradeKey, req.Data, req.TradeSign); err != nil {
 		return ex.Throw{Code: ex.BIZ, Msg: "trade sign invalid", Err: err}
 	}
 
-	tx := &openwallet.RawTransaction{}
-	if err := utils.JsonUnmarshal(utils.Str2Bytes(req.Data), tx); err != nil {
-		return ex.Throw{Code: ex.BIZ, Msg: "tx decode error", Err: err}
+	var tx *openwallet.RawTransaction
+
+	if req.Type == 0 {
+		tx = &openwallet.RawTransaction{}
+		if err := utils.JsonUnmarshal(utils.Str2Bytes(req.Data), tx); err != nil {
+			return ex.Throw{Code: ex.BIZ, Msg: "tx decode error", Err: err}
+		}
+	} else {
+		txErr := &openwallet.RawTransactionWithError{}
+		if err := utils.JsonUnmarshal(utils.Str2Bytes(req.Data), txErr); err != nil {
+			return ex.Throw{Code: ex.BIZ, Msg: "tx decode error", Err: err}
+		}
+		if txErr.Error != nil {
+			return ex.Throw{Code: ex.BIZ, Msg: "tx error: " + txErr.Error.Error()}
+		}
+
+		tx = txErr.RawTx
+	}
+
+	if tx.TxType != req.Type {
+
 	}
 
 	if utils.UnixMilli()-tx.CreateTime > 86400000 {

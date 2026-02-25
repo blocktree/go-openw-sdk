@@ -11,6 +11,8 @@ import (
 // 客户端私钥： uckgLxKoRjSHKjlsqa1gfYlHmza0DTRl/cRdV6DEaNY=
 // 客户端公钥： BNlt+QZ0StVPUuVlY5SLEijB0J51PvtMYK/F3Nd4HSs7khBFQhvyUosm/DG1mmspYiOS0Zd/yCFd4uyWQR7YWEI=
 
+// 测试钱包密码：dcdba32174fdf3f9a08a48b9fa838b68
+
 func main() {
 	// 初始化配置文件
 	common.NewBaseConfig("config.yaml", "cli-http")

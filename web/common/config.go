@@ -13,7 +13,6 @@ type Extract struct {
 	AppKey           string   `yaml:"appKey" json:"appKey"`
 	TradeKey         string   `yaml:"tradeKey" json:"tradeKey"`                 // 交易单签名校验
 	WalletDir        string   `yaml:"walletDir" json:"walletDir"`               // 钱包文件夹
-	PasswordKey      string   `yaml:"passwordKey" json:"passwordKey"`           // 密码文件，安全规范
 	SubmitBlacklist  []string `yaml:"submitBlacklist" json:"submitBlacklist"`   // 签名黑名单
 	SummaryWhitelist []string `yaml:"summaryWhitelist" json:"summaryWhitelist"` // 汇总白名单
 	RemoteWhitelist  []string `yaml:"remoteWhitelist" json:"remoteWhitelist"`   // 请求白名单

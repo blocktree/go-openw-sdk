@@ -21,9 +21,8 @@ logger:
     layout: 0
     location: "Asia/Shanghai"
     level: "error"
-    console: true
+    console: false
     file_config:
-      filename: ""
       max_size: 50
       max_backups: 10
       max_age: 7
@@ -35,10 +34,10 @@ extract:
   appKey: "43cb8a4f8c795c74426aed363aa9c12af0d065ca33b472c6ec7ce5cf7bc47c7c"
   tradeKey: "381f6b35d9acad1e744a0b75e0f64f3ccfc3802a0197a7a39d77dacd58ed7d6a"
   walletDir: "openwsdk/keys"
-  passwordKey: "e:\\passwords"
   remoteWhitelist: # 请求白名单
     - "127.0.0.1"
     - "localhost"
   signerBlacklist: # 签名黑名单，拒绝签名
+    - "0xdAb9c307B8B23A8fD8559f75C71F0694Da30D9F6"
   summaryWhitelist: # 汇总白名单
     - "0xdAb9c307B8B23A8fD8559f75C71F0694Da30D9F6"

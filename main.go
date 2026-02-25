@@ -1,6 +1,9 @@
 package main
 
 import (
+	"flag"
+	"strings"
+
 	webapp "github.com/blocktree/go-openw-sdk/v2/web"
 	"github.com/blocktree/go-openw-sdk/v2/web/common"
 )
@@ -14,8 +17,15 @@ import (
 // 测试钱包密码：dcdba32174fdf3f9a08a48b9fa838b68
 
 func main() {
+	// 命令行参数处理
+	configFile := flag.String("c", "config.yaml", "configuration file path")
+	flag.Parse()
+
+	// 生成日志文件名：配置文件名（去扩展名）+ "_log"
+	logFileName := strings.TrimSuffix(*configFile, ".yaml") + "_log"
+
 	// 初始化配置文件
-	common.NewBaseConfig("config.yaml", "cli-http")
+	common.NewBaseConfig(*configFile, logFileName)
 	// 启动交互式控制台
 	webapp.RunApplication()
 }

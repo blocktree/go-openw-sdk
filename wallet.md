@@ -14,8 +14,11 @@ OpenW SDK 采用双层架构设计，为区块链应用提供安全的密钥管�
 # 编译CLI程序
 go build -o cli-app main.go
 
-# 启动交互式控制台
+# 启动交互式控制台（使用默认配置）
 ./cli-app
+
+# 或指定自定义配置文件
+./cli-app -c myconfig.yaml
 ```
 
 ### 主要功能
@@ -24,6 +27,22 @@ go build -o cli-app main.go
 3. **Generate ECDSA** - 生成ECDSA密钥对
 4. **Start Service** - 启动HTTP签名服务
 5. **Exit** - 退出程序
+
+### 命令行参数
+- `-c`：指定配置文件路径（默认：`config.yaml`）
+- `-h`：显示帮助信息
+
+**示例：**
+```bash
+# 使用默认配置
+./cli-app
+
+# 使用自定义配置
+./cli-app -c production.yaml
+
+# 查看帮助
+./cli-app -h
+```
 
 ### 重要提醒
 交易签名需要先启动HTTP服务，服务将在后台运行并监听本地端口。

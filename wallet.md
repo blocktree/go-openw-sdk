@@ -28,30 +28,17 @@ go build -o cli-app main.go
 ### 重要提醒
 交易签名需要先启动HTTP服务，服务将在后台运行并监听本地端口。
 
-## 2. 核心业务流程
+## 核心功能
 
-### 流程1：创建和管理钱包
+### 1. 钱包管理
 
-#### 步骤1：CLI创建钱包（交互式界面）
-
-**启动流程：**
+#### 创建钱包
 ```bash
-# 编译并运行CLI程序
-go build -o cli-app main.go
-./cli-app
+# 在CLI交互界面中选择 "Create Wallet"
+# 1. 输入别名（字母数字组合）
+# 2. 输入密码（最少8字符，两次确认）
+# 3. 系统自动创建加密钱包文件
 ```
-
-**交互式操作：**
-1. 程序启动后显示主菜单：
-   - 🔐 OpenWallet CLI – Manage your cryptographic wallets
-   - 使用 ↑↓ 导航，Enter 选择，或按 1-5 快捷键
-
-2. 选择 **"Create Wallet"** (快捷键: 1)
-   - 输入别名（字母数字组合）
-   - 输入密码（最少8字符，两次确认）
-   - 系统自动创建钱包文件并显示钱包ID
-
-3. 创建完成后按 Enter 返回主菜单
 
 #### 解锁钱包
 
@@ -122,100 +109,69 @@ go build -o cli-app main.go
 
 #### 标准交易流程
 
-#### 前置条件：启动CLI签名服务
-```bash
-# 编译并启动CLI程序（作为HTTP服务）
-go build -o cli-app main.go
-./cli-app
-
-# 在交互界面中选择 "Start Service" (快捷键: 4)
-# 服务将在后台运行，监听 http://127.0.0.1:9422
-```
-
-#### 步骤1：业务系统创建交易单
+##### 1. 创建交易单
 ```go
-// 生成交易单ID
+// 生成交易单ID并构建交易
 sid := utils.GetUUID(true)
-
-// 云端构建交易单
 requestData := dto.CreateTradeReq{
     Sid:       sid,
     AccountID: "8K4oVwL3dLQmLzrsj2zXzbeapCsETNsRVFtykmAKBvp6",
-    Coin: dto.CoinInfo{
-        Symbol: "BETH",
-    },
-    To: map[string]string{
-        "0x4f8abf232ffd006a49a9426ed9a2ab377ce4bdce": "0.1",
-    },
+    Coin: dto.CoinInfo{Symbol: "BETH"},
+    To: map[string]string{"0x4f8abf232ffd006a49a9426ed9a2ab377ce4bdce": "0.1"},
 }
 responseData := dto.CreateTradeRes{}
 opsHttpSDK.PostByAuth("/api/CreateTrade", &requestData, &responseData, true)
 ```
 
-#### 步骤2：业务系统验证签名
+##### 2. 验证交易单
 ```bash
-# 验证云端返回的交易单签名
-# 检查关键字段：symbol、sid、accountID、to
+# 验证云端签名，检查关键字段：symbol、sid、accountID、to、contractID
 ```
 
-#### 步骤3：CLI签名交易
+##### 3. CLI签名
 ```go
 // CLI进行交易签名
 cliRequestData := dto.CliSignTransactionReq{
-    Type:      0,  // 0表示普通交易
-    Data:      txData.Data,
-    TradeSign: txData.TradeSign,
+    Type: 0, Data: txData.Data, TradeSign: txData.TradeSign,
 }
 cliResponseData := dto.CliSignTransactionRes{}
 cliHttpSDK.PostByAuth("/api/SignTransaction", &cliRequestData, &cliResponseData, true)
 ```
 
-#### 步骤4：云端广播交易
+##### 4. 广播交易
 ```go
-// 更新签名列表并广播交易
+// 更新签名并广播
 txData.SignerList = cliResponseData.SignerList
-requestSubmitData := dto.SubmitRawTransactionReq{
-    TxData: txData,
-}
+requestSubmitData := dto.SubmitRawTransactionReq{TxData: txData}
 responseSubmitData := dto.SubmitRawTransactionRes{}
 opsHttpSDK.PostByAuth("/api/SubmitTrade", &requestSubmitData, &responseSubmitData, true)
 ```
 
-#### 合约交易
+#### 特殊交易类型
+
+##### 合约交易
 ```go
-// 构建合约交易单（设置 IsContract: true 和 ContractID）
+// 设置 IsContract: true 和 ContractID
 requestData := dto.CreateTradeReq{
-    Sid:       utils.GetUUID(true),
+    Sid: utils.GetUUID(true),
     AccountID: "2TBCLPTaRQpbG6VwWuTNdPPgQtC8o3tzVnqUgJvTXmGs",
-    Coin: dto.CoinInfo{
-        Symbol:     "BETH",
-        IsContract: true,
-        ContractID: "ZA+oTwXimYwVFJ5Tk7ACU6tD+6ycw7u2UsdHLVof8kg=",
-    },
-    To: map[string]string{
-        "0xdAb9c307B8B23A8fD8559f75C71F0694Da30D9F6": "0.2",
-    },
+    Coin: dto.CoinInfo{Symbol: "BETH", IsContract: true, ContractID: "..."},
+    To: map[string]string{"0xdAb9c307B8B23A8fD8559f75C71F0694Da30D9F6": "0.2"},
 }
-responseData := dto.CreateTradeRes{}
-opsHttpSDK.PostByAuth("/api/CreateTrade", &requestData, &responseData, true)
 ```
 
-#### 汇总交易
+##### 汇总交易
 ```go
-// 创建汇总交易单（批量转账）
+// 批量转账交易
 requestData := dto.CreateSummaryTxReq{
-    Sid:             utils.GetUUID(true),
-    AccountID:       "2TBCLPTaRQpbG6VwWuTNdPPgQtC8o3tzVnqUgJvTXmGs",
-    MinTransfer:     "0",
-    RetainedBalance: "0",
-    Address:         "0xa6f4ddc5f8b6b6a07e1e250531f7600daa227138",
-    Coin:            dto.CoinInfo{Symbol: "BETH"},
+    Sid: utils.GetUUID(true), AccountID: "...",
+    MinTransfer: "0", RetainedBalance: "0", Address: "...",
+    Coin: dto.CoinInfo{Symbol: "BETH"},
 }
-responseData := dto.CreateTradeRes{}
 opsHttpSDK.PostByAuth("/api/CreateSummaryTx", &requestData, &responseData, true)
 ```
 
-## 安全机制
+## 安全保障
 
 ### 密码生命周期
 ```
@@ -235,18 +191,6 @@ opsHttpSDK.PostByAuth("/api/CreateSummaryTx", &requestData, &responseData, true)
 - ✅ 所有签名操作在本地内存中完成
 - ✅ 从不通过网络传输私钥、种子或密码
 
-#### ⚡ 完整的密码生命周期
-```
-解锁密码流程：
-1. 用户输入密码 → 2. 锁定到安全内存 → 3. 用于解锁钱包种子 → 4. 立即销毁密码内存块
-   ↑                        ↑                        ↑                        ↑
-输入无回显               防止内存泄露             单次解锁使用             安全即时清理
-
-钱包解锁后：
-5. 种子密钥加密存放内存 → 6. 签名操作使用 → 7. 程序退出时清理种子内存
-   ↑                            ↑                        ↑
-加密保护内存                 本地签名                自动清理
-```
 
 ### 数据验证
 - ✅ 业务系统必须验证交易单签名
@@ -262,7 +206,7 @@ opsHttpSDK.PostByAuth("/api/CreateSummaryTx", &requestData, &responseData, true)
 - ✅ 支持远程白名单配置
 - ✅ 所有通信使用加密传输
 
-## API参考
+## API 参考
 
 | 操作类型 | CLI端点 | OPS端点 | 说明 |
 |---------|---------|---------|------|
@@ -273,7 +217,7 @@ opsHttpSDK.PostByAuth("/api/CreateSummaryTx", &requestData, &responseData, true)
 | 合约交易 | - | `/api/CreateTrade` | 合约转账 |
 | 汇总交易 | - | `/api/CreateSummaryTx` | 批量转账 |
 
-## 部署指南
+## 部署架构
 
 ### 推荐部署方式
 ```

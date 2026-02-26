@@ -5,10 +5,14 @@ go 1.23.1
 toolchain go1.23.4
 
 require (
-	github.com/blocktree/go-owcrypt v1.1.13
-	github.com/blocktree/openwallet/v2 v2.4.3
-	github.com/godaddy-x/freego v0.0.0-00010101000000-000000000000
+	github.com/awnumar/memguard v0.23.0
+	github.com/blocktree/go-owcrypt v1.1.14
+	github.com/blocktree/openwallet/v2 v2.7.1
+	github.com/gdamore/tcell/v2 v2.8.1
+	github.com/godaddy-x/freego v1.1.0
+	github.com/howeyc/gopass v0.0.0-20210920133722-c8aef6fb66ef
 	github.com/mailru/easyjson v0.9.1
+	github.com/rivo/tview v0.42.0
 )
 
 require (
@@ -16,7 +20,6 @@ require (
 	github.com/asdine/storm v2.1.2+incompatible // indirect
 	github.com/astaxie/beego v1.12.0 // indirect
 	github.com/awnumar/memcall v0.4.0 // indirect
-	github.com/awnumar/memguard v0.23.0 // indirect
 	github.com/blocktree/go-owcdrivers v1.2.22 // indirect
 	github.com/bsm/redislock v0.9.4 // indirect
 	github.com/btcsuite/btcd v0.23.1 // indirect
@@ -31,12 +34,10 @@ require (
 	github.com/drand/kyber v1.1.4 // indirect
 	github.com/fasthttp/websocket v1.5.12 // indirect
 	github.com/gdamore/encoding v1.0.1 // indirect
-	github.com/gdamore/tcell/v2 v2.8.1 // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/godaddy-x/eccrypto v1.1.13 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/howeyc/gopass v0.0.0-20210920133722-c8aef6fb66ef // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
@@ -44,10 +45,8 @@ require (
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/phoreproject/bls v0.0.0-20200525203911-a88a5ae26844 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/redis/go-redis/v9 v9.16.0 // indirect
-	github.com/rivo/tview v0.42.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/savsgio/gotils v0.0.0-20240704082632-aef3928b8a38 // indirect
 	github.com/shiena/ansicolor v0.0.0-20151119151921-a422bbe96644 // indirect
@@ -81,10 +80,10 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/godaddy-x/freego => ../../github/freego
+//replace github.com/godaddy-x/freego => ../../github/freego
+//
+//replace github.com/blocktree/openwallet/v2 => ../../github/openwallet
 
-replace github.com/blocktree/openwallet/v2 => ../../github/openwallet
-
-replace github.com/blocktree/go-owcdrivers => ../../github/go-owcdrivers
-
-replace github.com/blocktree/go-owcrypt => ../../github/go-owcrypt
+//replace github.com/blocktree/go-owcdrivers => ../../github/go-owcdrivers
+//
+//replace github.com/blocktree/go-owcrypt => ../../github/go-owcrypt

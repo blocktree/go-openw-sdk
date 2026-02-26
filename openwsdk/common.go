@@ -10,8 +10,10 @@ import (
 	DIC "github.com/godaddy-x/freego/common"
 	"github.com/godaddy-x/freego/utils"
 	"github.com/godaddy-x/freego/utils/sdk"
+	"github.com/godaddy-x/freego/zlog"
 	"strings"
 	"sync"
+	"time"
 )
 
 type SdkConfig struct {
@@ -22,6 +24,7 @@ type SdkConfig struct {
 	ServerPub string `json:"serverPub"`
 	ClientNo  int64  `json:"clientNo"`
 	TradeKey  string `json:"tradeKey"`
+	TokenExp  int64  `json:"tokenExp"` // 轮换密钥间隔 单位/秒，最低15秒
 }
 
 func NewHttpSDK(config SdkConfig) *sdk.HttpSDK {
@@ -47,6 +50,18 @@ func NewHttpSDK(config SdkConfig) *sdk.HttpSDK {
 		requestData.Sign = utils.Base64Encode(utils.HMAC_SHA256_BASE(h, utils.Str2Bytes(utils.AddStr(requestData.Nonce, requestData.Time))))
 		return requestData, nil
 	})
+	go func() {
+		for {
+			if err := newObject.ResetAuth(); err != nil {
+				zlog.Error("sdk reset auth error", 0, zlog.String("errMsg", err.Error()))
+			}
+			tokenExp := config.TokenExp
+			if config.TokenExp < 15 {
+				tokenExp = 15
+			}
+			time.Sleep(time.Duration(tokenExp) * time.Second) // 10秒轮换一次请求token和secret
+		}
+	}()
 	return newObject
 }
 

@@ -7,6 +7,7 @@ import (
 	"github.com/godaddy-x/freego/utils"
 	"github.com/godaddy-x/freego/utils/sdk"
 	"testing"
+	"time"
 )
 
 var (
@@ -72,12 +73,15 @@ func TestCliLogin(t *testing.T) {
 }
 
 func TestSymbolBlockList(t *testing.T) {
-	requestData := dto.SymbolBlockListReq{}
-	responseData := dto.SymbolBlockListRes{}
-	if err := opsHttpSDK.PostByAuth("/api/SymbolBlockList", &requestData, &responseData, true); err != nil {
-		fmt.Println(err)
+	for {
+		requestData := dto.SymbolBlockListReq{}
+		responseData := dto.SymbolBlockListRes{}
+		if err := opsHttpSDK.PostByAuth("/api/SymbolBlockList", &requestData, &responseData, true); err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(responseData)
+		time.Sleep(500 * time.Millisecond)
 	}
-	fmt.Println(responseData)
 }
 
 func TestGetBlockStatus(t *testing.T) {

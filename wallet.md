@@ -227,7 +227,7 @@ SDK请求配置支持自动密钥轮换，确保通信安全：
 
 **配置示例：**
 ```yaml
-# config.yaml
+# cli_config.yaml
 jwt:
   cli_main:
     token_key_rotation: 15s  # 密钥轮换间隔

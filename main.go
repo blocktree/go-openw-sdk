@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"strings"
 
 	webapp "github.com/blocktree/go-openw-sdk/v2/web"
@@ -18,8 +19,16 @@ import (
 
 func main() {
 	// 命令行参数处理
-	configFile := flag.String("c", "config.yaml", "configuration file path")
+	configFile := flag.String("config", "cli_config.yaml", "configuration file path")
+	initConfig := flag.Bool("init", false, "initialize default configuration example file")
 	flag.Parse()
+
+	// 初始化默认配置文件
+	if *initConfig {
+		common.CreateDefaultCliConfigExample()
+		fmt.Printf("Default configuration created at: %s\n", "cli_config_example.yaml")
+		return
+	}
 
 	// 生成日志文件名：配置文件名（去扩展名）+ "_log"
 	logFileName := strings.TrimSuffix(*configFile, ".yaml") + "_log"

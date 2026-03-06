@@ -5,12 +5,13 @@ package webapp
 import (
 	"bytes"
 	"fmt"
-	"github.com/blocktree/go-openw-sdk/v2/openwsdk"
 	"log"
 	"os"
 	"strings"
 	"sync"
 	"unicode"
+
+	"github.com/blocktree/go-openw-sdk/v2/openwsdk"
 
 	"github.com/blocktree/go-openw-sdk/v2/web/common"
 	DIC "github.com/godaddy-x/freego/common"
@@ -105,7 +106,7 @@ func showMainMenu(app *tview.Application) {
 		case 3:
 			showHttpService(app)
 		case 4:
-			openwsdk.DestroyUnlockWallet()
+			openwsdk.DestroyMemoryObject()
 			app.Stop()
 			os.Exit(0)
 		}

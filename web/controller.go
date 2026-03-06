@@ -106,6 +106,7 @@ func StartHttpNode(web *WebNode) {
 	// 创建API服务
 	web.POST(api("PublicKey"), web.PublicKey, &node.RouterConfig{Guest: true})
 	web.POST(api("Login"), web.Login, &node.RouterConfig{UseRSA: true})
+	web.POST(api("SignTradeKey"), web.SignTradeKey, &node.RouterConfig{UseRSA: true})
 	web.POST(api("FindWalletList"), web.FindWalletList, &node.RouterConfig{AesRequest: true, AesResponse: true})
 	web.POST(api("CreateAccount"), web.CreateAccount, &node.RouterConfig{AesRequest: true, AesResponse: true})
 	web.POST(api("SignTransaction"), web.SignTransaction, &node.RouterConfig{AesRequest: true, AesResponse: true})

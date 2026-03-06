@@ -3,6 +3,11 @@ package impl
 import (
 	"bytes"
 	"encoding/hex"
+	"path/filepath"
+	"regexp"
+	"strings"
+	"sync/atomic"
+
 	"github.com/awnumar/memguard"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
@@ -14,10 +19,6 @@ import (
 	"github.com/godaddy-x/freego/utils"
 	"github.com/godaddy-x/freego/utils/jwt"
 	"github.com/godaddy-x/freego/zlog"
-	"path/filepath"
-	"regexp"
-	"strings"
-	"sync/atomic"
 )
 
 type CliService struct {
@@ -25,19 +26,15 @@ type CliService struct {
 }
 
 const (
-	// 设置别名(alias)和文件名(filename)的最大最小长度
-	minAliasLength = 1
-	maxAliasLength = 255
-
 	// 设置认证(auth)密码的最大最小长度
 	minAuthLength = 8
 	maxAuthLength = 256 // 根据你的业务需求调整这个值
 )
 
 var (
-	aad     = utils.GetRandomSecure(32)
+	aad     = memguard.NewBufferRandom(32)
 	aadCall = func(keyID string) ([]byte, error) {
-		return aad, nil
+		return aad.Data(), nil
 	}
 )
 
@@ -185,18 +182,54 @@ func (s *CliService) CreateAccount(req *dto.CliCreateAccountReq, res *dto.CliCre
 }
 
 func (s *CliService) SignTransaction(req *dto.CliSignTransactionReq, res *dto.CliSignTransactionRes) error {
+	tx, err := checkAndUnmarshalTx(req.Type, req.Data, req.TradeSign)
+	if err != nil {
+		return err
+	}
+
+	key := openwsdk.GetUnlockWallet(tx.Account.WalletID)
+	if key == nil {
+		return ex.Throw{Code: ex.BIZ, Msg: "walletID is nil or unlock: " + tx.Account.WalletID}
+	}
+
+	txSignerList := map[string]string{}
+	if err := openwsdk.SignRawTransactionExtract(tx, key, txSignerList); err != nil {
+		return ex.Throw{Code: ex.BIZ, Msg: "sign tx error: " + tx.Account.WalletID, Err: err}
+	}
+	res.SignerList = txSignerList
+
+	return nil
+}
+
+func (s *CliService) SignSharedTransaction(req *dto.CliSignTransactionReq, res *dto.CliSignTransactionRes) error {
+
+	tx, err := checkAndUnmarshalTx(req.Type, req.Data, req.TradeSign)
+	if err != nil {
+		return err
+	}
+
+	// TODO 获取其他节点的分片，进行combine
+	seed := memguard.NewBufferFromBytes(nil)
+
+	txSignerList := map[string]string{}
+	if err := openwsdk.SignRawTransactionExtractLocker(tx, seed, txSignerList); err != nil {
+		seed.Destroy()
+		return ex.Throw{Code: ex.BIZ, Msg: "sign tx error: " + tx.Account.WalletID, Err: err}
+	}
+
+	seed.Destroy()
+
+	res.SignerList = txSignerList
+
+	return nil
+}
+
+func (s *CliService) SignTradeKey(req *dto.CliSignTradeKeyReq, res *dto.CliSignTradeKeyRes) error {
 	if req.Data == "" {
 		return ex.Throw{Code: ex.BIZ, Msg: "data is nil"}
 	}
-	if req.TradeSign == "" {
-		return ex.Throw{Code: ex.BIZ, Msg: "tradeSign is nil"}
-	}
 	if !utils.CheckInt64(req.Type, 0, 1) {
 		return ex.Throw{Code: ex.BIZ, Msg: "type invalid"}
-	}
-
-	if err := openwsdk.CheckOneTxTradeSign(common.GetAllConfig().Extract.TradeKey, req.Data, req.TradeSign); err != nil {
-		return ex.Throw{Code: ex.BIZ, Msg: "trade sign invalid", Err: err}
 	}
 
 	var tx *openwallet.RawTransaction
@@ -219,7 +252,7 @@ func (s *CliService) SignTransaction(req *dto.CliSignTransactionReq, res *dto.Cl
 	}
 
 	if tx.TxType != req.Type {
-
+		return ex.Throw{Code: ex.BIZ, Msg: "tx type error"}
 	}
 
 	if utils.UnixMilli()-tx.CreateTime > 86400000 {
@@ -227,7 +260,7 @@ func (s *CliService) SignTransaction(req *dto.CliSignTransactionReq, res *dto.Cl
 	}
 
 	if tx.TxType == 0 { // 普通交易单，校验黑名单
-		blacklist := common.GetAllConfig().Extract.SubmitBlacklist
+		blacklist := common.GetAllConfig().Extract.SignerBlacklist
 		for to, _ := range tx.To {
 			if utils.CheckStr(to, blacklist...) {
 				return ex.Throw{Code: ex.BIZ, Msg: "tx submit blacklist invalid: " + to}
@@ -247,16 +280,74 @@ func (s *CliService) SignTransaction(req *dto.CliSignTransactionReq, res *dto.Cl
 		return ex.Throw{Code: ex.BIZ, Msg: "tx type invalid"}
 	}
 
-	key := openwsdk.GetUnlockWallet(tx.Account.WalletID)
-	if key == nil {
-		return ex.Throw{Code: ex.BIZ, Msg: "walletID is nil or unlock: " + tx.Account.WalletID}
-	}
+	// TODO 校验其他策略
 
-	txSignerList := map[string]string{}
-	if err := openwsdk.SignRawTransactionExtract(tx, key, txSignerList); err != nil {
-		return ex.Throw{Code: ex.BIZ, Msg: "sign tx error: " + tx.Account.WalletID, Err: err}
-	}
-	res.SignerList = txSignerList
+	res.Sign = hex.EncodeToString(utils.HMAC_SHA256_BASE(utils.Str2Bytes(req.Data), openwsdk.GetTradeKey().Data()))
 
 	return nil
+}
+
+func checkAndUnmarshalTx(typ int64, data, tradeSign string) (*openwallet.RawTransaction, error) {
+	if data == "" {
+		return nil, ex.Throw{Code: ex.BIZ, Msg: "data is nil"}
+	}
+	if tradeSign == "" {
+		return nil, ex.Throw{Code: ex.BIZ, Msg: "tradeSign is nil"}
+	}
+	if !utils.CheckInt64(typ, 0, 1) {
+		return nil, ex.Throw{Code: ex.BIZ, Msg: "type invalid"}
+	}
+
+	if err := openwsdk.CheckOneTxTradeSign(openwsdk.GetTradeKey().Data(), data, tradeSign); err != nil {
+		return nil, ex.Throw{Code: ex.BIZ, Msg: "trade sign invalid", Err: err}
+	}
+
+	var tx *openwallet.RawTransaction
+
+	if typ == 0 {
+		tx = &openwallet.RawTransaction{}
+		if err := utils.JsonUnmarshal(utils.Str2Bytes(data), tx); err != nil {
+			return nil, ex.Throw{Code: ex.BIZ, Msg: "tx decode error", Err: err}
+		}
+	} else {
+		txErr := &openwallet.RawTransactionWithError{}
+		if err := utils.JsonUnmarshal(utils.Str2Bytes(data), txErr); err != nil {
+			return nil, ex.Throw{Code: ex.BIZ, Msg: "tx decode error", Err: err}
+		}
+		if txErr.Error != nil {
+			return nil, ex.Throw{Code: ex.BIZ, Msg: "tx error: " + txErr.Error.Error()}
+		}
+
+		tx = txErr.RawTx
+	}
+
+	if tx.TxType != typ {
+		return nil, ex.Throw{Code: ex.BIZ, Msg: "tx type error"}
+	}
+
+	if utils.UnixMilli()-tx.CreateTime > 86400000 {
+		return nil, ex.Throw{Code: ex.BIZ, Msg: "tx create time invalid"}
+	}
+
+	if tx.TxType == 0 { // 普通交易单，校验黑名单
+		blacklist := common.GetAllConfig().Extract.SignerBlacklist
+		for to, _ := range tx.To {
+			if utils.CheckStr(to, blacklist...) {
+				return nil, ex.Throw{Code: ex.BIZ, Msg: "tx submit blacklist invalid: " + to}
+			}
+		}
+	} else if tx.TxType == 1 { // 汇总交易单，校验白名单
+		if len(tx.To) > 1 {
+			return nil, ex.Throw{Code: ex.BIZ, Msg: "tx submit target address > 1 invalid"}
+		}
+		whitelist := common.GetAllConfig().Extract.SummaryWhitelist
+		for to, _ := range tx.To {
+			if !utils.CheckStr(to, whitelist...) {
+				return nil, ex.Throw{Code: ex.BIZ, Msg: "tx submit blacklist invalid: " + to}
+			}
+		}
+	} else {
+		return nil, ex.Throw{Code: ex.BIZ, Msg: "tx type invalid"}
+	}
+	return tx, nil
 }

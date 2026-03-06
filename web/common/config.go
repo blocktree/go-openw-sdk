@@ -4,24 +4,26 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	DIC "github.com/godaddy-x/freego/common"
-	"github.com/godaddy-x/freego/utils"
-	"github.com/godaddy-x/freego/utils/crypto"
-	"github.com/godaddy-x/freego/zlog"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
+
+	DIC "github.com/godaddy-x/freego/common"
+	"github.com/godaddy-x/freego/utils"
+	"github.com/godaddy-x/freego/utils/crypto"
+	"github.com/godaddy-x/freego/zlog"
 )
 
 type Extract struct {
 	AppID            string   `yaml:"appID" json:"appID"`
 	AppKey           string   `yaml:"appKey" json:"appKey"`
-	TradeKey         string   `yaml:"tradeKey" json:"tradeKey"`                 // 交易单签名校验
 	WalletDir        string   `yaml:"walletDir" json:"walletDir"`               // 钱包文件夹
-	SubmitBlacklist  []string `yaml:"submitBlacklist" json:"submitBlacklist"`   // 签名黑名单
-	SummaryWhitelist []string `yaml:"summaryWhitelist" json:"summaryWhitelist"` // 汇总白名单
-	RemoteWhitelist  []string `yaml:"remoteWhitelist" json:"remoteWhitelist"`   // 请求白名单
+	WalletUsr        string   `yaml:"walletUsr" json:"walletUsr"`               // 钱包密码层数
+	SignerBlacklist  []string `yaml:"signerBlacklist" json:"signerBlacklist"`   // 转出地址黑名单
+	SignerWhitelist  []string `yaml:"signerWhitelist" json:"signerWhitelist"`   // 交易单JSON签名请求IP白名单
+	SummaryWhitelist []string `yaml:"summaryWhitelist" json:"summaryWhitelist"` // 汇总地址白名单
+	RemoteWhitelist  []string `yaml:"remoteWhitelist" json:"remoteWhitelist"`   // 业务系统请求IP白名单
 }
 
 type YamlConfigExtract struct {

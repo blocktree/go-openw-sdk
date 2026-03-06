@@ -3,31 +3,29 @@ package openwsdk
 import (
 	"encoding/hex"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
 	"github.com/godaddy-x/freego/utils"
 	"github.com/godaddy-x/freego/utils/sdk"
-	"testing"
-	"time"
 )
 
+func readJson(path string) SdkConfig {
+	data, err := utils.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	config := SdkConfig{}
+	if err := utils.JsonUnmarshal(data, &config); err != nil {
+		panic(err)
+	}
+	return config
+}
+
 var (
-	opsConfig = SdkConfig{
-		Domain:    "http://localhost:8422",
-		AppID:     "e6a06259193fb8476ffd83a87c4fc300",
-		AppKey:    "43cb8a4f8c795c74426aed363aa9c12af0d065ca33b472c6ec7ce5cf7bc47c7c",
-		ClientNo:  1,
-		ClientPrk: "uckgLxKoRjSHKjlsqa1gfYlHmza0DTRl/cRdV6DEaNY=",
-		ServerPub: "BDTL1IlMt+k2glN0Rnwzt7hX8cxWougeorB7hBTTheAqNELXRGTln6oPzqvL0WMhHkruudnFGMAemYsEby8iu80=",
-	}
-	cliConfig = SdkConfig{
-		Domain:    "http://localhost:9422",
-		AppID:     "e6a06259193fb8476ffd83a87c4fc300",
-		AppKey:    "43cb8a4f8c795c74426aed363aa9c12af0d065ca33b472c6ec7ce5cf7bc47c7c",
-		ClientNo:  1,
-		ClientPrk: "uckgLxKoRjSHKjlsqa1gfYlHmza0DTRl/cRdV6DEaNY=",
-		ServerPub: "BDTL1IlMt+k2glN0Rnwzt7hX8cxWougeorB7hBTTheAqNELXRGTln6oPzqvL0WMhHkruudnFGMAemYsEby8iu80=",
-		TradeKey:  "381f6b35d9acad1e744a0b75e0f64f3ccfc3802a0197a7a39d77dacd58ed7d6a",
-	}
+	opsConfig = readJson("ops.json")
+	cliConfig = readJson("cli.json")
 )
 
 var opsHttpSDK = NewHttpSDK(opsConfig)

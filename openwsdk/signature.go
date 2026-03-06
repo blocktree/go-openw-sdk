@@ -3,6 +3,8 @@ package openwsdk
 import (
 	"encoding/hex"
 	"fmt"
+
+	"github.com/awnumar/memguard"
 	"github.com/blocktree/go-owcrypt"
 	"github.com/blocktree/openwallet/v2/hdkeystore"
 	"github.com/blocktree/openwallet/v2/openwallet"
@@ -84,7 +86,7 @@ func SignRawTransaction(rawTx *openwallet.RawTransaction, key *hdkeystore.HDKey)
 	return nil
 }
 
-// SignRawTransaction 签名交易单
+// SignRawTransactionExtract 签名交易单
 func SignRawTransactionExtract(rawTx *openwallet.RawTransaction, key *hdkeystore.HDKey, txSigner map[string]string) error {
 
 	for accountID, keySignatures := range rawTx.Signatures {
@@ -92,35 +94,126 @@ func SignRawTransactionExtract(rawTx *openwallet.RawTransaction, key *hdkeystore
 
 			for k, keySignature := range keySignatures {
 
-				if keySignature.EccType == owcrypt.ECC_CURVE_BLS12381_G2_XMD_SHA_256_SSWU_RO_AUG {
-
-					childKey, err := key.DerivedKeyWithPath(keySignature.Address.HDPath, keySignature.EccType)
-					keyBytes, err := childKey.GetPrivateKeyBytes()
-					if err != nil {
-						return openwallet.NewError(openwallet.ErrSignRawTransactionFailed, err.Error())
-					}
-					message, err := hex.DecodeString(keySignature.Message)
-					if err != nil {
-						return err
-					}
-					key2 := Calculate_synthetic_secret_key(keyBytes)
-					newKey := make([]byte, 0)
-					if len(key2) != 32 {
-						for i := 0; i < 32-len(key2); i++ {
-							newKey = append(newKey, 0)
-						}
-					}
-					newKey = append(newKey, key2...)
-					signature, _, sigErr := owcrypt.Signature(newKey, nil, message, keySignature.EccType)
-					if sigErr != owcrypt.SUCCESS {
-						return fmt.Errorf("transaction hash sign failed")
-					}
-					txSigner[fmt.Sprintf("%s-%d", accountID, k)] = hex.EncodeToString(signature)
-					continue
-				}
+				//if keySignature.EccType == owcrypt.ECC_CURVE_BLS12381_G2_XMD_SHA_256_SSWU_RO_AUG {
+				//
+				//	childKey, err := key.DerivedKeyWithPath(keySignature.Address.HDPath, keySignature.EccType)
+				//	keyBytes, err := childKey.GetPrivateKeyBytes()
+				//	if err != nil {
+				//		return openwallet.NewError(openwallet.ErrSignRawTransactionFailed, err.Error())
+				//	}
+				//	message, err := hex.DecodeString(keySignature.Message)
+				//	if err != nil {
+				//		return err
+				//	}
+				//	key2 := Calculate_synthetic_secret_key(keyBytes)
+				//	newKey := make([]byte, 0)
+				//	if len(key2) != 32 {
+				//		for i := 0; i < 32-len(key2); i++ {
+				//			newKey = append(newKey, 0)
+				//		}
+				//	}
+				//	newKey = append(newKey, key2...)
+				//	signature, _, sigErr := owcrypt.Signature(newKey, nil, message, keySignature.EccType)
+				//	if sigErr != owcrypt.SUCCESS {
+				//		return fmt.Errorf("transaction hash sign failed")
+				//	}
+				//	txSigner[fmt.Sprintf("%s-%d", accountID, k)] = hex.EncodeToString(signature)
+				//	continue
+				//}
 
 				childKey, err := key.DerivedKeyWithPath(keySignature.Address.HDPath, keySignature.EccType)
 				keyBytes, err := childKey.GetPrivateKeyBytes()
+				if err != nil {
+					return err
+				}
+
+				locker := memguard.NewBufferFromBytes(keyBytes)
+
+				hdkeystore.ClearData(keyBytes)
+
+				//log.Debug("privateKey:", hex.EncodeToString(keyBytes))
+
+				//privateKeys = append(privateKeys, keyBytes)
+				txHash, err := hex.DecodeString(keySignature.Message)
+				//transHash = append(transHash, txHash)
+
+				//log.Infof("sign hash: %s", txHash)
+
+				//签名交易
+				/////////交易单哈希签名
+
+				//signature, err := signatureSet.SignTxHash(rawTx.Coin.Symbol, txHash, keyBytes, keySignature.EccType)
+				//if err != nil {
+				//	return fmt.Errorf("transaction hash sign failed, unexpected error: %v", err)
+				//}
+
+				signature, v, sigErr := owcrypt.Signature(locker.Bytes(), nil, txHash, keySignature.EccType)
+				if sigErr != owcrypt.SUCCESS {
+					locker.Destroy()
+					return fmt.Errorf("transaction hash sign failed")
+				}
+
+				locker.Destroy()
+
+				if keySignature.RSV {
+					signature = append(signature, v)
+				}
+
+				//log.Debug("Signature:", txHash)
+
+				//keySignature.Signature = hex.EncodeToString(signature)
+
+				txSigner[fmt.Sprintf("%s-%d", accountID, k)] = hex.EncodeToString(signature)
+
+			}
+		}
+	}
+
+	return nil
+}
+
+// SignRawTransactionExtractLocker 签名交易单
+func SignRawTransactionExtractLocker(rawTx *openwallet.RawTransaction, seed *memguard.LockedBuffer, txSigner map[string]string) error {
+
+	for accountID, keySignatures := range rawTx.Signatures {
+		if keySignatures != nil {
+
+			for k, keySignature := range keySignatures {
+
+				//if keySignature.EccType == owcrypt.ECC_CURVE_BLS12381_G2_XMD_SHA_256_SSWU_RO_AUG {
+				//
+				//	derived, err := hdkeystore.DerivedLockerKeyWithPath(seed, keySignature.Address.HDPath, keySignature.EccType)
+				//	if err != nil {
+				//		return openwallet.NewError(openwallet.ErrSignRawTransactionFailed, err.Error())
+				//	}
+				//
+				//	defer derived.Destroy()
+				//
+				//	message, err := hex.DecodeString(keySignature.Message)
+				//	if err != nil {
+				//		return err
+				//	}
+				//	key2 := Calculate_synthetic_secret_key(derived.Bytes())
+				//	newKey := make([]byte, 0)
+				//	if len(key2) != 32 {
+				//		for i := 0; i < 32-len(key2); i++ {
+				//			newKey = append(newKey, 0)
+				//		}
+				//	}
+				//	newKey = append(newKey, key2...)
+				//
+				//	signature, _, sigErr := owcrypt.Signature(newKey, nil, message, keySignature.EccType)
+				//
+				//	hdkeystore.ClearData(key2, newKey)
+				//
+				//	if sigErr != owcrypt.SUCCESS {
+				//		return fmt.Errorf("transaction hash sign failed")
+				//	}
+				//	txSigner[fmt.Sprintf("%s-%d", accountID, k)] = hex.EncodeToString(signature)
+				//	continue
+				//}
+
+				locker, err := hdkeystore.DerivedLockerKeyWithPath(seed, keySignature.Address.HDPath, keySignature.EccType)
 				if err != nil {
 					return err
 				}
@@ -140,10 +233,13 @@ func SignRawTransactionExtract(rawTx *openwallet.RawTransaction, key *hdkeystore
 				//	return fmt.Errorf("transaction hash sign failed, unexpected error: %v", err)
 				//}
 
-				signature, v, sigErr := owcrypt.Signature(keyBytes, nil, txHash, keySignature.EccType)
+				signature, v, sigErr := owcrypt.Signature(locker.Bytes(), nil, txHash, keySignature.EccType)
 				if sigErr != owcrypt.SUCCESS {
+					locker.Destroy()
 					return fmt.Errorf("transaction hash sign failed")
 				}
+
+				locker.Destroy()
 
 				if keySignature.RSV {
 					signature = append(signature, v)
@@ -157,7 +253,7 @@ func SignRawTransactionExtract(rawTx *openwallet.RawTransaction, key *hdkeystore
 
 			}
 		}
-		rawTx.Signatures[accountID] = keySignatures
+		//rawTx.Signatures[accountID] = keySignatures
 	}
 
 	return nil

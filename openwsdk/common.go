@@ -4,6 +4,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/awnumar/memguard"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
 	"github.com/blocktree/openwallet/v2/hdkeystore"
 	"github.com/blocktree/openwallet/v2/openwallet"
@@ -11,9 +16,6 @@ import (
 	"github.com/godaddy-x/freego/utils"
 	"github.com/godaddy-x/freego/utils/sdk"
 	"github.com/godaddy-x/freego/zlog"
-	"strings"
-	"sync"
-	"time"
 )
 
 type SdkConfig struct {
@@ -35,7 +37,7 @@ func NewHttpSDK(config SdkConfig) *sdk.HttpSDK {
 	}
 	clientPrk := config.ClientPrk
 	serverPub := config.ServerPub
-	newObject.SetClientNo(1)
+	newObject.SetClientNo(config.ClientNo)
 	_ = newObject.SetECDSAObject(newObject.ClientNo, clientPrk, serverPub)
 	newObject.AuthObject(func() (interface{}, error) {
 		requestData := dto.AppLoginReq{
@@ -74,6 +76,7 @@ var (
 	unlocked = &unlockWallet{
 		wallet: make(map[string]*hdkeystore.HDKey, 10),
 	}
+	tradeKey = memguard.NewBufferRandom(32)
 )
 
 func AddUnlockWallet(key *hdkeystore.HDKey) {
@@ -94,12 +97,17 @@ func GetUnlockWalletSize() int {
 	return len(unlocked.wallet)
 }
 
-func DestroyUnlockWallet() {
+func GetTradeKey() *memguard.LockedBuffer {
+	return tradeKey
+}
+
+func DestroyMemoryObject() {
 	unlocked.mu.Lock()
 	defer unlocked.mu.Unlock()
 	for _, v := range unlocked.wallet {
 		v.DestroySeed()
 	}
+	tradeKey.Destroy()
 }
 
 func SignTradePush(key string, data dto.TradePushResult) (string, error) {
@@ -193,15 +201,11 @@ func CheckTxTradeSign(tradeKey string, txData []*dto.TxData) error {
 	return nil
 }
 
-func CheckOneTxTradeSign(tradeKey, data, sign string) error {
+func CheckOneTxTradeSign(tradeKey []byte, data, sign string) error {
 	if len(data) == 0 {
 		return errors.New("tx data is nil")
 	}
-	h, err := hex.DecodeString(tradeKey)
-	if err != nil {
-		return err
-	}
-	checkSign := utils.HMAC_SHA256_BASE(utils.Str2Bytes(data), h)
+	checkSign := utils.HMAC_SHA256_BASE(utils.Str2Bytes(data), tradeKey)
 	if sign != utils.Base64Encode(checkSign) {
 		return errors.New(fmt.Sprintf("tx data check trade sign invalid: %s, %s", data, sign))
 	}

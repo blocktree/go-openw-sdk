@@ -85,3 +85,15 @@ func (s *WebNode) SignTransaction(ctx *node.Context) error {
 	}
 	return s.Json(ctx, res)
 }
+
+func (s *WebNode) SignTradeKey(ctx *node.Context) error {
+	req := &dto.CliSignTradeKeyReq{}
+	if err := ctx.Parser(req); err != nil {
+		return err
+	}
+	res := &dto.CliSignTradeKeyRes{}
+	if err := CliService.SignTradeKey(req, res); err != nil {
+		return err
+	}
+	return s.Json(ctx, res)
+}

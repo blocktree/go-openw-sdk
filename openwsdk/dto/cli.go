@@ -74,3 +74,14 @@ type CliSignTransactionReq struct {
 type CliSignTransactionRes struct {
 	SignerList map[string]string `json:"signerList"`
 }
+
+type CliSignTradeKeyReq struct {
+	common.BaseReq
+	Type int64  `json:"type"` // 0.普通交易 1.汇总交易
+	Data string `json:"data"`
+}
+
+//easyjson:json
+type CliSignTradeKeyRes struct {
+	Sign string `json:"sign"`
+}

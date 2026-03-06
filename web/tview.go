@@ -89,10 +89,17 @@ func showMainMenu(app *tview.Application) {
 	}
 	httpServerMu.Unlock()
 
+	config := common.GetAllConfig().Extract
+
 	list.AddItem("Create Wallet", "Generate new cryptographic keys", '1', nil)
-	list.AddItem("Unlock Wallet", "Load and decrypt an existing wallet", '2', nil)
+	if config.WalletMode == 1 {
+		list.AddItem("Unlock Wallet", "Load and decrypt an existing wallet", '2', nil)
+	} else {
+		// 显示但禁用（传 nil 回调）
+		list.AddItem("Unlock Wallet (disabled)", "Wallet mode does not allow unlocking", '2', nil)
+	}
 	list.AddItem("Generate ECDSA", "Print base64-encoded ECDSA key pair to terminal", '3', nil) // ← 新增
-	list.AddItem("Start Service"+status, "Launch HTTP signing API", '4', nil)
+	list.AddItem("Start HTTP Service"+status, "Launch HTTP signing API", '4', nil)
 	list.AddItem("Exit", "Quit the application", '5', nil)
 
 	list.SetSelectedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
@@ -100,7 +107,11 @@ func showMainMenu(app *tview.Application) {
 		case 0:
 			showCreateWallet(app)
 		case 1:
-			showWalletList(app)
+			if config.WalletMode == 1 {
+				showWalletList(app)
+			} else { // 模式3,5提示不可用描述
+				showDisableUnlockWallet(app)
+			}
 		case 2:
 			showGenerateECDSA(app)
 		case 3:
@@ -138,7 +149,7 @@ func isValidAlias(alias string) bool {
 	return true
 }
 
-// ==================== 创建钱包列表 ====================
+// ==================== mode=1创建钱包列表 ====================
 func showCreateWallet(app *tview.Application) {
 	app.Suspend(func() {
 		fmt.Print("\n")
@@ -217,7 +228,7 @@ func showCreateWallet(app *tview.Application) {
 	showMainMenu(app)
 }
 
-// ==================== 钱包列表与解锁 ====================
+// ==================== mode=1钱包列表与解锁 ====================
 func showWalletList(app *tview.Application) {
 	req := &dto.CliFindWalletListReq{}
 	res := &dto.CliFindWalletListRes{}
@@ -308,6 +319,27 @@ func showWalletList(app *tview.Application) {
 	layout.AddItem(header, 3, 1, false)
 	layout.AddItem(walletList, 0, 1, true)
 	app.SetRoot(layout, true)
+}
+
+// ==================== mode=3,5钱包解锁禁止描述 ====================
+func showDisableUnlockWallet(app *tview.Application) {
+	config := common.GetAllConfig().Extract
+	app.Suspend(func() {
+		if config.WalletMode == 3 || config.WalletMode == 5 {
+			fmt.Printf("\n🔒 Wallet unlocking is disabled in threshold/MPC mode (walletMode=%d).\n", config.WalletMode)
+			fmt.Println("   In this mode, private keys are split into shares across multiple nodes.")
+		} else {
+			fmt.Printf("\n🔒 Wallet unlocking is only available in standalone mode (walletMode=1).\n")
+			fmt.Printf("   Your current walletMode (%d) is not valid for local wallet operations.\n", config.WalletMode)
+		}
+		fmt.Println("   Valid walletMode values:")
+		fmt.Println("     • 1 = Standalone (local key storage)")
+		fmt.Println("     • 3 = Threshold/MPC (2-of-3 signing)")
+		fmt.Println("     • 5 = Threshold/MPC (3-of-5 signing)")
+		fmt.Print("\n   Press Enter to return to the main menu...")
+		fmt.Scanln()
+	})
+	showMainMenu(app) // 返回菜单
 }
 
 // ==================== 启动HTTP服务 ====================

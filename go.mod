@@ -5,13 +5,12 @@ go 1.26
 require (
 	github.com/awnumar/memguard v0.23.0
 	github.com/blocktree/go-owcrypt v1.1.14
-	github.com/blocktree/openwallet/v2 v2.7.3
+	github.com/blocktree/openwallet/v2 v2.7.4
 	github.com/codahale/sss v0.0.0-20160501174526-0cb9f6d3f7f1
 	github.com/gdamore/tcell/v2 v2.8.1
 	github.com/godaddy-x/freego v1.1.1
 	github.com/howeyc/gopass v0.0.0-20210920133722-c8aef6fb66ef
 	github.com/mailru/easyjson v0.9.1
-	github.com/mdp/qrterminal/v3 v3.2.1
 	github.com/nbutton23/zxcvbn-go v0.0.0-20210217022336-fa2cb2858354
 	github.com/rivo/tview v0.42.0
 )
@@ -79,12 +78,12 @@ require (
 	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	rsc.io/qr v0.2.0 // indirect
 )
 
-//replace github.com/godaddy-x/freego => ../../github/freego
+replace github.com/godaddy-x/freego => ../../github/freego
+
 //
-replace github.com/blocktree/openwallet/v2 => ../../github/openwallet
+//replace github.com/blocktree/openwallet/v2 => ../../github/openwallet
 
 //replace github.com/blocktree/go-owcdrivers => ../../github/go-owcdrivers
 //

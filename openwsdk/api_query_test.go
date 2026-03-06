@@ -11,21 +11,9 @@ import (
 	"github.com/godaddy-x/freego/utils/sdk"
 )
 
-func readJson(path string) SdkConfig {
-	data, err := utils.ReadFile(path)
-	if err != nil {
-		panic(err)
-	}
-	config := SdkConfig{}
-	if err := utils.JsonUnmarshal(data, &config); err != nil {
-		panic(err)
-	}
-	return config
-}
-
 var (
-	opsConfig = readJson("ops.json")
-	cliConfig = readJson("cli.json")
+	opsConfig = ReadJson("ops.json")
+	cliConfig = ReadJson("cli.json")
 )
 
 var opsHttpSDK = NewHttpSDK(opsConfig)

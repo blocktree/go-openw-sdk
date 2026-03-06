@@ -8,6 +8,10 @@ server:
       - name: 1
         public_key: "BNlt+QZ0StVPUuVlY5SLEijB0J51PvtMYK/F3Nd4HSs7khBFQhvyUosm/DG1mmspYiOS0Zd/yCFd4uyWQR7YWEI="
         private_key: "x97SIkFTlNUpTsNAdsHURjFQZ3BLL/iQ8bBW+hHV7mk="
+      - name: 2
+        public_key: "BL9HfxXeg9+L0vR24xFbMHw8XIUzhKFouFvVQ6T9bbEvzrS0i9fhNTzPYALSzRUZBF//8a3BSb0yu9NurwLqz6k="
+        private_key: "bsnBl3aP0hrgpwp6oqA5Dr87VWwfM8xJ/6jy9NBkVVo="
+
 
 jwt:
   cli_main:
@@ -33,7 +37,7 @@ extract:
   appID: "e6a06259193fb8476ffd83a87c4fc300"
   appKey: "43cb8a4f8c795c74426aed363aa9c12af0d065ca33b472c6ec7ce5cf7bc47c7c"
   walletDir: "openwsdk/keys"
-  walletUsr: 2 # 钱包密码层数
+  walletMode: 3 # 钱包模式,1,3,5模式, 1=本地创建密码钱包 3,5进行分片管理（需要部署多个分片节点）
   remoteWhitelist: # 业务系统请求IP白名单
     - "127.0.0.1"
     - "localhost"

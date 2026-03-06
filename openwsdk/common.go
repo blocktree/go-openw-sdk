@@ -29,6 +29,18 @@ type SdkConfig struct {
 	TokenExp  int64  `json:"tokenExp"` // 轮换密钥间隔 单位/秒，最低15秒
 }
 
+func ReadJson(path string) SdkConfig {
+	data, err := utils.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	config := SdkConfig{}
+	if err := utils.JsonUnmarshal(data, &config); err != nil {
+		panic(err)
+	}
+	return config
+}
+
 func NewHttpSDK(config SdkConfig) *sdk.HttpSDK {
 	newObject := &sdk.HttpSDK{
 		Domain:    config.Domain,

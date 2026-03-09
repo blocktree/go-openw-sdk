@@ -20,6 +20,10 @@ import (
 
 type SdkConfig struct {
 	Domain    string `json:"domain"`
+	WSDomain  string `json:"wsDomain"`
+	KeyPath   string `json:"keyPath"`
+	LoginPath string `json:"loginPath"`
+	Source    string `json:"source"`
 	AppID     string `json:"appID"`
 	AppKey    string `json:"appKey"`
 	ClientPrk string `json:"clientPrk"`
@@ -44,8 +48,8 @@ func ReadJson(path string) SdkConfig {
 func NewHttpSDK(config SdkConfig) *sdk.HttpSDK {
 	newObject := &sdk.HttpSDK{
 		Domain:    config.Domain,
-		KeyPath:   "/api/PublicKey",
-		LoginPath: "/api/Login",
+		KeyPath:   config.KeyPath,
+		LoginPath: config.LoginPath,
 	}
 	clientPrk := config.ClientPrk
 	serverPub := config.ServerPub
@@ -53,15 +57,16 @@ func NewHttpSDK(config SdkConfig) *sdk.HttpSDK {
 	_ = newObject.SetECDSAObject(newObject.ClientNo, clientPrk, serverPub)
 	newObject.AuthObject(func() (interface{}, error) {
 		requestData := dto.AppLoginReq{
-			AppID: config.AppID,
-			Nonce: utils.Base64Encode(utils.GetRandomSecure(32)),
-			Time:  utils.UnixSecond(),
+			AppID:  config.AppID,
+			Nonce:  utils.Base64Encode(utils.GetRandomSecure(32)),
+			Time:   utils.UnixSecond(),
+			Source: config.Source,
 		}
 		h, err := hex.DecodeString(config.AppKey)
 		if err != nil {
 			return nil, err
 		}
-		requestData.Sign = utils.Base64Encode(utils.HMAC_SHA256_BASE(h, utils.Str2Bytes(utils.AddStr(requestData.Nonce, requestData.Time))))
+		requestData.Sign = utils.Base64Encode(utils.HMAC_SHA256_BASE(h, utils.Str2Bytes(utils.AddStr(requestData.Nonce, requestData.Time, requestData.Source))))
 		return requestData, nil
 	})
 	go func() {

@@ -5,13 +5,13 @@ go 1.26
 require (
 	github.com/awnumar/memguard v0.23.0
 	github.com/blocktree/go-owcrypt v1.1.14
-	github.com/blocktree/openwallet/v2 v2.7.4
+	github.com/blocktree/openwallet/v2 v2.7.5
 	github.com/codahale/sss v0.0.0-20160501174526-0cb9f6d3f7f1
 	github.com/gdamore/tcell/v2 v2.8.1
-	github.com/godaddy-x/freego v1.1.1
+	github.com/godaddy-x/eccrypto v1.1.14
+	github.com/godaddy-x/freego v1.1.4
 	github.com/howeyc/gopass v0.0.0-20210920133722-c8aef6fb66ef
 	github.com/mailru/easyjson v0.9.1
-	github.com/nbutton23/zxcvbn-go v0.0.0-20210217022336-fa2cb2858354
 	github.com/rivo/tview v0.42.0
 )
 
@@ -35,7 +35,6 @@ require (
 	github.com/fasthttp/websocket v1.5.12 // indirect
 	github.com/gdamore/encoding v1.0.1 // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
-	github.com/godaddy-x/eccrypto v1.1.13 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
@@ -82,7 +81,6 @@ require (
 
 replace github.com/godaddy-x/freego => ../../github/freego
 
-//
 //replace github.com/blocktree/openwallet/v2 => ../../github/openwallet
 
 //replace github.com/blocktree/go-owcdrivers => ../../github/go-owcdrivers

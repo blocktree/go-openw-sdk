@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"testing"
@@ -10,7 +11,6 @@ import (
 	"github.com/codahale/sss"
 	"github.com/godaddy-x/freego/utils"
 	"github.com/godaddy-x/freego/utils/sdk"
-	"github.com/nbutton23/zxcvbn-go"
 )
 
 const (
@@ -48,11 +48,11 @@ func NewHttpSDK(domain, appID, appKey string) *sdk.HttpSDK {
 }
 
 func TestSharding(t *testing.T) {
-	secret := memguard.NewBufferRandom(64) // our secret
-	n := byte(3)                           // create 30 shares
-	k := byte(2)                           // require 2 of them to combine
+	seed := memguard.NewBufferRandom(64) // our secret
+	n := byte(3)                         // create 30 shares
+	k := byte(2)                         // require 2 of them to combine
 
-	shares, err := sss.Split(n, k, secret.Data()) // split into 30 shares
+	shares, err := sss.Split(n, k, seed.Bytes()) // split into 30 shares
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -67,22 +67,25 @@ func TestSharding(t *testing.T) {
 		}
 	}
 
-	// combine two shares and recover the secret
-	recovered := string(sss.Combine(subset))
-	fmt.Println(recovered)
+	fmt.Println("seed:", utils.Base64Encode(seed.Bytes()))
+
+	if !bytes.Equal(sss.Combine(subset), seed.Bytes()) {
+		panic("seeds don't match")
+	}
+	fmt.Println("seed:", utils.Base64Encode(sss.Combine(subset)))
 }
 
-func TestPasswordCheck(t *testing.T) {
-	password := "abc123456789#@!"
-	// 可选：传入用户名、邮箱等，防止用个人信息当密码
-	result := zxcvbn.PasswordStrength(password, nil)
-
-	fmt.Printf("Password: %s\n", password)
-	fmt.Printf("Estimated entropy: %.1f bits\n", result.Entropy)
-	fmt.Printf("Crack time (online): %s\n", result.CrackTimeDisplay)
-	fmt.Printf("Score (0-4): %d\n", result.Score) // 0=weak, 4=strong
-	fmt.Printf("Suggestions: %v\n", result.Score)
-}
+//func TestPasswordCheck(t *testing.T) {
+//	password := "abc123456789#@!"
+//	// 可选：传入用户名、邮箱等，防止用个人信息当密码
+//	result := zxcvbn.PasswordStrength(password, nil)
+//
+//	fmt.Printf("Password: %s\n", password)
+//	fmt.Printf("Estimated entropy: %.1f bits\n", result.Entropy)
+//	fmt.Printf("Crack time (online): %s\n", result.CrackTimeDisplay)
+//	fmt.Printf("Score (0-4): %d\n", result.Score) // 0=weak, 4=strong
+//	fmt.Printf("Suggestions: %v\n", result.Score)
+//}
 
 func TestGetPublicKey(t *testing.T) {
 	_, publicKey, _, err := httpSDK.GetPublicKey()

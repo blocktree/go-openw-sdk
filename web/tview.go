@@ -29,6 +29,9 @@ import (
 var (
 	httpServerMu     sync.Mutex
 	isServiceRunning bool
+
+	wsServerMu         sync.Mutex
+	isWSServiceRunning bool
 )
 
 // 启动 HTTP 服务（仅当未运行时）
@@ -62,6 +65,35 @@ func startHTTPService() error {
 	return nil
 }
 
+// 启动 WebSocket 服务（仅当未运行时）
+func startWSService() error {
+	wsServerMu.Lock()
+	defer wsServerMu.Unlock()
+
+	if isWSServiceRunning {
+		return fmt.Errorf("WebSocket service already running")
+	}
+
+	go func() {
+		defer func() {
+			wsServerMu.Lock()
+			isWSServiceRunning = false
+			wsServerMu.Unlock()
+
+			if r := recover(); r != nil {
+				log.Printf("[ERROR] Panic in StartWebSocketNode: %v", r)
+			}
+			log.Println("[Service] WebSocket service exited")
+		}()
+
+		NewSocket()
+	}()
+
+	isWSServiceRunning = true
+	log.Println("[Service] WebSocket service started successfully")
+	return nil
+}
+
 // ==================== 应用入口 ====================
 func RunApplication() {
 	app := tview.NewApplication()
@@ -74,7 +106,7 @@ func RunApplication() {
 // ==================== 主菜单 ====================
 func showMainMenu(app *tview.Application) {
 	header := tview.NewTextView()
-	header.SetText("🔐 OpenWallet CLI – Manage your cryptographic wallets\n( Use ↑↓ to navigate, Enter to select, or press 1–4 )")
+	header.SetText("🔐 OpenWallet CLI – Manage your cryptographic wallets\n( Use ↑↓ to navigate, Enter to select, or press 1–6 )")
 	header.SetTextColor(tcell.ColorYellow)
 	header.SetDynamicColors(true)
 	header.SetBorder(false)
@@ -89,6 +121,13 @@ func showMainMenu(app *tview.Application) {
 	}
 	httpServerMu.Unlock()
 
+	wsStatus := ""
+	wsServerMu.Lock()
+	if isWSServiceRunning {
+		wsStatus = " (running)"
+	}
+	wsServerMu.Unlock()
+
 	config := common.GetAllConfig().Extract
 
 	list.AddItem("Create Wallet", "Generate new cryptographic keys", '1', nil)
@@ -100,12 +139,17 @@ func showMainMenu(app *tview.Application) {
 	}
 	list.AddItem("Generate ECDSA", "Print base64-encoded ECDSA key pair to terminal", '3', nil) // ← 新增
 	list.AddItem("Start HTTP Service"+status, "Launch HTTP signing API", '4', nil)
-	list.AddItem("Exit", "Quit the application", '5', nil)
+	list.AddItem("Start WebSocket Service"+wsStatus, "Launch WebSocket signing API", '5', nil)
+	list.AddItem("Exit", "Quit the application", '6', nil)
 
 	list.SetSelectedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
 		switch index {
 		case 0:
-			showCreateWallet(app)
+			if config.WalletMode == 1 {
+				showCreateWallet(app)
+			} else {
+				showCreateShardingWallet(app)
+			}
 		case 1:
 			if config.WalletMode == 1 {
 				showWalletList(app)
@@ -117,6 +161,8 @@ func showMainMenu(app *tview.Application) {
 		case 3:
 			showHttpService(app)
 		case 4:
+			showWSService(app)
+		case 5:
 			openwsdk.DestroyMemoryObject()
 			app.Stop()
 			os.Exit(0)
@@ -224,7 +270,30 @@ func showCreateWallet(app *tview.Application) {
 		fmt.Print("\nPress Enter to return to main menu...")
 		fmt.Scanln()
 	})
+	showMainMenu(app)
+}
 
+// ==================== mode=1创建钱包列表 ====================
+func showCreateShardingWallet(app *tview.Application) {
+	app.Suspend(func() {
+		fmt.Print("\n")
+		fmt.Println("🔐 Create New Sharding Wallet")
+		fmt.Println("────────────────────")
+		fmt.Println()
+
+		keyID, err := CreateShardingTask()
+		if err != nil {
+			fmt.Printf("\n❌ Create failed: %v\n", err.Error())
+			fmt.Print("Press Enter to return to main menu...")
+			fmt.Scanln()
+			return
+		}
+
+		fmt.Printf("\n✅ Wallet created successfully!\n")
+		fmt.Printf("   Wallet ID: %s\n", keyID)
+		fmt.Print("\nPress Enter to return to main menu...")
+		fmt.Scanln()
+	})
 	showMainMenu(app)
 }
 
@@ -370,6 +439,44 @@ func showHttpService(app *tview.Application) {
 		app.Suspend(func() {
 			fmt.Println("\n✅ HTTP service started successfully!")
 			fmt.Println(fmt.Sprintf("   Listening on http://localhost:%d", common.GetAllConfig().GetServerConfig(project).Port))
+			fmt.Print("Press Enter to return to main menu...")
+			fmt.Scanln()
+		})
+		showMainMenu(app)
+	}
+}
+
+// ==================== 启动WebSocket服务 ====================
+func showWSService(app *tview.Application) {
+	// 检查是否已有服务在运行
+	wsServerMu.Lock()
+	alreadyRunning := isWSServiceRunning
+	wsServerMu.Unlock()
+	if alreadyRunning {
+		app.Suspend(func() {
+			fmt.Println("\n⚠️  WebSocket service is already running!")
+			fmt.Print("Press Enter to return to main menu...")
+			fmt.Scanln()
+		})
+		showMainMenu(app)
+		return
+	}
+
+	// 启动服务
+	if err := startWSService(); err != nil {
+		app.Suspend(func() {
+			fmt.Printf("\n❌ Failed to start WebSocket service: %v\n", err)
+			fmt.Print("Press Enter to return to main menu...")
+			fmt.Scanln()
+		})
+		showMainMenu(app)
+	} else {
+		app.Suspend(func() {
+			fmt.Println("\n✅ WebSocket service started successfully!")
+			// 注意：这里需要你的配置能获取 WebSocket 端口
+			// 假设配置中有 WSPort 字段，否则请调整
+			wsPort := common.GetAllConfig().GetServerConfig(project).Port + 100
+			fmt.Printf("   Listening on ws://localhost:%d\n", wsPort)
 			fmt.Print("Press Enter to return to main menu...")
 			fmt.Scanln()
 		})

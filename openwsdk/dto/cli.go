@@ -75,6 +75,7 @@ type CliSignTransactionRes struct {
 	SignerList map[string]string `json:"signerList"`
 }
 
+//easyjson:json
 type CliSignTradeKeyReq struct {
 	common.BaseReq
 	Type int64  `json:"type"` // 0.普通交易 1.汇总交易
@@ -84,4 +85,23 @@ type CliSignTradeKeyReq struct {
 //easyjson:json
 type CliSignTradeKeyRes struct {
 	Sign string `json:"sign"`
+}
+
+//easyjson:json
+type CliShardingTaskReq struct {
+	common.BaseReq
+	TaskID    string `json:"taskID"`
+	PublicKey string `json:"publicKey"`
+}
+
+//easyjson:json
+type CliShardingTaskRes struct {
+	TaskID        string `json:"taskID"`        // 任务ID
+	KeyID         string `json:"keyID"`         // 钱包ID
+	PublicKey     string `json:"publicKey"`     // 节点临时公钥
+	ShardKey      string `json:"shardKey"`      // 加密分片数据
+	ShardKeySize  int    `json:"shardKeySize"`  // 分片数据原始长度
+	ShardKeyIndex int    `json:"shardKeyIndex"` // 分片数组的索引值
+	ExpiredTime   int64  `json:"expiredTime"`   // 任务过期时间, 秒
+	Status        int64  `json:"status"`        // 0.任务已创建 10.服务端已下发上传公钥通知 20.节点已上传公钥 30.服务端已下发拉取分片数据通知
 }

@@ -1,5 +1,9 @@
 {
   "domain": "http://localhost:9422",
+  "wsDomain": "localhost:9522",
+  "source": "node2",
+  "keyPath": "/api/PublicKey",
+  "loginPath": "/api/NodeLogin",
   "appID": "e6a06259193fb8476ffd83a87c4fc300",
   "appKey": "43cb8a4f8c795c74426aed363aa9c12af0d065ca33b472c6ec7ce5cf7bc47c7c",
   "clientNo": 2,

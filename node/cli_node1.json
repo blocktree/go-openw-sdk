@@ -1,0 +1,12 @@
+{
+  "domain": "http://127.0.0.1:9422",
+  "wsDomain": "127.0.0.1:9522",
+  "source": "node1",
+  "keyPath": "/api/PublicKey",
+  "loginPath": "/api/NodeLogin",
+  "appID": "e6a06259193fb8476ffd83a87c4fc300",
+  "appKey": "43cb8a4f8c795c74426aed363aa9c12af0d065ca33b472c6ec7ce5cf7bc47c7c",
+  "clientNo": 2,
+  "clientPrk": "VuXXxgt/TgFycQ6sYzL9x4LGCNxjiXM+a78FK9/vELY=",
+  "serverPub": "BK/9jRJFKqElvbqSQKoRkGsUzoN72mr5HvU6Imnt4ROS6WeBT2pLVHk0gEuOz09fs9KGQOrmcI/AQNfy8inM1gg="
+}

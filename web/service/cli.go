@@ -128,7 +128,7 @@ func (s *CliService) CliLogin(req *dto.AppLoginReq, res *dto.AppLoginRes) error 
 	}
 	defer DIC.ClearData(decrypt)
 	// 使用应用密钥验签失败则响应错误
-	if !bytes.Equal(utils.HMAC_SHA256_BASE(decrypt, utils.Str2Bytes(utils.AddStr(req.Nonce, req.Time))), utils.Base64Decode(req.Sign)) {
+	if !bytes.Equal(utils.HMAC_SHA256_BASE(decrypt, utils.Str2Bytes(utils.AddStr(req.Nonce, req.Time, req.Source))), utils.Base64Decode(req.Sign)) {
 		return ex.Throw{Code: ex.BIZ, Msg: "sign invalid"}
 	}
 	res.Subject = config.Extract.AppID

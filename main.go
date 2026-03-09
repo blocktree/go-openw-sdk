@@ -36,8 +36,6 @@ func main() {
 	// 初始化配置文件
 	common.NewBaseConfig(*configFile, logFileName)
 
-	webapp.NewSocket()
-
 	// 启动交互式控制台
 	webapp.RunApplication()
 }

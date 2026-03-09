@@ -30,9 +30,10 @@ func TestGetPublicKey(t *testing.T) {
 
 func TestOpsLogin(t *testing.T) {
 	requestData := dto.AppLoginReq{
-		AppID: opsConfig.AppID,
-		Nonce: utils.Base64Encode(utils.GetRandomSecure(32)),
-		Time:  utils.UnixSecond(),
+		AppID:  opsConfig.AppID,
+		Nonce:  utils.Base64Encode(utils.GetRandomSecure(32)),
+		Time:   utils.UnixSecond(),
+		Source: "AppLogin",
 	}
 	h, _ := hex.DecodeString(opsConfig.AppKey)
 	requestData.Sign = utils.Base64Encode(utils.HMAC_SHA256_BASE(h, utils.Str2Bytes(utils.AddStr(requestData.Nonce, requestData.Time))))
@@ -45,9 +46,10 @@ func TestOpsLogin(t *testing.T) {
 
 func TestCliLogin(t *testing.T) {
 	requestData := dto.AppLoginReq{
-		AppID: cliConfig.AppID,
-		Nonce: utils.Base64Encode(utils.GetRandomSecure(32)),
-		Time:  utils.UnixSecond(),
+		AppID:  cliConfig.AppID,
+		Nonce:  utils.Base64Encode(utils.GetRandomSecure(32)),
+		Time:   utils.UnixSecond(),
+		Source: "AppLogin",
 	}
 	h, _ := hex.DecodeString(cliConfig.AppKey)
 	requestData.Sign = utils.Base64Encode(utils.HMAC_SHA256_BASE(h, utils.Str2Bytes(utils.AddStr(requestData.Nonce, requestData.Time))))

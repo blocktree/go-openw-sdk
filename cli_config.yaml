@@ -40,10 +40,10 @@ extract:
   walletMode: 3 # 钱包模式,1,3,5模式, 1=本地创建密码钱包 3,5进行分片管理（需要部署多个分片节点）
   remoteWhitelist: # 业务系统请求IP白名单
     - "127.0.0.1"
-    - "localhost"
   signerWhitelist: # 交易JSON签名请求IP白名单
     - "127.0.0.1"
-    - "localhost"
+  nodeWhitelist: # 节点IP白名单
+    - "127.0.0.1"
   signerBlacklist: # 签名黑名单地址，拒绝签名
     - "0xdAb9c307B8B23A8fD8559f75C71F0694Da30D9F6"
   summaryWhitelist: # 汇总白名单地址

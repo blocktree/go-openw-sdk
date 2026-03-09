@@ -24,6 +24,7 @@ type Extract struct {
 	SignerWhitelist  []string `yaml:"signerWhitelist" json:"signerWhitelist"`   // 交易单JSON签名请求IP白名单
 	SummaryWhitelist []string `yaml:"summaryWhitelist" json:"summaryWhitelist"` // 汇总地址白名单
 	RemoteWhitelist  []string `yaml:"remoteWhitelist" json:"remoteWhitelist"`   // 业务系统请求IP白名单
+	NodeWhitelist    []string `yaml:"nodeWhitelist" json:"nodeWhitelist"`       // 节点请求IP白名单
 }
 
 type YamlConfigExtract struct {

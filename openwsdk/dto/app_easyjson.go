@@ -17,7 +17,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjsonD2c14bDecodeGithubComOpenserverOpenStdrpcApiMainDto(in *jlexer.Lexer, out *AppLoginRes) {
+func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto(in *jlexer.Lexer, out *AppLoginRes) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -47,7 +47,7 @@ func easyjsonD2c14bDecodeGithubComOpenserverOpenStdrpcApiMainDto(in *jlexer.Lexe
 		in.Consumed()
 	}
 }
-func easyjsonD2c14bEncodeGithubComOpenserverOpenStdrpcApiMainDto(out *jwriter.Writer, in AppLoginRes) {
+func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto(out *jwriter.Writer, in AppLoginRes) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -62,27 +62,27 @@ func easyjsonD2c14bEncodeGithubComOpenserverOpenStdrpcApiMainDto(out *jwriter.Wr
 // MarshalJSON supports json.Marshaler interface
 func (v AppLoginRes) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2c14bEncodeGithubComOpenserverOpenStdrpcApiMainDto(&w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v AppLoginRes) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2c14bEncodeGithubComOpenserverOpenStdrpcApiMainDto(w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *AppLoginRes) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2c14bDecodeGithubComOpenserverOpenStdrpcApiMainDto(&r, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *AppLoginRes) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2c14bDecodeGithubComOpenserverOpenStdrpcApiMainDto(l, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto(l, v)
 }
-func easyjsonD2c14bDecodeGithubComOpenserverOpenStdrpcApiMainDto1(in *jlexer.Lexer, out *AppLoginReq) {
+func easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto1(in *jlexer.Lexer, out *AppLoginReq) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -119,6 +119,12 @@ func easyjsonD2c14bDecodeGithubComOpenserverOpenStdrpcApiMainDto1(in *jlexer.Lex
 				in.Skip()
 			} else {
 				out.Time = int64(in.Int64())
+			}
+		case "source":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.Source = string(in.String())
 			}
 		case "cmd":
 			if in.IsNull() {
@@ -166,7 +172,7 @@ func easyjsonD2c14bDecodeGithubComOpenserverOpenStdrpcApiMainDto1(in *jlexer.Lex
 		in.Consumed()
 	}
 }
-func easyjsonD2c14bEncodeGithubComOpenserverOpenStdrpcApiMainDto1(out *jwriter.Writer, in AppLoginReq) {
+func easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto1(out *jwriter.Writer, in AppLoginReq) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -189,6 +195,11 @@ func easyjsonD2c14bEncodeGithubComOpenserverOpenStdrpcApiMainDto1(out *jwriter.W
 		const prefix string = ",\"time\":"
 		out.RawString(prefix)
 		out.Int64(int64(in.Time))
+	}
+	{
+		const prefix string = ",\"source\":"
+		out.RawString(prefix)
+		out.String(string(in.Source))
 	}
 	{
 		const prefix string = ",\"cmd\":"
@@ -226,23 +237,23 @@ func easyjsonD2c14bEncodeGithubComOpenserverOpenStdrpcApiMainDto1(out *jwriter.W
 // MarshalJSON supports json.Marshaler interface
 func (v AppLoginReq) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2c14bEncodeGithubComOpenserverOpenStdrpcApiMainDto1(&w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto1(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v AppLoginReq) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2c14bEncodeGithubComOpenserverOpenStdrpcApiMainDto1(w, v)
+	easyjsonD2c14bEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto1(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *AppLoginReq) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2c14bDecodeGithubComOpenserverOpenStdrpcApiMainDto1(&r, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto1(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *AppLoginReq) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2c14bDecodeGithubComOpenserverOpenStdrpcApiMainDto1(l, v)
+	easyjsonD2c14bDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto1(l, v)
 }

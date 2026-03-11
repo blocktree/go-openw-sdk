@@ -93,6 +93,7 @@ func CreateMPCKeyTask() (keyID string, err error) {
 	for _, subject := range nodeIDs {
 		req := &dto.CliMPCTempPublicKeyReq{
 			TaskID: taskID,
+			Module: "keygen",
 		}
 		if err := server.GetConnManager().SendToSubject(subject, "mpcTempPublicKey", req); err != nil {
 			return "", err
@@ -120,7 +121,7 @@ func CreateMPCKeyTask() (keyID string, err error) {
 			case <-keyTicker.C:
 				allReady := true
 				for _, subject := range nodeIDs {
-					cacheKey := utils.FNV1a64(utils.AddStr(subject, ":", taskID, ":tempPublicKey"))
+					cacheKey := utils.FNV1a64(utils.AddStr(subject, ":", taskID, ":keygen:tempPublicKey"))
 					v, ok, _ := keyCache.Get(cacheKey, nil)
 					if !ok || v == nil {
 						allReady = false
@@ -152,7 +153,16 @@ func CreateMPCKeyTask() (keyID string, err error) {
 	}
 
 	for _, subject := range nodeIDs {
-		if err := server.GetConnManager().SendToSubject(subject, "mpcKeygenStart", startPayload); err != nil {
+		data, err := utils.JsonMarshal(startPayload)
+		if err != nil {
+			return "", err
+		}
+		encrypt, err := ecc.Encrypt(nil, meta.PublicKey[subject], data, utils.Str2Bytes(subject))
+		if err != nil {
+			return "", err
+		}
+
+		if err := server.GetConnManager().SendToSubject(subject, "mpcKeygenStart", &dto.CliMPCEncryptData{Data: utils.Base64Encode(encrypt)}); err != nil {
 			return "", err
 		}
 		nodeResult := &MpcKeygenNodeResult{
@@ -244,7 +254,7 @@ func handleTempPublicKey(ctx context.Context, connCtx *node.ConnectionContext, b
 		return nil, err
 	}
 	subject := connCtx.GetUserIDString()
-	cacheKey := utils.FNV1a64(utils.AddStr(subject, ":", request.TaskID, ":tempPublicKey"))
+	cacheKey := utils.FNV1a64(utils.AddStr(subject, ":", request.TaskID, ":", request.Module, ":tempPublicKey"))
 	// 缓存原始 bytes，便于后续直接使用
 	if err := keyCache.Put(cacheKey, rawPub, 20); err != nil { // 20秒有效
 		return nil, err

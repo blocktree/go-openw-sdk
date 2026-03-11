@@ -165,6 +165,7 @@ type CliMPCKeygenMsgRes struct {
 type CliMPCTempPublicKeyReq struct {
 	common.BaseReq
 	TaskID    string `json:"taskID"`
+	Module    string `json:"module"`
 	PublicKey string `json:"publicKey"`
 }
 
@@ -173,4 +174,11 @@ type CliMPCTempPublicKeyReq struct {
 //easyjson:json
 type CliMPCTempPublicKeyRes struct {
 	Success bool `json:"success"`
+}
+
+// CliMPCEncryptData 加密传输对象
+//
+//easyjson:json
+type CliMPCEncryptData struct {
+	Data string `json:"data"`
 }

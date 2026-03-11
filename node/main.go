@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/ecdh"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -10,14 +11,34 @@ import (
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
 	ecc "github.com/godaddy-x/eccrypto"
+	"github.com/godaddy-x/freego/cache"
 	"github.com/godaddy-x/freego/utils"
 	"github.com/godaddy-x/freego/utils/sdk"
 )
+
+var (
+	keyCache = cache.NewLocalCache(1, 1)
+)
+
+func getTempPrivateKey(mod, subject string) (*ecdh.PrivateKey, error) {
+	key := utils.FNV1a64(utils.AddStr(subject, ":", mod, ":tempPrivateKey"))
+	value, b, err := keyCache.Get(key, nil)
+	if err != nil {
+		return nil, err
+	}
+	if b && value != nil {
+		return value.(*ecdh.PrivateKey), nil
+	}
+	return nil, nil
+}
 
 func handleTempPublicKey(wsClient *sdk.SocketSDK, subject, router string, data []byte) error {
 	request := dto.CliMPCTempPublicKeyReq{}
 	if err := json.Unmarshal(data, &request); err != nil {
 		return errors.New("handleTempPublicKey json unmarshal error: " + err.Error())
+	}
+	if request.Module == "" {
+		return errors.New("handleTempPublicKey invalid module")
 	}
 	prk, err := ecc.CreateECDH()
 	if err != nil {
@@ -27,6 +48,12 @@ func handleTempPublicKey(wsClient *sdk.SocketSDK, subject, router string, data [
 	response := dto.CliMPCTempPublicKeyRes{}
 	if err := wsClient.SendWebSocketMessage("/ws/mpcTempPublicKey", &request, &response, true, true, 30); err != nil {
 		return errors.New("handleTempPublicKey send shard message error: " + err.Error())
+	}
+	if response.Success {
+		cacheKey := utils.FNV1a64(utils.AddStr(subject, ":", request.Module, ":tempPrivateKey"))
+		if err := keyCache.Put(cacheKey, prk); err != nil {
+			return errors.New("handleTempPublicKey put tempPrivateKey error: " + err.Error())
+		}
 	}
 	return nil
 }

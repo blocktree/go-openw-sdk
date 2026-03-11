@@ -12,6 +12,7 @@ import (
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
 	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
 	"github.com/bnb-chain/tss-lib/tss"
+	ecc "github.com/godaddy-x/eccrypto"
 	"github.com/godaddy-x/freego/utils"
 	"github.com/godaddy-x/freego/utils/sdk"
 )
@@ -133,8 +134,26 @@ func submitKeygenResultErr(wsClient *sdk.SocketSDK, taskID, nodeID, errMsg strin
 // HandleMpcKeygenStart 处理服务端下发的 mpcKeygenStart Push：
 // 提前注册会话以接收早期 TSS 消息，再异步执行耗时的 KeyGen。
 func HandleMpcKeygenStart(wsClient *sdk.SocketSDK, myNodeID, router string, body []byte) error {
+	if len(body) == 0 {
+		return nil
+	}
+	var decrypt dto.CliMPCEncryptData
+	if err := utils.JsonUnmarshal(body, &decrypt); err != nil {
+		return err
+	}
+	prk, err := getTempPrivateKey("keygen", myNodeID)
+	if err != nil {
+		return err
+	}
+	if prk == nil {
+		return errors.New("temp prk is nil")
+	}
+	msg, err := ecc.Decrypt(prk, utils.Base64Decode(decrypt.Data), utils.Str2Bytes(myNodeID), nil)
+	if err != nil {
+		return err
+	}
 	var start dto.CliMPCKeygenStartRes
-	if err := utils.JsonUnmarshal(body, &start); err != nil {
+	if err := utils.JsonUnmarshal(msg, &start); err != nil {
 		return err
 	}
 	if start.ExpiredTime > 0 && start.ExpiredTime < utils.UnixSecond() {

@@ -532,99 +532,12 @@ func handleMpcSignMsg(ctx context.Context, connCtx *node.ConnectionContext, body
 		return nil, err
 	}
 
-	mpcLogf("handleMpcSignMsg: taskID=%s subject=%s\n",
-		req.TaskID, req.Subject)
-
-	metaKey := utils.FNV1a64("mpcSignMeta:" + req.TaskID)
-	value, ok, _ := keyCache.Get(metaKey, nil)
-	if !ok || value == nil {
-		mpcLogf("handleMpcSignMsg: task meta not found, taskID=%s\n", req.TaskID)
-		return nil, errors.New("mpc sign task not found: " + req.TaskID)
-	}
-	meta := value.(*MpcKeygenTaskMeta)
-	if meta.ExpiredTime < utils.UnixSecond() {
-		mpcLogf("handleMpcSignMsg: task expired, taskID=%s\n", req.TaskID)
-		return nil, errors.New("mpc sign task expired")
-	}
-
-	//senderSubject := connCtx.GetUserIDString()
-	//mpcLogf("handleMpcSignMsg: sender subject=%s fromIndex=%d (taskID=%s)\n", senderSubject, req.FromIndex, req.TaskID)
+	mpcLogf("handleMpcSignMsg: taskID=%s subject=%s (forward only)\n", req.TaskID, req.Subject)
 
 	if err := server.GetConnManager().SendToSubject(req.Subject, "mpcSignMsg", req); err != nil {
 		mpcLogf("handleMpcSignMsg: push to %s FAILED: %v (taskID=%s fromSubject=%s)\n",
 			req.TaskID, err, req.TaskID, req.Subject)
 	}
-
-	//payload := &dto.CliMPCSignMsgRes{
-	//	TaskID:          req.TaskID,
-	//	WireBytesBase64: req.WireBytesBase64,
-	//	FromIndex:       req.FromIndex,
-	//	IsBroadcast:     req.IsBroadcast,
-	//}
-	//
-	//if err := server.GetConnManager().SendToSubject(nodeID, "mpcSignMsg", &dto.CliMPCEncryptData{
-	//	TaskID: meta.TaskID,
-	//	Data:   utils.Base64Encode(encrypt),
-	//}); err != nil {
-	//	mpcLogf("handleMpcSignMsg: push to %s FAILED: %v (taskID=%s fromIndex=%d)\n",
-	//		nodeID, err, req.TaskID, req.FromIndex)
-	//}
-	//
-	//if req.IsBroadcast {
-	//	var targets []string
-	//	for i, nodeID := range meta.NodeIDs {
-	//		if i == req.FromIndex {
-	//			continue
-	//		}
-	//		targets = append(targets, nodeID)
-	//		mpcLogf("handleMpcSignMsg: sending push mpcSignMsg -> %s (taskID=%s fromIndex=%d)\n",
-	//			nodeID, req.TaskID, req.FromIndex)
-	//
-	//		data, err := utils.JsonMarshal(payload)
-	//		if err != nil {
-	//			return "", err
-	//		}
-	//		encrypt, err := ecc.Encrypt(nil, meta.PublicKey[nodeID], data, utils.Str2Bytes(utils.AddStr(meta.TaskID, "|", nodeID, "|mpcSignMsg")))
-	//		if err != nil {
-	//			return "", err
-	//		}
-	//		if err := server.GetConnManager().SendToSubject(nodeID, "mpcSignMsg", &dto.CliMPCEncryptData{
-	//			TaskID: meta.TaskID,
-	//			Data:   utils.Base64Encode(encrypt),
-	//		}); err != nil {
-	//			mpcLogf("handleMpcSignMsg: push to %s FAILED: %v (taskID=%s fromIndex=%d)\n",
-	//				nodeID, err, req.TaskID, req.FromIndex)
-	//		} else {
-	//			mpcLogf("handleMpcSignMsg: push to %s OK (taskID=%s fromIndex=%d)\n",
-	//				nodeID, req.TaskID, req.FromIndex)
-	//		}
-	//	}
-	//	mpcLogf("handleMpcSignMsg: broadcast fromIndex=%d -> targets=%v (excluded self)\n", req.FromIndex, targets)
-	//} else {
-	//	for _, nodeID := range req.ToNodeIDs {
-	//		mpcLogf("handleMpcSignMsg: sending push mpcSignMsg -> %s (taskID=%s fromIndex=%d)\n",
-	//			nodeID, req.TaskID, req.FromIndex)
-	//
-	//		data, err := utils.JsonMarshal(payload)
-	//		if err != nil {
-	//			return "", err
-	//		}
-	//		encrypt, err := ecc.Encrypt(nil, meta.PublicKey[nodeID], data, utils.Str2Bytes(utils.AddStr(meta.TaskID, "|", nodeID, "|mpcSignMsg")))
-	//		if err != nil {
-	//			return "", err
-	//		}
-	//		if err := server.GetConnManager().SendToSubject(nodeID, "mpcSignMsg", &dto.CliMPCEncryptData{
-	//			TaskID: meta.TaskID,
-	//			Data:   utils.Base64Encode(encrypt),
-	//		}); err != nil {
-	//			mpcLogf("handleMpcSignMsg: push to %s FAILED: %v (taskID=%s fromIndex=%d)\n",
-	//				nodeID, err, req.TaskID, req.FromIndex)
-	//		} else {
-	//			mpcLogf("handleMpcSignMsg: push to %s OK (taskID=%s fromIndex=%d)\n",
-	//				nodeID, req.TaskID, req.FromIndex)
-	//		}
-	//	}
-	//}
 
 	mpcLogf("handleMpcSignMsg: done for taskID=%s subject=%s\n", req.TaskID, req.Subject)
 	return &dto.CliMPCResultRes{OK: true}, nil
@@ -658,90 +571,20 @@ func handleMpcKeygenResult(ctx context.Context, connCtx *node.ConnectionContext,
 	return &dto.CliMPCKeygenResultRes{OK: true}, nil
 }
 
-// handleMpcKeygenMsg 节点发出的 TSS 协议消息，服务端转发给其他参与方（广播或单播）。
+// handleMpcKeygenMsg 节点发出的 TSS 协议消息；节点已按目标加密，服务端只转发不解密。
 func handleMpcKeygenMsg(ctx context.Context, connCtx *node.ConnectionContext, body []byte) (interface{}, error) {
-	req := &dto.CliMPCKeygenMsgReq{}
+	req := &dto.CliMPCEncryptData{}
 	if err := utils.JsonUnmarshal(body, req); err != nil {
 		mpcLogf("handleMpcKeygenMsg: json unmarshal error: %v\n", err)
 		return nil, err
 	}
 
-	mpcLogf("handleMpcKeygenMsg: taskID=%s fromIndex=%d isBroadcast=%v toNodeIDs=%v\n",
-		req.TaskID, req.FromIndex, req.IsBroadcast, req.ToNodeIDs)
+	mpcLogf("handleMpcKeygenMsg: taskID=%s subject=%s (forward only)\n", req.TaskID, req.Subject)
 
-	metaKey := utils.FNV1a64("mpcMeta:" + req.TaskID)
-	value, ok, _ := keyCache.Get(metaKey, nil)
-	if !ok || value == nil {
-		mpcLogf("handleMpcKeygenMsg: task meta not found, taskID=%s\n", req.TaskID)
-		return nil, errors.New("mpc task not found: " + req.TaskID)
+	if err := server.GetConnManager().SendToSubject(req.Subject, "mpcKeygenMsg", req); err != nil {
+		mpcLogf("handleMpcKeygenMsg: push to %s FAILED: %v (taskID=%s)\n", req.Subject, err, req.TaskID)
+		return nil, err
 	}
-	meta := value.(*MpcKeygenTaskMeta)
-	if meta.ExpiredTime < utils.UnixSecond() {
-		mpcLogf("handleMpcKeygenMsg: task expired, taskID=%s\n", req.TaskID)
-		return nil, errors.New("mpc task expired")
-	}
-
-	senderSubject := connCtx.GetUserIDString()
-	mpcLogf("handleMpcKeygenMsg: sender subject=%s fromIndex=%d (taskID=%s)\n", senderSubject, req.FromIndex, req.TaskID)
-
-	payload := &dto.CliMPCKeygenMsgRes{
-		TaskID:          req.TaskID,
-		WireBytesBase64: req.WireBytesBase64,
-		FromIndex:       req.FromIndex,
-		IsBroadcast:     req.IsBroadcast,
-	}
-
-	if req.IsBroadcast {
-		var targets []string
-		for i, nodeID := range meta.NodeIDs {
-			if i == req.FromIndex {
-				continue
-			}
-			targets = append(targets, nodeID)
-			mpcLogf("handleMpcKeygenMsg: sending push mpcKeygenMsg -> %s (taskID=%s fromIndex=%d)\n",
-				nodeID, req.TaskID, req.FromIndex)
-
-			data, err := utils.JsonMarshal(payload)
-			if err != nil {
-				return "", err
-			}
-			encrypt, err := ecc.Encrypt(nil, meta.PublicKey[nodeID], data, utils.Str2Bytes(utils.AddStr(meta.TaskID, "|", nodeID, "|mpcKeygenMsg")))
-			if err != nil {
-				return "", err
-			}
-
-			if err := server.GetConnManager().SendToSubject(nodeID, "mpcKeygenMsg", &dto.CliMPCEncryptData{TaskID: meta.TaskID, Data: utils.Base64Encode(encrypt)}); err != nil {
-				mpcLogf("handleMpcKeygenMsg: push to %s FAILED: %v (taskID=%s fromIndex=%d)\n",
-					nodeID, err, req.TaskID, req.FromIndex)
-			} else {
-				mpcLogf("handleMpcKeygenMsg: push to %s OK (taskID=%s fromIndex=%d)\n",
-					nodeID, req.TaskID, req.FromIndex)
-			}
-		}
-		mpcLogf("handleMpcKeygenMsg: broadcast fromIndex=%d -> targets=%v (excluded self)\n", req.FromIndex, targets)
-	} else {
-		for _, nodeID := range req.ToNodeIDs {
-			mpcLogf("handleMpcKeygenMsg: sending push mpcKeygenMsg -> %s (taskID=%s fromIndex=%d)\n",
-				nodeID, req.TaskID, req.FromIndex)
-
-			data, err := utils.JsonMarshal(payload)
-			if err != nil {
-				return "", err
-			}
-			encrypt, err := ecc.Encrypt(nil, meta.PublicKey[nodeID], data, utils.Str2Bytes(utils.AddStr(meta.TaskID, "|", nodeID, "|mpcKeygenMsg")))
-			if err != nil {
-				return "", err
-			}
-			if err := server.GetConnManager().SendToSubject(nodeID, "mpcKeygenMsg", &dto.CliMPCEncryptData{TaskID: meta.TaskID, Data: utils.Base64Encode(encrypt)}); err != nil {
-				mpcLogf("handleMpcKeygenMsg: push to %s FAILED: %v (taskID=%s fromIndex=%d)\n",
-					nodeID, err, req.TaskID, req.FromIndex)
-			} else {
-				mpcLogf("handleMpcKeygenMsg: push to %s OK (taskID=%s fromIndex=%d)\n",
-					nodeID, req.TaskID, req.FromIndex)
-			}
-		}
-	}
-
-	mpcLogf("handleMpcKeygenMsg: done for taskID=%s\n", req.TaskID)
+	mpcLogf("handleMpcKeygenMsg: done taskID=%s subject=%s\n", req.TaskID, req.Subject)
 	return &dto.CliMPCResultRes{OK: true}, nil
 }

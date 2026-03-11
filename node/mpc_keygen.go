@@ -165,8 +165,8 @@ func HandleMpcKeygenStart(wsClient *sdk.SocketSDK, myNodeID, router string, body
 			continue
 		}
 		cacheKey := utils.FNV1a64(utils.AddStr(v.Subject, ":", start.TaskID, ":keygen:tempPublicKey"))
-		if err := keyCache.Put(cacheKey, prk, 600); err != nil {
-			return errors.New("handleTempPublicKey put tempPrivateKey error: " + err.Error())
+		if err := keyCache.Put(cacheKey, v.PublicKey, 600); err != nil {
+			return errors.New("handleTempPublicKey put tempPublicKey error: " + err.Error())
 		}
 	}
 
@@ -217,6 +217,11 @@ func HandleMpcKeygenStart(wsClient *sdk.SocketSDK, myNodeID, router string, body
 			unregisterKeygenSession(start.TaskID, myNodeID)
 			keygenTempPrk := utils.FNV1a64(utils.AddStr(myNodeID, ":", start.TaskID, ":keygen:tempPrivateKey"))
 			_ = keyCache.Del(keygenTempPrk)
+			for _, v := range start.NodeIDs {
+				signTempPub := utils.FNV1a64(utils.AddStr(v, ":", start.TaskID, ":keygen:tempPublicKey"))
+				a, _ := keyCache.GetString(signTempPub)
+				_ = keyCache.Del(signTempPub)
+			}
 		}()
 
 		saveData, keyID, err := RunKeygenNodeReal(start.TaskID, start.NodeIDs, myNodeID, start.Threshold, wsClient)
@@ -257,7 +262,7 @@ type wsKeygenRouter struct {
 	wsClient  *sdk.SocketSDK
 }
 
-// Send 将本节点 party 产生的消息编码后 POST 到服务端，由服务端转发给其他节点。
+// Send 将本节点 party 产生的消息按目标加密后 POST 到服务端，服务端只转发不解密（与 sign 模块一致）。
 func (r *wsKeygenRouter) Send(fromIndex int, msg tss.Message) error {
 	wireBytes, _, err := msg.WireBytes()
 	if err != nil {
@@ -273,18 +278,46 @@ func (r *wsKeygenRouter) Send(fromIndex int, msg tss.Message) error {
 		}
 		fmt.Printf("[mpc-keygen] Send: task=%s fromIndex=%d toNodeIDs=%v\n",
 			r.taskID, fromIndex, toNodeIDs)
+	} else {
+		for _, v := range r.sortedIDs {
+			if v.GetId() == r.subject { // 跳过自身
+				continue
+			}
+			toNodeIDs = append(toNodeIDs, v.GetId())
+		}
 	}
-	req := &dto.CliMPCKeygenMsgReq{
-		TaskID:          r.taskID,
-		WireBytesBase64: base64.StdEncoding.EncodeToString(wireBytes),
-		FromIndex:       fromIndex,
-		IsBroadcast:     msg.IsBroadcast(),
-		ToNodeIDs:       toNodeIDs,
-	}
-	var res map[string]interface{}
-	if err := r.wsClient.SendWebSocketMessage("/ws/mpcKeygenMsg", req, &res, true, true, 60); err != nil {
-		fmt.Printf("[mpc-keygen] Send: task=%s fromIndex=%d rpc error=%v\n", r.taskID, fromIndex, err)
-		return err
+
+	for _, targetNodeID := range toNodeIDs {
+		payload := &dto.CliMPCKeygenMsgRes{
+			TaskID:          r.taskID,
+			WireBytesBase64: base64.StdEncoding.EncodeToString(wireBytes),
+			FromIndex:       fromIndex,
+			IsBroadcast:     msg.IsBroadcast(),
+		}
+		data, err := utils.JsonMarshal(payload)
+		if err != nil {
+			return err
+		}
+		publicKey, err := getTempPublicKey("keygen", targetNodeID, r.taskID)
+		if err != nil {
+			return err
+		}
+		if len(publicKey) == 0 {
+			fmt.Printf("[mpc-keygen] Send: task=%s no public key for target %s, skip\n", r.taskID, targetNodeID)
+			continue
+		}
+		encrypt, err := ecc.Encrypt(nil, publicKey, data, utils.Str2Bytes(utils.AddStr(r.taskID, "|", targetNodeID, "|mpcKeygenMsg")))
+		if err != nil {
+			return err
+		}
+		if err := r.wsClient.SendWebSocketMessage("/ws/mpcKeygenMsg", &dto.CliMPCEncryptData{
+			TaskID:  r.taskID,
+			Subject: targetNodeID,
+			Data:    utils.Base64Encode(encrypt),
+		}, &dto.CliMPCResultRes{}, true, true, 60); err != nil {
+			fmt.Printf("[mpc-keygen] Send: task=%s fromIndex=%d to %s rpc error=%v\n", r.taskID, fromIndex, targetNodeID, err)
+			return err
+		}
 	}
 	return nil
 }

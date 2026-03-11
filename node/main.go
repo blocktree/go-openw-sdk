@@ -17,12 +17,12 @@ import (
 )
 
 var (
-	keyCache = cache.NewLocalCache(1, 1)
+	keygenCache = cache.NewLocalCache(1, 1)
 )
 
-func getTempPrivateKey(mod, subject string) (*ecdh.PrivateKey, error) {
-	key := utils.FNV1a64(utils.AddStr(subject, ":", mod, ":tempPrivateKey"))
-	value, b, err := keyCache.Get(key, nil)
+func getTempPrivateKey(mod, subject, taskID string) (*ecdh.PrivateKey, error) {
+	key := utils.FNV1a64(utils.AddStr(subject, ":", taskID, ":", mod, ":tempPrivateKey"))
+	value, b, err := keygenCache.Get(key, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -50,8 +50,8 @@ func handleTempPublicKey(wsClient *sdk.SocketSDK, subject, router string, data [
 		return errors.New("handleTempPublicKey send shard message error: " + err.Error())
 	}
 	if response.Success {
-		cacheKey := utils.FNV1a64(utils.AddStr(subject, ":", request.Module, ":tempPrivateKey"))
-		if err := keyCache.Put(cacheKey, prk); err != nil {
+		cacheKey := utils.FNV1a64(utils.AddStr(subject, ":", request.TaskID, ":", request.Module, ":tempPrivateKey"))
+		if err := keygenCache.Put(cacheKey, prk, 600); err != nil {
 			return errors.New("handleTempPublicKey put tempPrivateKey error: " + err.Error())
 		}
 	}

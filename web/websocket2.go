@@ -157,12 +157,12 @@ func CreateMPCKeyTask() (keyID string, err error) {
 		if err != nil {
 			return "", err
 		}
-		encrypt, err := ecc.Encrypt(nil, meta.PublicKey[subject], data, utils.Str2Bytes(subject))
+		encrypt, err := ecc.Encrypt(nil, meta.PublicKey[subject], data, utils.Str2Bytes(utils.AddStr(taskID, "|", subject, "|mpcKeygenStart")))
 		if err != nil {
 			return "", err
 		}
 
-		if err := server.GetConnManager().SendToSubject(subject, "mpcKeygenStart", &dto.CliMPCEncryptData{Data: utils.Base64Encode(encrypt)}); err != nil {
+		if err := server.GetConnManager().SendToSubject(subject, "mpcKeygenStart", &dto.CliMPCEncryptData{TaskID: taskID, Data: utils.Base64Encode(encrypt)}); err != nil {
 			return "", err
 		}
 		nodeResult := &MpcKeygenNodeResult{

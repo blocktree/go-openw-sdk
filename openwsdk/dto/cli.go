@@ -180,5 +180,7 @@ type CliMPCTempPublicKeyRes struct {
 //
 //easyjson:json
 type CliMPCEncryptData struct {
-	Data string `json:"data"`
+	TaskID  string `json:"taskID"`
+	Subject string `json:"subject"`
+	Data    string `json:"data"`
 }

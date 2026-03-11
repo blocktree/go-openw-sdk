@@ -141,14 +141,14 @@ func HandleMpcKeygenStart(wsClient *sdk.SocketSDK, myNodeID, router string, body
 	if err := utils.JsonUnmarshal(body, &decrypt); err != nil {
 		return err
 	}
-	prk, err := getTempPrivateKey("keygen", myNodeID)
+	prk, err := getTempPrivateKey("keygen", myNodeID, decrypt.TaskID)
 	if err != nil {
 		return err
 	}
 	if prk == nil {
 		return errors.New("temp prk is nil")
 	}
-	msg, err := ecc.Decrypt(prk, utils.Base64Decode(decrypt.Data), utils.Str2Bytes(myNodeID), nil)
+	msg, err := ecc.Decrypt(prk, utils.Base64Decode(decrypt.Data), utils.Str2Bytes(utils.AddStr(decrypt.TaskID, "|", myNodeID, "|mpcKeygenStart")), nil)
 	if err != nil {
 		return err
 	}
@@ -205,6 +205,8 @@ func HandleMpcKeygenStart(wsClient *sdk.SocketSDK, myNodeID, router string, body
 		defer func() {
 			session.close()
 			unregisterKeygenSession(start.TaskID, myNodeID)
+			keygenTempPrk := utils.FNV1a64(utils.AddStr(myNodeID, ":", start.TaskID, ":keygen:tempPrivateKey"))
+			_ = keygenCache.Del(keygenTempPrk)
 		}()
 
 		saveData, keyID, err := RunKeygenNodeReal(start.TaskID, start.NodeIDs, myNodeID, start.Threshold, wsClient)

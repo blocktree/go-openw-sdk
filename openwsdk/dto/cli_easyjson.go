@@ -2009,6 +2009,18 @@ func easyjsonC5d09f7cDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto16(in *jlexe
 		key := in.UnsafeFieldName(false)
 		in.WantColon()
 		switch key {
+		case "taskID":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.TaskID = string(in.String())
+			}
+		case "subject":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.Subject = string(in.String())
+			}
 		case "data":
 			if in.IsNull() {
 				in.Skip()
@@ -2030,8 +2042,18 @@ func easyjsonC5d09f7cEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto16(out *jwri
 	first := true
 	_ = first
 	{
-		const prefix string = ",\"data\":"
+		const prefix string = ",\"taskID\":"
 		out.RawString(prefix[1:])
+		out.String(string(in.TaskID))
+	}
+	{
+		const prefix string = ",\"subject\":"
+		out.RawString(prefix)
+		out.String(string(in.Subject))
+	}
+	{
+		const prefix string = ",\"data\":"
+		out.RawString(prefix)
 		out.String(string(in.Data))
 	}
 	out.RawByte('}')

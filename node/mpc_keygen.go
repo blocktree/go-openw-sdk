@@ -206,7 +206,7 @@ func HandleMpcKeygenStart(wsClient *sdk.SocketSDK, myNodeID, router string, body
 			session.close()
 			unregisterKeygenSession(start.TaskID, myNodeID)
 			keygenTempPrk := utils.FNV1a64(utils.AddStr(myNodeID, ":", start.TaskID, ":keygen:tempPrivateKey"))
-			_ = keygenCache.Del(keygenTempPrk)
+			_ = keyCache.Del(keygenTempPrk)
 		}()
 
 		saveData, keyID, err := RunKeygenNodeReal(start.TaskID, start.NodeIDs, myNodeID, start.Threshold, wsClient)

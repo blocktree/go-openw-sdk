@@ -216,6 +216,18 @@ func CreateMPCSignTask(keyID, msgHashHex string) (sigHex string, err error) {
 			if sigHexFirst == "" {
 				return "", errors.New("empty signature from nodes")
 			}
+			// 清理与本次签名任务相关的缓存（签名结果、临时公钥、任务元信息）
+			for _, subject := range signNodeIDs {
+				resKey := utils.FNV1a64(utils.AddStr("sign:", subject, ":", taskID))
+				_ = keyCache.Del(resKey)
+				tempPubKey := utils.FNV1a64(utils.AddStr(subject, ":", taskID, ":sign:tempPublicKey"))
+				_ = keyCache.Del(tempPubKey)
+			}
+			metaKey = utils.FNV1a64("mpcSignMeta:" + taskID)
+			_ = keyCache.Del(metaKey)
+
+			mpcLogf("CreateMPCSignTask: taskID=%s caches cleared\n", taskID)
+
 			return sigHexFirst, nil
 		}
 	}
@@ -437,6 +449,17 @@ func CreateMPCKeyTask() (keyID string, err error) {
 			if err := os.WriteFile(metaPath, metaData, 0o600); err != nil {
 				return "", fmt.Errorf("write key meta file failed: %w", err)
 			}
+
+			// 清理与本次任务相关的缓存（节点状态、临时公钥、任务元信息）
+			for _, subject := range nodeIDs {
+				nodeCacheKey := utils.FNV1a64(utils.AddStr(subject, taskID))
+				_ = keyCache.Del(nodeCacheKey)
+				tempPubKey := utils.FNV1a64(utils.AddStr(subject, ":", taskID, ":keygen:tempPublicKey"))
+				_ = keyCache.Del(tempPubKey)
+			}
+			_ = keyCache.Del(metaKey)
+
+			mpcLogf("CreateMPCKeyTask: taskID=%s caches cleared\n", taskID)
 
 			mpcLogf("CreateMPCKeyTask: taskID=%s all nodes done, keyID=%s\n", taskID, keyID)
 			return keyID, nil

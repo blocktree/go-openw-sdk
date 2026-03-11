@@ -271,6 +271,13 @@ func NewSocket() {
 		panic(err)
 	}
 
+	if err := server.AddRouter("/ws/mpcKeygenResult", handleMpcKeygenResult, &node.RouterConfig{}); err != nil {
+		panic(err)
+	}
+	if err := server.AddRouter("/ws/mpcKeygenMsg", handleMpcKeygenMsg, &node.RouterConfig{}); err != nil {
+		panic(err)
+	}
+
 	if err := server.StartWebsocket(utils.AddStr(serverConfig.Addr, ":", serverConfig.Port+100)); err != nil {
 		panic(err)
 	}

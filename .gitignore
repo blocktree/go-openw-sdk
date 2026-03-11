@@ -9,3 +9,5 @@ build
 cli-http.log
 cli-app
 cli_config_log.log
+node/keys/
+node/node/

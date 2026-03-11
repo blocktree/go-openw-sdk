@@ -52,14 +52,7 @@ func handleShardingPost(wsClient *sdk.SocketSDK, subject, router string, data []
 	return nil
 }
 
-func main() {
-
-	// 命令行参数处理
-	configFile := flag.String("config", "cli_node.json", "configuration file path")
-	flag.Parse()
-
-	cliConfig := openwsdk.ReadJson(*configFile)
-
+func RunMPCNode(cliConfig openwsdk.SdkConfig) {
 	cliHttp := openwsdk.NewHttpSDK(cliConfig)
 
 	time.Sleep(2 * time.Second)
@@ -92,8 +85,32 @@ func main() {
 			if err := handleShardingPost(wsClient, cliConfig.Source, router, data); err != nil {
 				fmt.Println(err)
 			}
+		} else if router == "mpcKeygenStart" {
+			go func() {
+				if err := HandleMpcKeygenStart(wsClient, cliConfig.Source, router, data); err != nil {
+					fmt.Println("mpc keygen error:", err)
+				} else {
+					fmt.Println("mpc keygen done, result submitted")
+				}
+			}()
+		} else if router == "mpcKeygenMsg" {
+			fmt.Printf("[mpc-keygen] Push received: router=%s len=%d\n", router, len(data))
+			if err := DeliverMpcKeygenMsg(wsClient, cliConfig.Source, router, data); err != nil && err.Error() != "Error is nil" {
+				fmt.Println("mpcKeygenMsg deliver error:", err)
+			}
 		}
 	})
+}
+
+func main() {
+
+	// 命令行参数处理
+	configFile := flag.String("config", "cli_node.json", "configuration file path")
+	flag.Parse()
+
+	cliConfig := openwsdk.ReadJson(*configFile)
+
+	RunMPCNode(cliConfig)
 
 	time.Sleep(2000 * time.Second)
 

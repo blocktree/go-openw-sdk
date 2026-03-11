@@ -1,7 +1,7 @@
 {
-  "domain": "http://localhost:9422",
-  "wsDomain": "localhost:9522",
-  "source": "node3",
+  "domain": "http://127.0.0.1:9422",
+  "wsDomain": "127.0.0.1:9522",
+  "source": "node0",
   "keyPath": "/api/PublicKey",
   "loginPath": "/api/NodeLogin",
   "appID": "e6a06259193fb8476ffd83a87c4fc300",

@@ -105,3 +105,56 @@ type CliShardingTaskRes struct {
 	ExpiredTime   int64  `json:"expiredTime"`   // 任务过期时间, 秒
 	Status        int64  `json:"status"`        // 0.任务已创建 10.服务端已下发上传公钥通知 20.节点已上传公钥 30.服务端已下发拉取分片数据通知
 }
+
+// CliMPCKeygenStartRes 服务端下发给节点的「开始 MPC keygen」消息（push: mpcKeygenStart）
+//
+//easyjson:json
+type CliMPCKeygenStartRes struct {
+	TaskID      string   `json:"taskID"`
+	NodeIDs     []string `json:"nodeIDs"`
+	Threshold   int      `json:"threshold"`
+	ExpiredTime int64    `json:"expiredTime"`
+}
+
+// CliMPCKeygenResultReq 节点上报 keygen 结果（POST /ws/mpcKeygenResult）
+//
+//easyjson:json
+type CliMPCKeygenResultReq struct {
+	common.BaseReq
+	TaskID         string `json:"taskID"`
+	NodeID         string `json:"nodeID"`
+	KeyID          string `json:"keyID"`
+	SaveDataBase64 string `json:"saveDataBase64"`
+	Err            string `json:"err"`
+}
+
+// CliMPCKeygenResultRes 服务端对 keygen 结果的上报响应
+//
+//easyjson:json
+type CliMPCKeygenResultRes struct {
+	OK  bool   `json:"ok"`
+	Err string `json:"err,omitempty"`
+}
+
+// CliMPCKeygenMsgReq 节点发出的 TSS 协议消息（服务端转发给其他节点）
+//
+//easyjson:json
+type CliMPCKeygenMsgReq struct {
+	common.BaseReq
+	TaskID          string   `json:"taskID"`
+	WireBytesBase64 string   `json:"wireBytesBase64"`
+	FromIndex       int      `json:"fromIndex"`
+	IsBroadcast     bool     `json:"isBroadcast"`
+	ToNodeIDs       []string `json:"toNodeIDs,omitempty"`
+}
+
+// CliMPCKeygenMsgRes 服务端推送给节点的 TSS 协议消息（push: mpcKeygenMsg）
+//
+//easyjson:json
+type CliMPCKeygenMsgRes struct {
+	TaskID          string   `json:"taskID"`
+	WireBytesBase64 string   `json:"wireBytesBase64"`
+	FromIndex       int      `json:"fromIndex"`
+	IsBroadcast     bool     `json:"isBroadcast"`
+	ToNodeIDs       []string `json:"toNodeIDs"`
+}

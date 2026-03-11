@@ -140,6 +140,7 @@ func showMainMenu(app *tview.Application) {
 	list.AddItem("Generate ECDSA", "Print base64-encoded ECDSA key pair to terminal", '3', nil) // ← 新增
 	list.AddItem("Start HTTP Service"+status, "Launch HTTP signing API", '4', nil)
 	list.AddItem("Start WebSocket Service"+wsStatus, "Launch WebSocket signing API", '5', nil)
+	list.AddItem("Create MPC Key (TSS)", "Multi-node TSS keygen (3 or 5 nodes online)", '7', nil)
 	list.AddItem("Exit", "Quit the application", '6', nil)
 
 	list.SetSelectedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
@@ -160,9 +161,13 @@ func showMainMenu(app *tview.Application) {
 			showGenerateECDSA(app)
 		case 3:
 			showHttpService(app)
+			showWSService(app)
 		case 4:
+			showHttpService(app)
 			showWSService(app)
 		case 5:
+			showCreateMPCKeyWallet(app)
+		case 6:
 			openwsdk.DestroyMemoryObject()
 			app.Stop()
 			os.Exit(0)
@@ -291,6 +296,32 @@ func showCreateShardingWallet(app *tview.Application) {
 
 		fmt.Printf("\n✅ Wallet created successfully!\n")
 		fmt.Printf("   Wallet ID: %s\n", keyID)
+		fmt.Print("\nPress Enter to return to main menu...")
+		fmt.Scanln()
+	})
+	showMainMenu(app)
+}
+
+// showCreateMPCKeyWallet 通过轮询多节点完成 TSS keygen，落盘 mpc_keys 后返回 KeyID。
+func showCreateMPCKeyWallet(app *tview.Application) {
+	app.Suspend(func() {
+		fmt.Print("\n")
+		fmt.Println("🔐 Create MPC Key (TSS Keygen)")
+		fmt.Println("────────────────────")
+		fmt.Println("Ensure 3 or 5 nodes are online and WebSocket service is running.")
+		fmt.Println()
+
+		keyID, err := CreateMPCKeyTask()
+		if err != nil {
+			fmt.Printf("\n❌ MPC keygen failed: %v\n", err.Error())
+			fmt.Print("Press Enter to return to main menu...")
+			fmt.Scanln()
+			return
+		}
+
+		fmt.Printf("\n✅ MPC key created successfully!\n")
+		fmt.Printf("   KeyID: %s\n", keyID)
+		fmt.Printf("   Saved to: mpc_keys/%s/<nodeID>.json\n", keyID)
 		fmt.Print("\nPress Enter to return to main menu...")
 		fmt.Scanln()
 	})

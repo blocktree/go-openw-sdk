@@ -199,7 +199,7 @@ func HandleMpcKeygenStart(wsClient *sdk.SocketSDK, myNodeID, router string, body
 			myNodeID, start.TaskID, keyID)
 
 		// 节点本地持久化自己的份额（keyfile）
-		baseDir := fmt.Sprintf("node/keys/%s", myNodeID)
+		baseDir := fmt.Sprintf("keys")
 		store := mpc.NewFileKeyStore(baseDir)
 		if err := store.Save(keyID, myNodeID, saveData); err != nil {
 			fmt.Printf("[mpc-keygen] node=%s task=%s save local share failed: %v\n", myNodeID, start.TaskID, err)

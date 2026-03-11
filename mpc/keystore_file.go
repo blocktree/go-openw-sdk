@@ -12,7 +12,7 @@ import (
 )
 
 // FileKeyStore 基于目录的 KeyStore 实现：每个 (keyID, nodeID) 存为一份 JSON 文件。
-// 目录结构：BaseDir / {keyID} / {nodeID}.json
+// 目录结构：BaseDir / {keyID}-{nodeID}.json
 // 重启后通过 Load(keyID, nodeID) 即可恢复该节点的 SaveData。
 //
 // 安全说明：SaveData 含 Paillier 私钥、秘密份额等，等同于私钥级别，必须保密。
@@ -40,10 +40,10 @@ func sanitize(s string) string {
 }
 
 func (f *FileKeyStore) path(keyID, nodeID string) string {
-	return filepath.Join(f.BaseDir, sanitize(keyID), sanitize(nodeID)+".json")
+	return filepath.Join(f.BaseDir, sanitize(keyID)+"-"+sanitize(nodeID)+".json")
 }
 
-// Save 将 data 序列化为 JSON 写入 BaseDir/keyID/nodeID.json。
+// Save 将 data 序列化为 JSON 写入 BaseDir/{keyID}-{nodeID}.json（新规则）。
 // 文件权限 0700(目录)/0600(文件)。内容为明文，敏感；生产环境应对内容加密或使用加密存储。
 func (f *FileKeyStore) Save(keyID, nodeID string, data keygen.LocalPartySaveData) error {
 	path := f.path(keyID, nodeID)
@@ -57,7 +57,7 @@ func (f *FileKeyStore) Save(keyID, nodeID string, data keygen.LocalPartySaveData
 	return os.WriteFile(path, raw, 0600)
 }
 
-// Load 从 BaseDir/keyID/nodeID.json 读取并反序列化，并恢复曲线（SetCurve）。
+// Load 从 BaseDir/{keyID}-{nodeID}.json 读取并反序列化，并恢复曲线（SetCurve）。
 // 重启后对每个 (keyID, nodeID) 调用 Load 即可得到该节点的 SaveData，用于 RunSign。
 func (f *FileKeyStore) Load(keyID, nodeID string) (keygen.LocalPartySaveData, error) {
 	path := f.path(keyID, nodeID)

@@ -185,7 +185,7 @@ func HandleMpcSignStart(wsClient *sdk.SocketSDK, myNodeID, router string, body [
 			session.close()
 			unregisterSignSession(start.TaskID, myNodeID)
 			signTempPrk := utils.FNV1a64(utils.AddStr(myNodeID, ":", start.TaskID, ":sign:tempPrivateKey"))
-			_ = keygenCache.Del(signTempPrk)
+			_ = keyCache.Del(signTempPrk)
 		}()
 
 		sigHex, err := RunSignNodeReal(start.TaskID, start.KeyID, start.NodeIDs, myNodeID, start.Threshold, msgHash, wsClient)
@@ -460,4 +460,3 @@ func DeliverMpcSignMsg(wsClient *sdk.SocketSDK, myNodeID, router string, body []
 	fmt.Printf("[mpc-sign] Deliver: enqueued myIndex=%d fromIndex=%d task=%s\n", s.router.myIndex, res.FromIndex, res.TaskID)
 	return nil
 }
-

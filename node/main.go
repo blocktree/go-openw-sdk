@@ -17,13 +17,12 @@ import (
 )
 
 var (
-	keygenCache  = cache.NewLocalCache(1, 1)
-	signingCache = cache.NewLocalCache(1, 1)
+	keyCache = cache.NewLocalCache(3, 3)
 )
 
 func getTempPrivateKey(mod, subject, taskID string) (*ecdh.PrivateKey, error) {
 	key := utils.FNV1a64(utils.AddStr(subject, ":", taskID, ":", mod, ":tempPrivateKey"))
-	value, b, err := keygenCache.Get(key, nil)
+	value, b, err := keyCache.Get(key, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +51,7 @@ func handleTempPublicKey(wsClient *sdk.SocketSDK, subject, router string, data [
 	}
 	if response.Success {
 		cacheKey := utils.FNV1a64(utils.AddStr(subject, ":", request.TaskID, ":", request.Module, ":tempPrivateKey"))
-		if err := keygenCache.Put(cacheKey, prk, 600); err != nil {
+		if err := keyCache.Put(cacheKey, prk, 600); err != nil {
 			return errors.New("handleTempPublicKey put tempPrivateKey error: " + err.Error())
 		}
 	}

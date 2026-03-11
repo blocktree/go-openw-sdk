@@ -256,7 +256,7 @@ func handleTempPublicKey(ctx context.Context, connCtx *node.ConnectionContext, b
 	subject := connCtx.GetUserIDString()
 	cacheKey := utils.FNV1a64(utils.AddStr(subject, ":", request.TaskID, ":", request.Module, ":tempPublicKey"))
 	// 缓存原始 bytes，便于后续直接使用
-	if err := keyCache.Put(cacheKey, rawPub, 20); err != nil { // 20秒有效
+	if err := keyCache.Put(cacheKey, rawPub, 120); err != nil { // 120秒有效
 		return nil, err
 	}
 	return &dto.CliMPCTempPublicKeyRes{Success: true}, nil
@@ -332,7 +332,17 @@ func handleMpcKeygenMsg(ctx context.Context, connCtx *node.ConnectionContext, bo
 			targets = append(targets, nodeID)
 			mpcLogf("handleMpcKeygenMsg: sending push mpcKeygenMsg -> %s (taskID=%s fromIndex=%d)\n",
 				nodeID, req.TaskID, req.FromIndex)
-			if err := server.GetConnManager().SendToSubject(nodeID, "mpcKeygenMsg", payload); err != nil {
+
+			data, err := utils.JsonMarshal(payload)
+			if err != nil {
+				return "", err
+			}
+			encrypt, err := ecc.Encrypt(nil, meta.PublicKey[nodeID], data, utils.Str2Bytes(utils.AddStr(meta.TaskID, "|", nodeID, "|mpcKeygenMsg")))
+			if err != nil {
+				return "", err
+			}
+
+			if err := server.GetConnManager().SendToSubject(nodeID, "mpcKeygenMsg", &dto.CliMPCEncryptData{TaskID: meta.TaskID, Data: utils.Base64Encode(encrypt)}); err != nil {
 				mpcLogf("handleMpcKeygenMsg: push to %s FAILED: %v (taskID=%s fromIndex=%d)\n",
 					nodeID, err, req.TaskID, req.FromIndex)
 			} else {
@@ -345,7 +355,16 @@ func handleMpcKeygenMsg(ctx context.Context, connCtx *node.ConnectionContext, bo
 		for _, nodeID := range req.ToNodeIDs {
 			mpcLogf("handleMpcKeygenMsg: sending push mpcKeygenMsg -> %s (taskID=%s fromIndex=%d)\n",
 				nodeID, req.TaskID, req.FromIndex)
-			if err := server.GetConnManager().SendToSubject(nodeID, "mpcKeygenMsg", payload); err != nil {
+
+			data, err := utils.JsonMarshal(payload)
+			if err != nil {
+				return "", err
+			}
+			encrypt, err := ecc.Encrypt(nil, meta.PublicKey[nodeID], data, utils.Str2Bytes(utils.AddStr(meta.TaskID, "|", nodeID, "|mpcKeygenMsg")))
+			if err != nil {
+				return "", err
+			}
+			if err := server.GetConnManager().SendToSubject(nodeID, "mpcKeygenMsg", &dto.CliMPCEncryptData{TaskID: meta.TaskID, Data: utils.Base64Encode(encrypt)}); err != nil {
 				mpcLogf("handleMpcKeygenMsg: push to %s FAILED: %v (taskID=%s fromIndex=%d)\n",
 					nodeID, err, req.TaskID, req.FromIndex)
 			} else {

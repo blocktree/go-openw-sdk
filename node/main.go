@@ -17,7 +17,8 @@ import (
 )
 
 var (
-	keygenCache = cache.NewLocalCache(1, 1)
+	keygenCache  = cache.NewLocalCache(1, 1)
+	signingCache = cache.NewLocalCache(1, 1)
 )
 
 func getTempPrivateKey(mod, subject, taskID string) (*ecdh.PrivateKey, error) {

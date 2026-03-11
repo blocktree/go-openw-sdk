@@ -379,8 +379,8 @@ func runKeygenDelivery(s *keygenSession) {
 			continue
 		}
 
-		// party 未就绪：缓存消息（最多缓存 100 条，防内存爆炸）
-		if len(earlyMsgs) < 100 {
+		// party 未就绪：缓存消息（最多缓存 512 条，防内存爆炸）
+		if len(earlyMsgs) < 512 {
 			earlyMsgs = append(earlyMsgs, item)
 			fmt.Printf("[mpc-keygen] task=%s cached early msg fromIndex=%d (total=%d)\n",
 				s.router.taskID, item.FromIndex, len(earlyMsgs))
@@ -443,8 +443,26 @@ func getKeygenSession(taskID, nodeID string) *keygenSession {
 
 // DeliverMpcKeygenMsg 由 main 的 Push 回调调用：根据 body 中的 taskID 找到会话，将消息放入投递队列由 delivery 协程串行 Update。
 func DeliverMpcKeygenMsg(wsClient *sdk.SocketSDK, myNodeID, router string, body []byte) error {
+	if len(body) == 0 {
+		return nil
+	}
+	var decrypt dto.CliMPCEncryptData
+	if err := utils.JsonUnmarshal(body, &decrypt); err != nil {
+		return err
+	}
+	prk, err := getTempPrivateKey("keygen", myNodeID, decrypt.TaskID)
+	if err != nil {
+		return err
+	}
+	if prk == nil {
+		return errors.New("temp prk is nil")
+	}
+	msg, err := ecc.Decrypt(prk, utils.Base64Decode(decrypt.Data), utils.Str2Bytes(utils.AddStr(decrypt.TaskID, "|", myNodeID, "|mpcKeygenMsg")), nil)
+	if err != nil {
+		return err
+	}
 	var res dto.CliMPCKeygenMsgRes
-	if err := utils.JsonUnmarshal(body, &res); err != nil {
+	if err := utils.JsonUnmarshal(msg, &res); err != nil {
 		fmt.Println("[mpc-keygen] Deliver: json error =", err)
 		return err
 	}

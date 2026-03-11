@@ -184,3 +184,65 @@ type CliMPCEncryptData struct {
 	Subject string `json:"subject"`
 	Data    string `json:"data"`
 }
+
+// 分布式签名相关 DTO
+
+// CliMPCSignStartRes 服务端下发给节点的「开始 MPC sign」消息（push: mpcSignStart）
+//
+//easyjson:json
+type CliMPCSignStartRes struct {
+	TaskID      string   `json:"taskID"`
+	KeyID       string   `json:"keyID"`       // 要使用的根密钥 KeyID
+	NodeIDs     []string `json:"nodeIDs"`     // 参与签名的节点（TSS 顺序）
+	Threshold   int      `json:"threshold"`   // 门限（通常与 keygen 一致）
+	MsgHashHex  string   `json:"msgHashHex"`  // 待签名消息哈希（32字节 hex）
+	ExpiredTime int64    `json:"expiredTime"` // 任务过期时间，秒级时间戳
+}
+
+// CliMPCSignResultReq 节点上报签名结果（POST /ws/mpcSignResult）
+//
+//easyjson:json
+type CliMPCSignResultReq struct {
+	common.BaseReq
+	TaskID       string `json:"taskID"`
+	NodeID       string `json:"nodeID"`
+	KeyID        string `json:"keyID"`
+	SignatureHex string `json:"signatureHex"` // R||S 的 64字节 hex（或空，当 Err 不为空时）
+	Err          string `json:"err"`
+}
+
+// CliMPCSignResultRes 服务端对签名结果上报的响应
+//
+//easyjson:json
+type CliMPCSignResultRes struct {
+	OK  bool   `json:"ok"`
+	Err string `json:"err,omitempty"`
+}
+
+// CliMPCSignMsgReq 节点发出的 TSS 签名协议消息（服务端转发给其他节点）
+//
+//easyjson:json
+type CliMPCSignMsgReq struct {
+	common.BaseReq
+	TaskID          string   `json:"taskID"`
+	WireBytesBase64 string   `json:"wireBytesBase64"`
+	FromIndex       int      `json:"fromIndex"`
+	IsBroadcast     bool     `json:"isBroadcast"`
+	ToNodeIDs       []string `json:"toNodeIDs,omitempty"`
+}
+
+// CliMPCSignMsgRes 服务端推送给节点的 TSS 签名协议消息（push: mpcSignMsg）
+//
+//easyjson:json
+type CliMPCSignMsgRes struct {
+	TaskID          string   `json:"taskID"`
+	WireBytesBase64 string   `json:"wireBytesBase64"`
+	FromIndex       int      `json:"fromIndex"`
+	IsBroadcast     bool     `json:"isBroadcast"`
+	ToNodeIDs       []string `json:"toNodeIDs"`
+}
+
+//easyjson:json
+type CliMPCResultRes struct {
+	OK bool `json:"ok"`
+}

@@ -126,6 +126,19 @@ func RunMPCNode(cliConfig openwsdk.SdkConfig) {
 			if err := DeliverMpcKeygenMsg(wsClient, cliConfig.Source, router, data); err != nil && err.Error() != "Error is nil" {
 				fmt.Println("mpcKeygenMsg deliver error:", err)
 			}
+		} else if router == "mpcSignStart" {
+			go func() {
+				if err := HandleMpcSignStart(wsClient, cliConfig.Source, router, data); err != nil {
+					fmt.Println("mpc sign error:", err)
+				} else {
+					fmt.Println("mpc sign done, result submitted")
+				}
+			}()
+		} else if router == "mpcSignMsg" {
+			fmt.Printf("[mpc-sign] Push received: router=%s len=%d\n", router, len(data))
+			if err := DeliverMpcSignMsg(wsClient, cliConfig.Source, router, data); err != nil && err.Error() != "Error is nil" {
+				fmt.Println("mpcSignMsg deliver error:", err)
+			}
 		}
 	})
 }

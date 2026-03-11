@@ -245,6 +245,14 @@ func NewSocket() {
 		panic(err)
 	}
 
+	// 分布式签名相关路由
+	if err := server.AddRouter("/ws/mpcSignResult", handleMpcSignResult, &node.RouterConfig{}); err != nil {
+		panic(err)
+	}
+	if err := server.AddRouter("/ws/mpcSignMsg", handleMpcSignMsg, &node.RouterConfig{}); err != nil {
+		panic(err)
+	}
+
 	if err := server.StartWebsocket(utils.AddStr(serverConfig.Addr, ":", serverConfig.Port+100)); err != nil {
 		panic(err)
 	}

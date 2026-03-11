@@ -32,6 +32,18 @@ func getTempPrivateKey(mod, subject, taskID string) (*ecdh.PrivateKey, error) {
 	return nil, nil
 }
 
+func getTempPublicKey(mod, subject, taskID string) ([]byte, error) {
+	key := utils.FNV1a64(utils.AddStr(subject, ":", taskID, ":", mod, ":tempPublicKey"))
+	value, err := keyCache.GetString(key)
+	if err != nil {
+		return nil, err
+	}
+	if value != "" {
+		return utils.Base64Decode(value), nil
+	}
+	return nil, nil
+}
+
 func handleTempPublicKey(wsClient *sdk.SocketSDK, subject, router string, data []byte) error {
 	request := dto.CliMPCTempPublicKeyReq{}
 	if err := json.Unmarshal(data, &request); err != nil {
@@ -55,27 +67,6 @@ func handleTempPublicKey(wsClient *sdk.SocketSDK, subject, router string, data [
 			return errors.New("handleTempPublicKey put tempPrivateKey error: " + err.Error())
 		}
 	}
-	return nil
-}
-
-func handleShardingPost(wsClient *sdk.SocketSDK, subject, router string, data []byte) error {
-	request := dto.CliShardingTaskReq{}
-	if err := json.Unmarshal(data, &request); err != nil {
-		return errors.New("handleShardingPost json unmarshal error: " + err.Error())
-	}
-	response := dto.CliShardingTaskRes{}
-	if err := wsClient.SendWebSocketMessage("/ws/shardingPost", &request, &response, true, true, 30); err != nil {
-		return errors.New("handleShardingPost send shard message error: " + err.Error())
-	}
-	//dst := memguard.NewBuffer(64)
-	//defer dst.Destroy()
-	//_, err = ecc.Decrypt(prk, utils.Base64Decode(response.ShardKey), utils.Str2Bytes(subject), dst.Bytes())
-	//if err != nil {
-	//	return errors.New("handleShardingPost decrypt error: " + err.Error())
-	//}
-	//fmt.Println("sharding: ", utils.Base64Encode(dst.Bytes()))
-	a, _ := utils.JsonMarshal(&response)
-	fmt.Println(string(a))
 	return nil
 }
 
@@ -106,10 +97,6 @@ func RunMPCNode(cliConfig openwsdk.SdkConfig) {
 	wsClient.SetPushMessageCallback(func(router string, data []byte) {
 		if router == "mpcTempPublicKey" {
 			if err := handleTempPublicKey(wsClient, cliConfig.Source, router, data); err != nil {
-				fmt.Println(err)
-			}
-		} else if router == "shardingPost" {
-			if err := handleShardingPost(wsClient, cliConfig.Source, router, data); err != nil {
 				fmt.Println(err)
 			}
 		} else if router == "mpcKeygenStart" {

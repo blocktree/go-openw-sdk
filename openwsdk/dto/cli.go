@@ -106,14 +106,21 @@ type CliShardingTaskRes struct {
 	Status        int64  `json:"status"`        // 0.任务已创建 10.服务端已下发上传公钥通知 20.节点已上传公钥 30.服务端已下发拉取分片数据通知
 }
 
+//easyjson:json
+type CliMPCPublicKeyPair struct {
+	Subject   string `json:"subject"`
+	PublicKey string `json:"publicKey"`
+}
+
 // CliMPCKeygenStartRes 服务端下发给节点的「开始 MPC keygen」消息（push: mpcKeygenStart）
 //
 //easyjson:json
 type CliMPCKeygenStartRes struct {
-	TaskID      string   `json:"taskID"`
-	NodeIDs     []string `json:"nodeIDs"`
-	Threshold   int      `json:"threshold"`
-	ExpiredTime int64    `json:"expiredTime"`
+	TaskID        string                `json:"taskID"`
+	NodeIDs       []string              `json:"nodeIDs"`
+	Threshold     int                   `json:"threshold"`
+	ExpiredTime   int64                 `json:"expiredTime"`
+	PublicKeyPair []CliMPCPublicKeyPair `json:"publicKeyPair"`
 }
 
 // CliMPCKeygenResultReq 节点上报 keygen 结果（POST /ws/mpcKeygenResult）
@@ -191,12 +198,13 @@ type CliMPCEncryptData struct {
 //
 //easyjson:json
 type CliMPCSignStartRes struct {
-	TaskID      string   `json:"taskID"`
-	KeyID       string   `json:"keyID"`       // 要使用的根密钥 KeyID
-	NodeIDs     []string `json:"nodeIDs"`     // 参与签名的节点（TSS 顺序）
-	Threshold   int      `json:"threshold"`   // 门限（通常与 keygen 一致）
-	MsgHashHex  string   `json:"msgHashHex"`  // 待签名消息哈希（32字节 hex）
-	ExpiredTime int64    `json:"expiredTime"` // 任务过期时间，秒级时间戳
+	TaskID        string                `json:"taskID"`
+	KeyID         string                `json:"keyID"`       // 要使用的根密钥 KeyID
+	NodeIDs       []string              `json:"nodeIDs"`     // 参与签名的节点（TSS 顺序）
+	Threshold     int                   `json:"threshold"`   // 门限（通常与 keygen 一致）
+	MsgHashHex    string                `json:"msgHashHex"`  // 待签名消息哈希（32字节 hex）
+	ExpiredTime   int64                 `json:"expiredTime"` // 任务过期时间，秒级时间戳
+	PublicKeyPair []CliMPCPublicKeyPair `json:"publicKeyPair"`
 }
 
 // CliMPCSignResultReq 节点上报签名结果（POST /ws/mpcSignResult）

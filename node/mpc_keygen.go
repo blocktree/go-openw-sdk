@@ -160,6 +160,16 @@ func HandleMpcKeygenStart(wsClient *sdk.SocketSDK, myNodeID, router string, body
 		return errors.New("mpc keygen task expired")
 	}
 
+	for _, v := range start.PublicKeyPair {
+		if v.Subject == myNodeID {
+			continue
+		}
+		cacheKey := utils.FNV1a64(utils.AddStr(v.Subject, ":", start.TaskID, ":keygen:tempPublicKey"))
+		if err := keyCache.Put(cacheKey, prk, 600); err != nil {
+			return errors.New("handleTempPublicKey put tempPrivateKey error: " + err.Error())
+		}
+	}
+
 	fmt.Printf("[mpc-keygen] node=%s task=%s start, threshold=%d, nodes=%v\n",
 		myNodeID, start.TaskID, start.Threshold, start.NodeIDs)
 

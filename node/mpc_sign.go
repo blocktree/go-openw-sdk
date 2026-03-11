@@ -137,6 +137,16 @@ func HandleMpcSignStart(wsClient *sdk.SocketSDK, myNodeID, router string, body [
 		return errors.New("mpc sign task expired")
 	}
 
+	for _, v := range start.PublicKeyPair {
+		if v.Subject == myNodeID {
+			continue
+		}
+		cacheKey := utils.FNV1a64(utils.AddStr(v.Subject, ":", start.TaskID, ":sign:tempPublicKey"))
+		if err := keyCache.Put(cacheKey, v.PublicKey, 600); err != nil {
+			return errors.New("handleTempPublicKey put tempPrivateKey error: " + err.Error())
+		}
+	}
+
 	fmt.Printf("[mpc-sign] node=%s task=%s start, keyID=%s threshold=%d, nodes=%v\n",
 		myNodeID, start.TaskID, start.KeyID, start.Threshold, start.NodeIDs)
 
@@ -186,6 +196,10 @@ func HandleMpcSignStart(wsClient *sdk.SocketSDK, myNodeID, router string, body [
 			unregisterSignSession(start.TaskID, myNodeID)
 			signTempPrk := utils.FNV1a64(utils.AddStr(myNodeID, ":", start.TaskID, ":sign:tempPrivateKey"))
 			_ = keyCache.Del(signTempPrk)
+			for _, v := range start.NodeIDs {
+				signTempPub := utils.FNV1a64(utils.AddStr(v, ":", start.TaskID, ":sign:tempPublicKey"))
+				_ = keyCache.Del(signTempPub)
+			}
 		}()
 
 		sigHex, err := RunSignNodeReal(start.TaskID, start.KeyID, start.NodeIDs, myNodeID, start.Threshold, msgHash, wsClient)
@@ -245,21 +259,53 @@ func (r *wsSignRouter) Send(fromIndex int, msg tss.Message) error {
 		for _, pid := range msg.GetTo() {
 			toNodeIDs = append(toNodeIDs, pid.GetId())
 		}
-		fmt.Printf("[mpc-sign] Send: task=%s fromIndex=%d toNodeIDs=%v\n",
-			r.taskID, fromIndex, toNodeIDs)
+	} else {
+		for _, v := range r.sortedIDs {
+			if v.GetId() == r.subject { // 跳过自身
+				continue
+			}
+			toNodeIDs = append(toNodeIDs, v.GetId())
+		}
 	}
-	req := &dto.CliMPCSignMsgReq{
-		TaskID:          r.taskID,
-		WireBytesBase64: base64.StdEncoding.EncodeToString(wireBytes),
-		FromIndex:       fromIndex,
-		IsBroadcast:     msg.IsBroadcast(),
-		ToNodeIDs:       toNodeIDs,
+	fmt.Printf("[mpc-sign] Send: task=%s fromIndex=%d toNodeIDs=%v\n",
+		r.taskID, fromIndex, toNodeIDs)
+	// 这里开始发送给服务端转发
+	for _, v := range toNodeIDs {
+		payload := &dto.CliMPCSignMsgRes{
+			TaskID:          r.taskID,
+			WireBytesBase64: base64.StdEncoding.EncodeToString(wireBytes),
+			FromIndex:       fromIndex,
+			IsBroadcast:     msg.IsBroadcast(),
+		}
+		data, err := utils.JsonMarshal(payload)
+		if err != nil {
+			return err
+		}
+		publicKey, err := getTempPublicKey("sign", v, r.taskID)
+		if err != nil {
+			return err
+		}
+		encrypt, err := ecc.Encrypt(nil, publicKey, data, utils.Str2Bytes(utils.AddStr(r.taskID, "|", v, "|mpcSignMsg")))
+		if err != nil {
+			return err
+		}
+		if err := r.wsClient.SendWebSocketMessage("/ws/mpcSignMsg", &dto.CliMPCEncryptData{Data: utils.Base64Encode(encrypt), TaskID: r.taskID, Subject: v}, &dto.CliMPCResultRes{}, true, true, 60); err != nil {
+			fmt.Printf("[mpc-sign] Send: task=%s fromIndex=%d rpc error=%v\n", r.taskID, fromIndex, err)
+			return err
+		}
 	}
-	var res map[string]interface{}
-	if err := r.wsClient.SendWebSocketMessage("/ws/mpcSignMsg", req, &res, true, true, 60); err != nil {
-		fmt.Printf("[mpc-sign] Send: task=%s fromIndex=%d rpc error=%v\n", r.taskID, fromIndex, err)
-		return err
-	}
+	//req := &dto.CliMPCSignMsgReq{
+	//	TaskID:          r.taskID,
+	//	WireBytesBase64: base64.StdEncoding.EncodeToString(wireBytes),
+	//	FromIndex:       fromIndex,
+	//	IsBroadcast:     msg.IsBroadcast(),
+	//	ToNodeIDs:       toNodeIDs,
+	//}
+	//var res map[string]interface{}
+	//if err := r.wsClient.SendWebSocketMessage("/ws/mpcSignMsg", req, &res, true, true, 60); err != nil {
+	//	fmt.Printf("[mpc-sign] Send: task=%s fromIndex=%d rpc error=%v\n", r.taskID, fromIndex, err)
+	//	return err
+	//}
 	return nil
 }
 

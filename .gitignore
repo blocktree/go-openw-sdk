@@ -11,3 +11,4 @@ cli-app
 cli_config_log.log
 node/keys/
 node/node/
+mpc_keys_meta/

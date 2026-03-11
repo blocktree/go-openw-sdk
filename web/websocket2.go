@@ -3,8 +3,11 @@ package webapp
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sort"
 	"sync"
 	"time"
@@ -19,6 +22,10 @@ import (
 // mpcKeygenLogMu 串行化 mpc-keygen 相关日志，避免 CreateMPCKeyTask 轮询与 handleMpcKeygenMsg 并发写 stdout 导致交错。
 var mpcKeygenLogMu sync.Mutex
 
+// keyMetaDir 服务端记录 keyID 对应节点列表的本地目录。
+// 每次 keygen 成功后会写入 keyMetaDir/{keyID}.json，内容为节点 ID 数组（nodeIDs，TSS 顺序）。
+const keyMetaDir = "mpc_keys_meta"
+
 func mpcLogf(format string, args ...interface{}) {
 	mpcKeygenLogMu.Lock()
 	fmt.Printf("[mpc-keygen] "+format, args...)
@@ -32,6 +39,15 @@ type MpcKeygenTaskMeta struct {
 	Threshold   int
 	ExpiredTime int64
 	PublicKey   map[string][]byte // subject -> temp ECDH public key (raw bytes)
+}
+
+// KeyMeta 用于持久化一把 key 的元信息到本地 JSON 文件（keyMetaDir/{keyID}.json）。
+// 方便在服务端配置丢失时，从文件恢复参与节点与门限配置。
+type KeyMeta struct {
+	KeyID         string         `json:"keyID"`
+	NodeIDs       []string       `json:"nodeIDs"`       // 按 TSS PartyIDs 顺序
+	Threshold     int            `json:"threshold"`     // 门限 t（如 2-of-3、3-of-5）
+	IndexByNodeID map[string]int `json:"indexByNodeID"` // nodeID -> index（在 NodeIDs 中的下标）
 }
 
 // MpcKeygenNodeResult 按 (subject, taskID) 存的节点上报结果，Status 40 表示已上报 SaveData。
@@ -227,6 +243,30 @@ func CreateMPCKeyTask() (keyID string, err error) {
 			if keyID == "" {
 				return "", errors.New("keyID empty")
 			}
+
+			// 将本次 keygen 的元信息持久化到本地 JSON 文件：keyMetaDir/{keyID}.json
+			if err := os.MkdirAll(keyMetaDir, 0o700); err != nil {
+				return "", fmt.Errorf("create key meta dir failed: %w", err)
+			}
+			metaPath := filepath.Join(keyMetaDir, keyID+".json")
+			indexByNodeID := make(map[string]int, len(nodeIDs))
+			for i, id := range nodeIDs {
+				indexByNodeID[id] = i
+			}
+			metaObj := KeyMeta{
+				KeyID:         keyID,
+				NodeIDs:       nodeIDs,
+				Threshold:     threshold,
+				IndexByNodeID: indexByNodeID,
+			}
+			metaData, err := json.Marshal(&metaObj)
+			if err != nil {
+				return "", fmt.Errorf("marshal key meta failed: %w", err)
+			}
+			if err := os.WriteFile(metaPath, metaData, 0o600); err != nil {
+				return "", fmt.Errorf("write key meta file failed: %w", err)
+			}
+
 			mpcLogf("CreateMPCKeyTask: taskID=%s all nodes done, keyID=%s\n", taskID, keyID)
 			return keyID, nil
 		}

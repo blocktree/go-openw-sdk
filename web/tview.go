@@ -141,6 +141,7 @@ func showMainMenu(app *tview.Application) {
 	list.AddItem("Start HTTP Service"+status, "Launch HTTP signing API", '4', nil)
 	list.AddItem("Start WebSocket Service"+wsStatus, "Launch WebSocket signing API", '5', nil)
 	list.AddItem("Create MPC Key (TSS)", "Multi-node TSS keygen (3 or 5 nodes online)", '7', nil)
+	list.AddItem("Test MPC Sign (TSS)", "Run a test MPC signature with fixed hash", '8', nil)
 	list.AddItem("Exit", "Quit the application", '6', nil)
 
 	list.SetSelectedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
@@ -168,6 +169,8 @@ func showMainMenu(app *tview.Application) {
 		case 5:
 			showCreateMPCKeyWallet(app)
 		case 6:
+			showTestMPCSign(app)
+		case 7:
 			openwsdk.DestroyMemoryObject()
 			app.Stop()
 			os.Exit(0)
@@ -322,6 +325,42 @@ func showCreateMPCKeyWallet(app *tview.Application) {
 		fmt.Printf("\n✅ MPC key created successfully!\n")
 		fmt.Printf("   KeyID: %s\n", keyID)
 		fmt.Printf("   Saved to: mpc_keys/%s/<nodeID>.json\n", keyID)
+		fmt.Print("\nPress Enter to return to main menu...")
+		fmt.Scanln()
+	})
+	showMainMenu(app)
+}
+
+// showTestMPCSign 通过 CreateMPCSignTask 触发一次固定消息哈希的 MPC 签名，用于快速联调。
+func showTestMPCSign(app *tview.Application) {
+	app.Suspend(func() {
+		fmt.Print("\n")
+		fmt.Println("🧪 Test MPC Sign (TSS)")
+		fmt.Println("──────────────────────")
+		fmt.Println("This will use a fixed existing KeyID and a fixed 32-byte hash to run a distributed TSS signature.")
+		fmt.Println("Ensure WebSocket service is running and all nodes for this KeyID are online.")
+		fmt.Println()
+
+		// 固定使用已存在的 KeyID（测试用）
+		const keyID = "94d7492d6c53402edce599583b8ec2a88c4b4b939b33ef75ebd4fba59637728e"
+		fmt.Printf("Using fixed KeyID: %s\n", keyID)
+
+		// 固定的 32 字节消息哈希（64 位 hex），仅用于测试
+		const msgHashHex = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+		fmt.Printf("Using fixed msgHashHex: %s\n", msgHashHex)
+
+		sigHex, err := CreateMPCSignTask(keyID, msgHashHex)
+		if err != nil {
+			fmt.Printf("\n❌ MPC sign failed: %v\n", err.Error())
+			fmt.Print("Press Enter to return to main menu...")
+			fmt.Scanln()
+			return
+		}
+
+		fmt.Printf("\n✅ MPC sign succeeded!\n")
+		fmt.Printf("   KeyID         : %s\n", keyID)
+		fmt.Printf("   MsgHash (hex) : %s\n", msgHashHex)
+		fmt.Printf("   Signature(hex): %s\n", sigHex)
 		fmt.Print("\nPress Enter to return to main menu...")
 		fmt.Scanln()
 	})

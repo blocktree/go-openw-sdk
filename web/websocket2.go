@@ -2,6 +2,7 @@ package webapp
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"sort"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/blocktree/go-openw-sdk/v2/mpc"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
+	ecc "github.com/godaddy-x/eccrypto"
 	"github.com/godaddy-x/freego/node"
 	"github.com/godaddy-x/freego/utils"
 )
@@ -29,16 +31,17 @@ type MpcKeygenTaskMeta struct {
 	NodeIDs     []string
 	Threshold   int
 	ExpiredTime int64
+	PublicKey   map[string][]byte // subject -> temp ECDH public key (raw bytes)
 }
 
 // MpcKeygenNodeResult 按 (subject, taskID) 存的节点上报结果，Status 40 表示已上报 SaveData。
 type MpcKeygenNodeResult struct {
-	TaskID         string
-	NodeID         string
-	Status         int64  // 10=已下发 start，40=已上报结果
-	KeyID          string // 仅用于各节点自报的一致性校验，服务端不落盘 SaveData
-	SaveDataBase64 string // 当前仅用于调试/可观测性，生产可去除；服务端不解码也不保存
-	Err            string
+	TaskID    string
+	NodeID    string
+	Status    int64  // 10=已下发 start，40=已上报结果
+	KeyID     string // 仅用于各节点自报的一致性校验，服务端不落盘 SaveData
+	PublicKey string // 节点临时公钥
+	Err       string
 }
 
 func truncateErr(s string, max int) string {
@@ -86,14 +89,58 @@ func CreateMPCKeyTask() (keyID string, err error) {
 
 	mpcLogf("CreateMPCKeyTask: taskID=%s subjects=%v nodeIDs(tss-order)=%v threshold=%d\n", taskID, subjects, nodeIDs, threshold)
 
+	// 发送通知节点提交临时公钥
+	for _, subject := range nodeIDs {
+		req := &dto.CliMPCTempPublicKeyReq{
+			TaskID: taskID,
+		}
+		if err := server.GetConnManager().SendToSubject(subject, "mpcTempPublicKey", req); err != nil {
+			return "", err
+		}
+	}
+
 	meta := &MpcKeygenTaskMeta{
 		TaskID:      taskID,
 		NodeIDs:     nodeIDs,
 		Threshold:   threshold,
 		ExpiredTime: expiredTime,
+		PublicKey:   make(map[string][]byte, 5),
 	}
+
+	// 轮询检查多节点提交公钥状态
+	keyMaxWait := time.After(10 * time.Second)
+	keyTicker := time.NewTicker(300 * time.Millisecond)
+	defer keyTicker.Stop()
+
+	waitForAll := func() error {
+		for {
+			select {
+			case <-keyMaxWait:
+				return errors.New("timeout waiting for all nodes to submit public keys")
+			case <-keyTicker.C:
+				allReady := true
+				for _, subject := range nodeIDs {
+					cacheKey := utils.FNV1a64(utils.AddStr(subject, ":", taskID, ":tempPublicKey"))
+					v, ok, _ := keyCache.Get(cacheKey, nil)
+					if !ok || v == nil {
+						allReady = false
+						break
+					}
+					meta.PublicKey[subject] = v.([]byte)
+				}
+				if allReady {
+					return nil
+				}
+			}
+		}
+	}
+
+	if err := waitForAll(); err != nil {
+		return "", err
+	}
+
 	metaKey := utils.FNV1a64("mpcMeta:" + taskID)
-	if err := keyCache.Put(metaKey, meta, 300); err != nil {
+	if err := keyCache.Put(metaKey, meta, 600); err != nil {
 		return "", err
 	}
 
@@ -119,7 +166,7 @@ func CreateMPCKeyTask() (keyID string, err error) {
 		}
 	}
 
-	maxWait := time.After(12 * time.Minute)
+	maxWait := time.After(10 * time.Minute)
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 
@@ -176,6 +223,35 @@ func CreateMPCKeyTask() (keyID string, err error) {
 	}
 }
 
+// handleTempPublicKey 节点上传 ECDH 临时公钥到服务端
+func handleTempPublicKey(ctx context.Context, connCtx *node.ConnectionContext, body []byte) (interface{}, error) {
+	request := &dto.CliMPCTempPublicKeyReq{}
+	if err := utils.JsonUnmarshal(body, &request); err != nil {
+		return nil, err
+	}
+	if request.TaskID == "" {
+		return nil, errors.New("taskID is nil")
+	}
+	if request.PublicKey == "" {
+		return nil, errors.New("public key is nil")
+	}
+	_, err := ecc.LoadECDHPublicKeyFromBase64(request.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	rawPub, err := base64.StdEncoding.DecodeString(request.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	subject := connCtx.GetUserIDString()
+	cacheKey := utils.FNV1a64(utils.AddStr(subject, ":", request.TaskID, ":tempPublicKey"))
+	// 缓存原始 bytes，便于后续直接使用
+	if err := keyCache.Put(cacheKey, rawPub, 20); err != nil { // 20秒有效
+		return nil, err
+	}
+	return &dto.CliMPCTempPublicKeyRes{Success: true}, nil
+}
+
 // handleMpcKeygenResult 节点上报 MPC keygen 结果（SaveData base64），服务端写入缓存供 CreateMPCKeyTask 轮询收齐后落盘。
 func handleMpcKeygenResult(ctx context.Context, connCtx *node.ConnectionContext, body []byte) (interface{}, error) {
 	req := &dto.CliMPCKeygenResultReq{}
@@ -194,7 +270,7 @@ func handleMpcKeygenResult(ctx context.Context, connCtx *node.ConnectionContext,
 	}
 	nodeRes.Status = 40
 	nodeRes.KeyID = req.KeyID
-	nodeRes.SaveDataBase64 = req.SaveDataBase64
+	//nodeRes.SaveDataBase64 = req.SaveDataBase64
 	nodeRes.Err = truncateErr(req.Err, 256)
 	if err := keyCache.Put(cacheKey, nodeRes, 300); err != nil {
 		return &dto.CliMPCKeygenResultRes{OK: false, Err: err.Error()}, nil

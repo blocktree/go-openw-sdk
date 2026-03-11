@@ -158,3 +158,19 @@ type CliMPCKeygenMsgRes struct {
 	IsBroadcast     bool     `json:"isBroadcast"`
 	ToNodeIDs       []string `json:"toNodeIDs"`
 }
+
+// CliMPCTempPublicKeyReq 节点推送给服务端临时ECDH公钥
+//
+//easyjson:json
+type CliMPCTempPublicKeyReq struct {
+	common.BaseReq
+	TaskID    string `json:"taskID"`
+	PublicKey string `json:"publicKey"`
+}
+
+// CliMPCTempPublicKeyRes 节点推送给服务端临时ECDH公钥结果
+//
+//easyjson:json
+type CliMPCTempPublicKeyRes struct {
+	Success bool `json:"success"`
+}

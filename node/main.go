@@ -14,19 +14,19 @@ import (
 	"github.com/godaddy-x/freego/utils/sdk"
 )
 
-func handleShardingPre(wsClient *sdk.SocketSDK, subject, router string, data []byte) error {
-	request := dto.CliShardingTaskReq{}
+func handleTempPublicKey(wsClient *sdk.SocketSDK, subject, router string, data []byte) error {
+	request := dto.CliMPCTempPublicKeyReq{}
 	if err := json.Unmarshal(data, &request); err != nil {
-		return errors.New("handleShardingPre json unmarshal error: " + err.Error())
+		return errors.New("handleTempPublicKey json unmarshal error: " + err.Error())
 	}
 	prk, err := ecc.CreateECDH()
 	if err != nil {
-		return errors.New("create ecdh error: " + err.Error())
+		return errors.New("handleTempPublicKey create ecdh error: " + err.Error())
 	}
 	request.PublicKey = utils.Base64Encode(ecc.GetECDHPublicKeyBytes(prk.PublicKey()))
-	response := dto.CliShardingTaskRes{}
-	if err := wsClient.SendWebSocketMessage("/ws/shardingPre", &request, &response, true, true, 30); err != nil {
-		return errors.New("handleShardingPre send shard message error: " + err.Error())
+	response := dto.CliMPCTempPublicKeyRes{}
+	if err := wsClient.SendWebSocketMessage("/ws/mpcTempPublicKey", &request, &response, true, true, 30); err != nil {
+		return errors.New("handleTempPublicKey send shard message error: " + err.Error())
 	}
 	return nil
 }
@@ -77,8 +77,8 @@ func RunMPCNode(cliConfig openwsdk.SdkConfig) {
 	fmt.Println("sdk connect websocket success: ", cliConfig.Source)
 
 	wsClient.SetPushMessageCallback(func(router string, data []byte) {
-		if router == "shardingPre" {
-			if err := handleShardingPre(wsClient, cliConfig.Source, router, data); err != nil {
+		if router == "mpcTempPublicKey" {
+			if err := handleTempPublicKey(wsClient, cliConfig.Source, router, data); err != nil {
 				fmt.Println(err)
 			}
 		} else if router == "shardingPost" {

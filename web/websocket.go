@@ -173,39 +173,6 @@ func CreateShardingTask() (string, error) {
 	return keyID, nil
 }
 
-// handleShardingPre 节点上传ECDH临时公钥到服务端
-func handleShardingPre(ctx context.Context, connCtx *node.ConnectionContext, body []byte) (interface{}, error) {
-	request := &dto.CliShardingTaskReq{}
-	if err := utils.JsonUnmarshal(body, &request); err != nil {
-		return nil, err
-	}
-	subject := connCtx.GetUserIDString()
-	cacheKey := utils.FNV1a64(utils.AddStr(subject, request.TaskID))
-	value, b, err := keyCache.Get(cacheKey, nil)
-	if err != nil {
-		return nil, err
-	}
-	if !b || value == nil {
-		return nil, errors.New("task not found: " + request.TaskID)
-	}
-	task := value.(*dto.CliShardingTaskRes)
-	if task.ExpiredTime < utils.UnixSecond() {
-		_ = keyCache.Del(cacheKey)
-		return nil, errors.New("task expired: " + request.TaskID)
-	}
-	if len(task.PublicKey) > 0 {
-		return nil, errors.New("task public key exists: " + request.TaskID)
-	}
-	task.PublicKey = request.PublicKey
-	task.ExpiredTime = utils.UnixSecond() + 15
-	task.Status = 20
-
-	if err := keyCache.Put(cacheKey, task, 20); err != nil {
-		return nil, err
-	}
-	return task, nil
-}
-
 // handleShardingPost 节点拉取临时公钥加密的分片数据
 func handleShardingPost(ctx context.Context, connCtx *node.ConnectionContext, body []byte) (interface{}, error) {
 	request := &dto.CliShardingTaskReq{}
@@ -263,11 +230,11 @@ func NewSocket() {
 		panic(err)
 	}
 
-	if err := server.AddRouter("/ws/shardingPre", handleShardingPre, &node.RouterConfig{}); err != nil {
+	if err := server.AddRouter("/ws/shardingPost", handleShardingPost, &node.RouterConfig{}); err != nil {
 		panic(err)
 	}
 
-	if err := server.AddRouter("/ws/shardingPost", handleShardingPost, &node.RouterConfig{}); err != nil {
+	if err := server.AddRouter("/ws/mpcTempPublicKey", handleTempPublicKey, &node.RouterConfig{}); err != nil {
 		panic(err)
 	}
 

@@ -219,7 +219,6 @@ func HandleMpcKeygenStart(wsClient *sdk.SocketSDK, myNodeID, router string, body
 			_ = keyCache.Del(keygenTempPrk)
 			for _, v := range start.NodeIDs {
 				signTempPub := utils.FNV1a64(utils.AddStr(v, ":", start.TaskID, ":keygen:tempPublicKey"))
-				a, _ := keyCache.GetString(signTempPub)
 				_ = keyCache.Del(signTempPub)
 			}
 		}()

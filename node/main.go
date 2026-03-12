@@ -56,16 +56,14 @@ func handleTempPublicKey(wsClient *sdk.SocketSDK, subject, router string, data [
 	if err != nil {
 		return errors.New("handleTempPublicKey create ecdh error: " + err.Error())
 	}
+	cacheKey := utils.FNV1a64(utils.AddStr(subject, ":", request.TaskID, ":", request.Module, ":tempPrivateKey"))
+	if err := keyCache.Put(cacheKey, prk, 600); err != nil {
+		return errors.New("handleTempPublicKey put tempPrivateKey error: " + err.Error())
+	}
 	request.PublicKey = utils.Base64Encode(ecc.GetECDHPublicKeyBytes(prk.PublicKey()))
 	response := dto.CliMPCTempPublicKeyRes{}
 	if err := wsClient.SendWebSocketMessage("/ws/mpcTempPublicKey", &request, &response, true, true, 30); err != nil {
 		return errors.New("handleTempPublicKey send shard message error: " + err.Error())
-	}
-	if response.Success {
-		cacheKey := utils.FNV1a64(utils.AddStr(subject, ":", request.TaskID, ":", request.Module, ":tempPrivateKey"))
-		if err := keyCache.Put(cacheKey, prk, 600); err != nil {
-			return errors.New("handleTempPublicKey put tempPrivateKey error: " + err.Error())
-		}
 	}
 	return nil
 }

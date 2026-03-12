@@ -314,7 +314,7 @@ func showCreateMPCKeyWallet(app *tview.Application) {
 		fmt.Println("Ensure 3 or 5 nodes are online and WebSocket service is running.")
 		fmt.Println()
 
-		keyID, err := CreateMPCKeyTask()
+		keyID, err := CreateMPCKeygenTask()
 		if err != nil {
 			fmt.Printf("\n❌ MPC keygen failed: %v\n", err.Error())
 			fmt.Print("Press Enter to return to main menu...")

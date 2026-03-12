@@ -1,0 +1,245 @@
+package webapp
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+
+	"github.com/blocktree/go-openw-sdk/v2/mpc"
+	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
+	ecc "github.com/godaddy-x/eccrypto"
+	"github.com/godaddy-x/freego/node"
+	"github.com/godaddy-x/freego/utils"
+)
+
+// CreateMPCSignTask 协调多节点完成一次 TSS 签名，返回 64 字节签名的 hex（R||S）。
+// keyID 用于确定参与节点列表与门限（从 keyMetaDir/{keyID}.json 读取），msgHashHex 为 32 字节消息哈希的 hex。
+func CreateMPCSignTask(keyID, msgHashHex string) (sigHex string, err error) {
+	if server == nil {
+		return "", errors.New("ws server not initialized")
+	}
+
+	// 1) 读取 key 元信息（节点列表、门限、index 映射）
+	metaPath := filepath.Join(keyMetaDir, keyID+".json")
+	raw, err := os.ReadFile(metaPath)
+	if err != nil {
+		return "", fmt.Errorf("read key meta failed: %w", err)
+	}
+	var keyMeta KeyMeta
+	if err := json.Unmarshal(raw, &keyMeta); err != nil {
+		return "", fmt.Errorf("unmarshal key meta failed: %w", err)
+	}
+	if keyMeta.KeyID == "" || len(keyMeta.NodeIDs) == 0 {
+		return "", errors.New("invalid key meta")
+	}
+
+	// 2) 解析消息哈希
+	_, err = mpc.MessageHashFromTxHash(msgHashHex)
+	if err != nil {
+		return "", fmt.Errorf("invalid msgHashHex: %w", err)
+	}
+
+	// 3) 取在线节点，确保 keyMeta.NodeIDs 覆盖在当前在线列表内
+	nodes := server.GetConnManager().GetAllSubjectDevices()
+	online := make(map[string]bool, len(nodes))
+	for s := range nodes {
+		online[s] = true
+	}
+	signNodeIDs := make([]string, 0, len(keyMeta.NodeIDs))
+	for _, id := range keyMeta.NodeIDs {
+		if !online[id] {
+			return "", fmt.Errorf("node %s offline for sign", id)
+		}
+		signNodeIDs = append(signNodeIDs, id)
+	}
+
+	taskID := utils.GetUUID(true)
+	expiredTime := utils.UnixSecond() + 120
+
+	mpcLogf("CreateMPCSignTask: taskID=%s keyID=%s nodes=%v threshold=%d\n", taskID, keyID, signNodeIDs, keyMeta.Threshold)
+
+	// 4) ECDH 临时公钥交换（module = "sign"）
+	for _, subject := range signNodeIDs {
+		req := &dto.CliMPCTempPublicKeyReq{
+			TaskID: taskID,
+			Module: "sign",
+		}
+		if err := server.GetConnManager().SendToSubject(subject, "mpcTempPublicKey", req); err != nil {
+			return "", err
+		}
+	}
+
+	signMeta := &MpcKeygenTaskMeta{
+		TaskID:      taskID,
+		AllNodeIDs:  keyMeta.NodeIDs,
+		SignNodeIDs: signNodeIDs,
+		Threshold:   keyMeta.Threshold,
+		ExpiredTime: expiredTime,
+		PublicKey:   make(map[string][]byte, len(signNodeIDs)),
+	}
+
+	// 等待各节点上报临时公钥
+	keyMaxWait := time.After(30 * time.Second)
+	keyTicker := time.NewTicker(300 * time.Millisecond)
+	defer keyTicker.Stop()
+
+	waitForAll := func() error {
+		for {
+			select {
+			case <-keyMaxWait:
+				return errors.New("timeout waiting for all nodes to submit public keys")
+			case <-keyTicker.C:
+				allReady := true
+				for _, subject := range signNodeIDs {
+					cacheKey := utils.FNV1a64(utils.AddStr(subject, ":", taskID, ":sign:tempPublicKey"))
+					v, ok, _ := keyCache.Get(cacheKey, nil)
+					if !ok || v == nil {
+						allReady = false
+						break
+					}
+					signMeta.PublicKey[subject] = v.([]byte)
+				}
+				if allReady {
+					return nil
+				}
+			}
+		}
+	}
+
+	if err := waitForAll(); err != nil {
+		return "", err
+	}
+
+	// 将 signMeta 存入 cache 供 handleMpcSignMsg 使用
+	metaKey := utils.FNV1a64("mpcSignMeta:" + taskID)
+	if err := keyCache.Put(metaKey, signMeta, 600); err != nil {
+		return "", err
+	}
+
+	// 5) 下发 mpcSignStart（加密）
+	startPayload := &dto.CliMPCSignStartRes{
+		TaskID:        taskID,
+		KeyID:         keyID,
+		NodeIDs:       signNodeIDs,
+		Threshold:     keyMeta.Threshold,
+		MsgHashHex:    msgHashHex,
+		ExpiredTime:   expiredTime,
+		PublicKeyPair: make([]dto.CliMPCPublicKeyPair, 0, len(signMeta.PublicKey)),
+	}
+
+	for _, v := range signNodeIDs {
+		startPayload.PublicKeyPair = append(startPayload.PublicKeyPair, dto.CliMPCPublicKeyPair{
+			Subject:   v,
+			PublicKey: utils.Base64Encode(signMeta.PublicKey[v]),
+		})
+	}
+
+	for _, subject := range signNodeIDs {
+		data, err := utils.JsonMarshal(startPayload)
+		if err != nil {
+			return "", err
+		}
+		encrypt, err := ecc.Encrypt(nil, signMeta.PublicKey[subject], data, utils.Str2Bytes(utils.AddStr(taskID, "|", subject, "|mpcSignStart")))
+		if err != nil {
+			return "", err
+		}
+		if err := server.GetConnManager().SendToSubject(subject, "mpcSignStart", &dto.CliMPCEncryptData{
+			TaskID: taskID,
+			Data:   utils.Base64Encode(encrypt),
+		}); err != nil {
+			return "", err
+		}
+	}
+
+	// 6) 轮询签名结果（每节点一份，但签名应一致）
+	maxWait := time.After(2 * time.Minute)
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+
+	var sigHexFirst string
+
+	for {
+		select {
+		case <-maxWait:
+			return "", errors.New("timeout waiting for MPC sign result")
+		case <-ticker.C:
+			allDone := true
+			for _, subject := range signNodeIDs {
+				cacheKey := utils.FNV1a64(utils.AddStr("sign:", subject, ":", taskID))
+				v, ok, _ := keyCache.Get(cacheKey, nil)
+				if !ok || v == nil {
+					allDone = false
+					break
+				}
+				res := v.(*dto.CliMPCSignResultReq)
+				if res.Err != "" {
+					return "", fmt.Errorf("node %s sign failed: %s", res.NodeID, res.Err)
+				}
+				if sigHexFirst == "" {
+					sigHexFirst = res.SignatureHex
+				} else if res.SignatureHex != sigHexFirst {
+					return "", errors.New("signature mismatch between nodes")
+				}
+			}
+			if !allDone {
+				continue
+			}
+			if sigHexFirst == "" {
+				return "", errors.New("empty signature from nodes")
+			}
+			// 清理与本次签名任务相关的缓存（签名结果、临时公钥、任务元信息）
+			for _, subject := range signNodeIDs {
+				resKey := utils.FNV1a64(utils.AddStr("sign:", subject, ":", taskID))
+				_ = keyCache.Del(resKey)
+				tempPubKey := utils.FNV1a64(utils.AddStr(subject, ":", taskID, ":sign:tempPublicKey"))
+				_ = keyCache.Del(tempPubKey)
+			}
+			metaKey = utils.FNV1a64("mpcSignMeta:" + taskID)
+			_ = keyCache.Del(metaKey)
+
+			mpcLogf("CreateMPCSignTask: taskID=%s caches cleared\n", taskID)
+
+			return sigHexFirst, nil
+		}
+	}
+}
+
+// handleMpcSignResult 节点上报 MPC 签名结果，服务端仅用于汇总与一致性校验。
+func handleMpcSignResult(ctx context.Context, connCtx *node.ConnectionContext, body []byte) (interface{}, error) {
+	req := &dto.CliMPCSignResultReq{}
+	if err := utils.JsonUnmarshal(body, req); err != nil {
+		return &dto.CliMPCSignResultRes{OK: false, Err: err.Error()}, nil
+	}
+	subject := connCtx.GetUserIDString()
+	if req.NodeID == "" {
+		req.NodeID = subject
+	}
+	cacheKey := utils.FNV1a64(utils.AddStr("sign:", subject, ":", req.TaskID))
+	if err := keyCache.Put(cacheKey, req, 300); err != nil {
+		return &dto.CliMPCSignResultRes{OK: false, Err: err.Error()}, nil
+	}
+	return &dto.CliMPCSignResultRes{OK: true}, nil
+}
+
+// handleMpcSignMsg 节点发出的 TSS 签名协议消息，服务端转发给其他参与方（广播或单播）。
+func handleMpcSignMsg(ctx context.Context, connCtx *node.ConnectionContext, body []byte) (interface{}, error) {
+	req := &dto.CliMPCEncryptData{}
+	if err := utils.JsonUnmarshal(body, req); err != nil {
+		mpcLogf("handleMpcSignMsg: json unmarshal error: %v\n", err)
+		return nil, err
+	}
+
+	mpcLogf("handleMpcSignMsg: taskID=%s subject=%s (forward only)\n", req.TaskID, req.Subject)
+
+	if err := server.GetConnManager().SendToSubject(req.Subject, "mpcSignMsg", req); err != nil {
+		mpcLogf("handleMpcSignMsg: push to %s FAILED: %v (taskID=%s fromSubject=%s)\n",
+			req.TaskID, err, req.TaskID, req.Subject)
+	}
+
+	mpcLogf("handleMpcSignMsg: done for taskID=%s subject=%s\n", req.TaskID, req.Subject)
+	return &dto.CliMPCResultRes{OK: true}, nil
+}

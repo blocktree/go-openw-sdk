@@ -342,14 +342,14 @@ func showTestMPCSign(app *tview.Application) {
 		fmt.Println()
 
 		// 固定使用已存在的 KeyID（测试用）
-		const keyID = "94d7492d6c53402edce599583b8ec2a88c4b4b939b33ef75ebd4fba59637728e"
-		fmt.Printf("Using fixed KeyID: %s\n", keyID)
+		const walletID = "WGE8bUCAQBw3WH6JyYRPw2ocWGSugKiBDP"
+		fmt.Printf("Using fixed KeyID: %s\n", walletID)
 
 		// 固定的 32 字节消息哈希（64 位 hex），仅用于测试
 		const msgHashHex = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 		fmt.Printf("Using fixed msgHashHex: %s\n", msgHashHex)
 
-		sigHex, err := CreateMPCSignTask(keyID, msgHashHex)
+		sigHex, err := CreateMPCSignTask(walletID, msgHashHex)
 		if err != nil {
 			fmt.Printf("\n❌ MPC sign failed: %v\n", err.Error())
 			fmt.Print("Press Enter to return to main menu...")
@@ -358,7 +358,7 @@ func showTestMPCSign(app *tview.Application) {
 		}
 
 		fmt.Printf("\n✅ MPC sign succeeded!\n")
-		fmt.Printf("   KeyID         : %s\n", keyID)
+		fmt.Printf("   walletID         : %s\n", walletID)
 		fmt.Printf("   MsgHash (hex) : %s\n", msgHashHex)
 		fmt.Printf("   Signature(hex): %s\n", sigHex)
 		fmt.Print("\nPress Enter to return to main menu...")

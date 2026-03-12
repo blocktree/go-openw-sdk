@@ -47,6 +47,7 @@ type MpcKeygenTaskMeta struct {
 type KeyMeta struct {
 	WalletID      string         `json:"walletID"`
 	KeyID         string         `json:"keyID"`
+	RootPubHex    string         `json:"rootPubHex"`    // 65-byte uncompressed pubkey hex (04||X||Y)
 	NodeIDs       []string       `json:"nodeIDs"`       // 按 TSS PartyIDs 顺序
 	Threshold     int            `json:"threshold"`     // 门限 t（如 2-of-3、3-of-5）
 	IndexByNodeID map[string]int `json:"indexByNodeID"` // nodeID -> index（在 NodeIDs 中的下标）
@@ -54,12 +55,13 @@ type KeyMeta struct {
 
 // MpcKeygenNodeResult 按 (subject, taskID) 存的节点上报结果，Status 40 表示已上报 SaveData。
 type MpcKeygenNodeResult struct {
-	TaskID    string
-	NodeID    string
-	Status    int64  // 10=已下发 start，40=已上报结果
-	KeyID     string // 仅用于各节点自报的一致性校验，服务端不落盘 SaveData
-	PublicKey string // 节点临时公钥
-	Err       string
+	TaskID     string
+	NodeID     string
+	Status     int64  // 10=已下发 start，40=已上报结果
+	KeyID      string // 仅用于各节点自报的一致性校验，服务端不落盘 SaveData
+	PublicKey  string // 节点临时公钥
+	Err        string
+	RootPubHex string
 }
 
 func truncateErr(s string, max int) string {
@@ -235,6 +237,22 @@ func CreateMPCKeygenTask() (keyID string, err error) {
 	}
 
 	walletID := hdkeystore.ComputeKeyID([]byte(keyID))
+
+	// 基于节点上报的 RootPubHex 校验根公钥一致性
+	var rootPubHex string
+	for _, subject := range nodeIDs {
+		res := results[subject]
+		h := res.RootPubHex
+		if h == "" {
+			return "", fmt.Errorf("missing root pub from %s", subject)
+		}
+		if rootPubHex == "" {
+			rootPubHex = h
+		} else if h != rootPubHex {
+			return "", errors.New("root pub mismatch between nodes")
+		}
+	}
+
 	// 将本次 keygen 的元信息持久化到本地 JSON 文件：keyMetaDir/{walletID}.json
 	if err := os.MkdirAll(keyMetaDir, 0o700); err != nil {
 		return "", fmt.Errorf("create key meta dir failed: %w", err)
@@ -247,6 +265,7 @@ func CreateMPCKeygenTask() (keyID string, err error) {
 	metaObj := KeyMeta{
 		WalletID:      walletID,
 		KeyID:         keyID,
+		RootPubHex:    rootPubHex,
 		NodeIDs:       nodeIDs,
 		Threshold:     threshold,
 		IndexByNodeID: indexByNodeID,
@@ -318,7 +337,7 @@ func handleMpcKeygenResult(ctx context.Context, connCtx *node.ConnectionContext,
 	}
 	nodeRes.Status = 40
 	nodeRes.KeyID = req.KeyID
-	//nodeRes.SaveDataBase64 = req.SaveDataBase64
+	nodeRes.RootPubHex = req.RootPubHex
 	nodeRes.Err = truncateErr(req.Err, 256)
 	if err := keyCache.Put(cacheKey, nodeRes, 300); err != nil {
 		return &dto.CliMPCKeygenResultRes{OK: false, Err: err.Error()}, nil

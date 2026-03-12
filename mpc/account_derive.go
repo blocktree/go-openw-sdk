@@ -107,3 +107,52 @@ func DeriveMPCAccountFromIndex(
 
 	return accountID, pubHex, nil
 }
+
+// DeriveMPCAccountFromKeyStore 从本地 MPC keyfile（SaveData）派生账户信息。
+// baseDir 对应 NewFileKeyStore(baseDir) 的目录（例如 "keys"）。
+// nodeID 为本节点 ID（用于定位 keyfile：{keyID}-{nodeID}.json）。
+func DeriveMPCAccountFromKeyStore(baseDir, keyID, nodeID string, index uint32) (accountID string, pubHex string, err error) {
+	store := NewFileKeyStore(baseDir)
+	save, err := store.Load(keyID, nodeID)
+	if err != nil {
+		return "", "", err
+	}
+	return DeriveMPCAccountFromIndex(&save, keyID, index)
+}
+
+// DeriveMPCAccountFromRootPubHex 从根公钥 hex（RootPubHex）+ KeyID + index 派生 AccountID 与公钥 hex。
+// 适用于服务端：只持有 RootPubHex 与 KeyID，而不持有 SaveData。
+func DeriveMPCAccountFromRootPubHex(rootPubHex, keyID string, index uint32) (accountID string, pubHex string, err error) {
+	if rootPubHex == "" {
+		return "", "", fmt.Errorf("mpc: empty rootPubHex")
+	}
+	b, err := hex.DecodeString(rootPubHex)
+	if err != nil {
+		return "", "", fmt.Errorf("decode rootPubHex: %w", err)
+	}
+	if len(b) != 65 || b[0] != 0x04 {
+		return "", "", fmt.Errorf("mpc: invalid rootPubHex format")
+	}
+
+	// 解析 04||X||Y
+	x := new(big.Int).SetBytes(b[1:33])
+	y := new(big.Int).SetBytes(b[33:65])
+
+	ec := tss.S256()
+	point, err := crypto.NewECPoint(ec, x, y)
+	if err != nil {
+		return "", "", fmt.Errorf("mpc: invalid EC point: %w", err)
+	}
+
+	chainCode := ChainCodeFromKeyID(keyID)
+	path := PathFromAccountIndex(index)
+
+	_, childPub, err := DeriveChildPubFromPath(point, chainCode, path)
+	if err != nil {
+		return "", "", err
+	}
+
+	pubHex = PubKeyToHex(childPub)
+	accountID = openwallet.GenAccountIDByHex(pubHex)
+	return accountID, pubHex, nil
+}

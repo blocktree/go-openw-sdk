@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/ecdsa"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -357,11 +358,21 @@ func RunKeygenNodeReal(taskID string, nodeIDs []string, myNodeID string, thresho
 	}
 }
 
-func SubmitKeygenResult(wsClient *sdk.SocketSDK, taskID, nodeID, keyID string) error {
+func SubmitKeygenResult(wsClient *sdk.SocketSDK, taskID, nodeID, keyID string, saveData keygen.LocalPartySaveData) error {
+	var rootPubHex string
+	if saveData.ECDSAPub != nil {
+		pub := &ecdsa.PublicKey{
+			Curve: tss.S256(),
+			X:     saveData.ECDSAPub.X(),
+			Y:     saveData.ECDSAPub.Y(),
+		}
+		rootPubHex = mpc.PubKeyToHex(pub)
+	}
 	req := &dto.CliMPCKeygenResultReq{
-		TaskID: taskID,
-		NodeID: nodeID,
-		KeyID:  keyID,
+		TaskID:     taskID,
+		NodeID:     nodeID,
+		KeyID:      keyID,
+		RootPubHex: rootPubHex,
 	}
 	var res dto.CliMPCKeygenResultRes
 	if err := wsClient.SendWebSocketMessage("/ws/mpcKeygenResult", req, &res, true, true, 30); err != nil {
@@ -491,7 +502,7 @@ func HandleMpcKeygenStart(wsClient *sdk.SocketSDK, myNodeID, router string, body
 			return
 		}
 
-		if err := SubmitKeygenResult(wsClient, start.TaskID, myNodeID, keyID); err != nil {
+		if err := SubmitKeygenResult(wsClient, start.TaskID, myNodeID, keyID, saveData); err != nil {
 			fmt.Printf("[mpc-keygen] node=%s task=%s submit result failed: %v\n", myNodeID, start.TaskID, err)
 			_ = submitKeygenResultErr(wsClient, start.TaskID, myNodeID, "submit result failed: "+err.Error())
 		}

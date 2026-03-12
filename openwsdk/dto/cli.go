@@ -128,11 +128,12 @@ type CliMPCKeygenStartRes struct {
 //easyjson:json
 type CliMPCKeygenResultReq struct {
 	common.BaseReq
-	TaskID         string `json:"taskID"`
-	NodeID         string `json:"nodeID"`
-	KeyID          string `json:"keyID"`
-	SaveDataBase64 string `json:"saveDataBase64"`
-	Err            string `json:"err"`
+	TaskID string `json:"taskID"`
+	NodeID string `json:"nodeID"`
+	KeyID  string `json:"keyID"`
+	//SaveDataBase64 string `json:"saveDataBase64"`
+	RootPubHex string `json:"rootPubHex"` // 65-byte uncompressed root pubkey hex (04||X||Y)
+	Err        string `json:"err"`
 }
 
 // CliMPCKeygenResultRes 服务端对 keygen 结果的上报响应

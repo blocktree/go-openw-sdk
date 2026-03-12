@@ -2525,11 +2525,11 @@ func easyjsonC5d09f7cDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto20(in *jlexe
 			} else {
 				out.KeyID = string(in.String())
 			}
-		case "saveDataBase64":
+		case "rootPubHex":
 			if in.IsNull() {
 				in.Skip()
 			} else {
-				out.SaveDataBase64 = string(in.String())
+				out.RootPubHex = string(in.String())
 			}
 		case "err":
 			if in.IsNull() {
@@ -2603,9 +2603,9 @@ func easyjsonC5d09f7cEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto20(out *jwri
 		out.String(string(in.KeyID))
 	}
 	{
-		const prefix string = ",\"saveDataBase64\":"
+		const prefix string = ",\"rootPubHex\":"
 		out.RawString(prefix)
-		out.String(string(in.SaveDataBase64))
+		out.String(string(in.RootPubHex))
 	}
 	{
 		const prefix string = ",\"err\":"

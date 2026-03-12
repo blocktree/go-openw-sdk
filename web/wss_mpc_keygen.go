@@ -8,28 +8,22 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"sync"
 	"time"
 
 	"github.com/blocktree/go-openw-sdk/v2/mpc"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
+	"github.com/blocktree/go-openw-sdk/v2/web/common"
 	"github.com/blocktree/openwallet/v2/hdkeystore"
 	ecc "github.com/godaddy-x/eccrypto"
 	"github.com/godaddy-x/freego/node"
 	"github.com/godaddy-x/freego/utils"
 )
 
-// mpcKeygenLogMu 串行化 mpc-keygen 相关日志，避免 CreateMPCKeyTask 轮询与 handleMpcKeygenMsg 并发写 stdout 导致交错。
-var mpcKeygenLogMu sync.Mutex
-
 // keyMetaDir 服务端记录 walletID 对应节点列表的本地目录。
 // 每次 keygen 成功后会写入 keyMetaDir/{walletID}.json。
-const keyMetaDir = "mpc_keys_meta"
 
 func mpcLogf(format string, args ...interface{}) {
-	mpcKeygenLogMu.Lock()
 	fmt.Printf("[mpc-keygen] "+format, args...)
-	mpcKeygenLogMu.Unlock()
 }
 
 // MpcKeygenTaskMeta 按 taskID 存的 MPC keygen 任务元信息（NodeIDs、门限等），用于转发 TSS 消息时查表。
@@ -254,6 +248,7 @@ func CreateMPCKeygenTask() (keyID string, err error) {
 	}
 
 	// 将本次 keygen 的元信息持久化到本地 JSON 文件：keyMetaDir/{walletID}.json
+	keyMetaDir := common.GetAllConfig().Extract.WalletDir
 	if err := os.MkdirAll(keyMetaDir, 0o700); err != nil {
 		return "", fmt.Errorf("create key meta dir failed: %w", err)
 	}
@@ -289,7 +284,7 @@ func CreateMPCKeygenTask() (keyID string, err error) {
 
 	mpcLogf("CreateMPCKeyTask: taskID=%s caches cleared\n", taskID)
 	mpcLogf("CreateMPCKeyTask: taskID=%s all nodes done, keyID=%s\n", taskID, keyID)
-	return keyID, nil
+	return walletID, nil
 }
 
 // handleTempPublicKey 节点上传 ECDH 临时公钥到服务端

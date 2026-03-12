@@ -7,7 +7,7 @@ require (
 	github.com/blocktree/go-owcrypt v1.1.14
 	github.com/blocktree/openwallet/v2 v2.7.5
 	github.com/bnb-chain/tss-lib v1.5.0
-	github.com/codahale/sss v0.0.0-20160501174526-0cb9f6d3f7f1
+	github.com/btcsuite/btcd v0.23.1
 	github.com/gdamore/tcell/v2 v2.8.1
 	github.com/godaddy-x/eccrypto v1.1.14
 	github.com/godaddy-x/freego v1.1.4
@@ -24,7 +24,6 @@ require (
 	github.com/awnumar/memcall v0.4.0 // indirect
 	github.com/blocktree/go-owcdrivers v1.2.22 // indirect
 	github.com/bsm/redislock v0.9.4 // indirect
-	github.com/btcsuite/btcd v0.23.1 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.1.3 // indirect
 	github.com/btcsuite/btcd/btcutil v1.1.0 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 // indirect

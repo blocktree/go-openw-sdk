@@ -19,7 +19,7 @@ type Extract struct {
 	AppID            string   `yaml:"appID" json:"appID"`
 	AppKey           string   `yaml:"appKey" json:"appKey"`
 	WalletDir        string   `yaml:"walletDir" json:"walletDir"`               // 钱包文件夹
-	WalletMode       int64    `yaml:"walletMode" json:"walletMode"`             // # 钱包模式,1,3,5模式, 1=本地创建密码钱包 3,5进行分片管理（需要部署多个分片节点）
+	WalletMode       int64    `yaml:"walletMode" json:"walletMode"`             // # 钱包模式,1,3,5模式, 1=本地创建密码钱包 3,5 MPC多节点钱包（需要部署多个分片节点）
 	SignerBlacklist  []string `yaml:"signerBlacklist" json:"signerBlacklist"`   // 转出地址黑名单
 	SignerWhitelist  []string `yaml:"signerWhitelist" json:"signerWhitelist"`   // 交易单JSON签名请求IP白名单
 	SummaryWhitelist []string `yaml:"summaryWhitelist" json:"summaryWhitelist"` // 汇总地址白名单

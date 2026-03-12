@@ -34,6 +34,14 @@ var (
 	isWSServiceRunning bool
 )
 
+const (
+	menuCreateMPCWallet = iota
+	menuCreateECDSA
+	menuStartHttp
+	menuStartWebsocket
+	menuExit
+)
+
 // 启动 HTTP 服务（仅当未运行时）
 func startHTTPService() error {
 	httpServerMu.Lock()
@@ -103,6 +111,10 @@ func RunApplication() {
 	}
 }
 
+func menuNumber(index int32) rune {
+	return '1' + index
+}
+
 // ==================== 主菜单 ====================
 func showMainMenu(app *tview.Application) {
 	header := tview.NewTextView()
@@ -128,49 +140,23 @@ func showMainMenu(app *tview.Application) {
 	}
 	wsServerMu.Unlock()
 
-	config := common.GetAllConfig().Extract
-
-	list.AddItem("Create Wallet", "Generate new cryptographic keys", '1', nil)
-	if config.WalletMode == 1 {
-		list.AddItem("Unlock Wallet", "Load and decrypt an existing wallet", '2', nil)
-	} else {
-		// 显示但禁用（传 nil 回调）
-		list.AddItem("Unlock Wallet (disabled)", "Wallet mode does not allow unlocking", '2', nil)
-	}
-	list.AddItem("Generate ECDSA", "Print base64-encoded ECDSA key pair to terminal", '3', nil) // ← 新增
-	list.AddItem("Start HTTP Service"+status, "Launch HTTP signing API", '4', nil)
-	list.AddItem("Start WebSocket Service"+wsStatus, "Launch WebSocket signing API", '5', nil)
-	list.AddItem("Create MPC Key (TSS)", "Multi-node TSS keygen (3 or 5 nodes online)", '7', nil)
-	list.AddItem("Test MPC Sign (TSS)", "Run a test MPC signature with fixed hash", '8', nil)
-	list.AddItem("Exit", "Quit the application", '6', nil)
+	list.AddItem("Create MPC Wallet (TSS)", "Multi-node TSS keygen (3 or 5 nodes online)", menuNumber(menuCreateMPCWallet), nil)
+	list.AddItem("Generate ECDSA", "Print base64-encoded ECDSA key pair to terminal", menuNumber(menuCreateECDSA), nil) // ← 新增
+	list.AddItem("Start HTTP Service"+status, "Launch HTTP signing API", menuNumber(menuStartHttp), nil)
+	list.AddItem("Start WebSocket Service"+wsStatus, "Launch WebSocket signing API", menuNumber(menuStartWebsocket), nil)
+	list.AddItem("Exit", "Quit the application", menuNumber(menuExit), nil)
 
 	list.SetSelectedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
 		switch index {
-		case 0:
-			if config.WalletMode == 1 {
-				showCreateWallet(app)
-			} else {
-				showCreateShardingWallet(app)
-			}
-		case 1:
-			if config.WalletMode == 1 {
-				showWalletList(app)
-			} else { // 模式3,5提示不可用描述
-				showDisableUnlockWallet(app)
-			}
-		case 2:
-			showGenerateECDSA(app)
-		case 3:
-			showHttpService(app)
-			showWSService(app)
-		case 4:
-			showHttpService(app)
-			showWSService(app)
-		case 5:
+		case menuCreateMPCWallet:
 			showCreateMPCKeyWallet(app)
-		case 6:
-			showTestMPCSign(app)
-		case 7:
+		case menuCreateECDSA:
+			showGenerateECDSA(app)
+		case menuStartHttp:
+			showHttpService(app)
+		case menuStartWebsocket:
+			showWSService(app)
+		case menuExit:
 			openwsdk.DestroyMemoryObject()
 			app.Stop()
 			os.Exit(0)
@@ -281,40 +267,16 @@ func showCreateWallet(app *tview.Application) {
 	showMainMenu(app)
 }
 
-// ==================== mode=1创建钱包列表 ====================
-func showCreateShardingWallet(app *tview.Application) {
-	app.Suspend(func() {
-		fmt.Print("\n")
-		fmt.Println("🔐 Create New Sharding Wallet")
-		fmt.Println("────────────────────")
-		fmt.Println()
-
-		keyID, err := CreateShardingTask()
-		if err != nil {
-			fmt.Printf("\n❌ Create failed: %v\n", err.Error())
-			fmt.Print("Press Enter to return to main menu...")
-			fmt.Scanln()
-			return
-		}
-
-		fmt.Printf("\n✅ Wallet created successfully!\n")
-		fmt.Printf("   Wallet ID: %s\n", keyID)
-		fmt.Print("\nPress Enter to return to main menu...")
-		fmt.Scanln()
-	})
-	showMainMenu(app)
-}
-
 // showCreateMPCKeyWallet 通过轮询多节点完成 TSS keygen，落盘 mpc_keys 后返回 KeyID。
 func showCreateMPCKeyWallet(app *tview.Application) {
 	app.Suspend(func() {
 		fmt.Print("\n")
-		fmt.Println("🔐 Create MPC Key (TSS Keygen)")
+		fmt.Println("🔐 Create MPC Wallet (TSS Keygen)")
 		fmt.Println("────────────────────")
 		fmt.Println("Ensure 3 or 5 nodes are online and WebSocket service is running.")
 		fmt.Println()
 
-		keyID, err := CreateMPCKeygenTask()
+		walletID, err := CreateMPCKeygenTask()
 		if err != nil {
 			fmt.Printf("\n❌ MPC keygen failed: %v\n", err.Error())
 			fmt.Print("Press Enter to return to main menu...")
@@ -322,9 +284,9 @@ func showCreateMPCKeyWallet(app *tview.Application) {
 			return
 		}
 
-		fmt.Printf("\n✅ MPC key created successfully!\n")
-		fmt.Printf("   KeyID: %s\n", keyID)
-		fmt.Printf("   Saved to: mpc_keys/%s/<nodeID>.json\n", keyID)
+		fmt.Printf("\n✅ MPC wallet created successfully!\n")
+		fmt.Printf("   walletID: %s\n", walletID)
+		fmt.Printf("   Saved to: %s/%s.json\n", common.GetAllConfig().Extract.WalletDir, walletID)
 		fmt.Print("\nPress Enter to return to main menu...")
 		fmt.Scanln()
 	})

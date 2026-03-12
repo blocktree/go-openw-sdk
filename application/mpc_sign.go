@@ -11,7 +11,6 @@ import (
 
 	"github.com/blocktree/go-openw-sdk/v2/mpc"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
-	"github.com/blocktree/go-openw-sdk/v2/web/common"
 	ecc "github.com/godaddy-x/eccrypto"
 	"github.com/godaddy-x/freego/node"
 	"github.com/godaddy-x/freego/utils"
@@ -24,7 +23,7 @@ func CreateMPCSignTask(walletID, msgHashHex string) (sigHex string, err error) {
 		return "", errors.New("ws server not initialized")
 	}
 
-	keyMetaDir := common.GetAllConfig().Extract.WalletDir
+	keyMetaDir := GetAllConfig().Extract.WalletDir
 
 	// 1) 读取 key 元信息（节点列表、门限、index 映射）
 	metaPath := filepath.Join(keyMetaDir, walletID+".json")

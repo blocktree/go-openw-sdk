@@ -3,7 +3,6 @@ package webapp
 import (
 	"net"
 
-	"github.com/blocktree/go-openw-sdk/v2/web/common"
 	"github.com/godaddy-x/freego/ex"
 	ballast "github.com/godaddy-x/freego/gc"
 	"github.com/godaddy-x/freego/node"
@@ -25,7 +24,7 @@ func api(key string) string {
 	return utils.AddStr("/api/", key)
 }
 func addr() string {
-	config := common.GetAllConfig().GetServerConfig(project)
+	config := GetAllConfig().GetServerConfig(project)
 	return utils.AddStr(config.Addr, ":", config.Port)
 }
 
@@ -46,7 +45,7 @@ func (self *RemoteCheckFilter) DoFilter(chain node.Filter, ctx *node.Context, ar
 	}
 
 	// 检查远程白名单
-	whitelist := common.GetAllConfig().Extract.RemoteWhitelist
+	whitelist := GetAllConfig().Extract.RemoteWhitelist
 	for _, ip := range whitelist {
 		if host == ip {
 			return chain.DoFilter(chain, ctx, args...)
@@ -65,11 +64,11 @@ func NewHTTP() *WebNode {
 	var web = &WebNode{}
 
 	// 添加JWT配置参数
-	jwtConfig := common.GetAllConfig().GetJwtConfig(project)
+	jwtConfig := GetAllConfig().GetJwtConfig(project)
 	_ = web.AddJwtConfig(jwt.JwtConfig{TokenKey: jwtConfig.TokenKey, TokenAlg: jwtConfig.TokenAlg, TokenExp: jwtConfig.TokenExp, TokenTyp: jwtConfig.TokenTyp})
 
 	// 添加系统基本参数
-	serverConfig := common.GetAllConfig().GetServerConfig(project)
+	serverConfig := GetAllConfig().GetServerConfig(project)
 	web.SetSystem(serverConfig.Name, serverConfig.Version)
 
 	// 配置基础GC优化参数

@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	webapp "github.com/blocktree/go-openw-sdk/v2/web"
-	"github.com/blocktree/go-openw-sdk/v2/web/common"
+	webapp "github.com/blocktree/go-openw-sdk/v2/application"
 )
 
 // 测试参数
@@ -25,7 +24,7 @@ func main() {
 
 	// 初始化默认配置文件
 	if *initConfig {
-		common.CreateDefaultCliConfigExample()
+		webapp.CreateDefaultCliConfigExample()
 		fmt.Printf("Default configuration created at: %s\n", "cli_config_example.yaml")
 		return
 	}
@@ -34,7 +33,7 @@ func main() {
 	logFileName := strings.TrimSuffix(*configFile, ".yaml") + "_log"
 
 	// 初始化配置文件
-	common.NewBaseConfig(*configFile, logFileName)
+	webapp.NewBaseConfig(*configFile, logFileName)
 
 	// 启动交互式控制台
 	webapp.RunApplication()

@@ -1,4 +1,4 @@
-package impl
+package webapp
 
 import (
 	"bytes"
@@ -11,7 +11,6 @@ import (
 	"github.com/awnumar/memguard"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
-	"github.com/blocktree/go-openw-sdk/v2/web/common"
 	"github.com/blocktree/openwallet/v2/hdkeystore"
 	"github.com/blocktree/openwallet/v2/openwallet"
 	DIC "github.com/godaddy-x/freego/common"
@@ -57,7 +56,7 @@ func (s *CliService) UnlockWallet(filename string, password []byte, res *dto.Cli
 
 	// === 5. 执行解锁 ===
 	ks := &hdkeystore.HDKeystore{}
-	walletPath := ks.JoinDirPath(filepath.Join(".", common.GetAllConfig().Extract.WalletDir), filename)
+	walletPath := ks.JoinDirPath(filepath.Join(".", GetAllConfig().Extract.WalletDir), filename)
 
 	key, err := ks.GetLockerKey(walletPath, authBuf, aadCall)
 	if err != nil {
@@ -94,7 +93,7 @@ func (s *CliService) CreateWallet(alias string, password []byte, res *dto.CliCre
 	}
 
 	// === 4. 执行创建逻辑 ===
-	config := common.GetAllConfig()
+	config := GetAllConfig()
 	path := filepath.Join(".", config.Extract.WalletDir)
 	rootID, err := hdkeystore.StoreLockerHDKey(path, alias, authBuf)
 	if err != nil {
@@ -120,7 +119,7 @@ func (s *CliService) CliLogin(req *dto.AppLoginReq, res *dto.AppLoginRes) error 
 		return ex.Throw{Code: ex.BIZ, Msg: "time invalid"}
 	}
 	// 通过配置的服务端秘钥解码应用的KEY，进行签名验证
-	config := common.GetAllConfig()
+	config := GetAllConfig()
 	// 方法结束清除内存中的密钥
 	decrypt, err := hex.DecodeString(config.Extract.AppKey)
 	if err != nil {
@@ -136,8 +135,8 @@ func (s *CliService) CliLogin(req *dto.AppLoginReq, res *dto.AppLoginRes) error 
 }
 
 func (s *CliService) FindWalletList(req *dto.CliFindWalletListReq, res *dto.CliFindWalletListRes) error {
-	config := common.GetAllConfig().Extract
-	fileList, err := common.ReadAllFilesInDir(config.WalletDir)
+	config := GetAllConfig().Extract
+	fileList, err := ReadAllFilesInDir(config.WalletDir)
 	if err != nil {
 		return err
 	}
@@ -146,7 +145,7 @@ func (s *CliService) FindWalletList(req *dto.CliFindWalletListReq, res *dto.CliF
 		res.Result = append(res.Result, dto.WalletResult{
 			Alias:    v.Alias,
 			WalletID: v.KeyID,
-			RootPath: v.RootPath,
+			RootPath: v.RootPubHex,
 		})
 	}
 	return nil
@@ -260,7 +259,7 @@ func (s *CliService) SignTradeKey(req *dto.CliSignTradeKeyReq, res *dto.CliSignT
 	}
 
 	if tx.TxType == 0 { // 普通交易单，校验黑名单
-		blacklist := common.GetAllConfig().Extract.SignerBlacklist
+		blacklist := GetAllConfig().Extract.SignerBlacklist
 		for to, _ := range tx.To {
 			if utils.CheckStr(to, blacklist...) {
 				return ex.Throw{Code: ex.BIZ, Msg: "tx submit blacklist invalid: " + to}
@@ -270,7 +269,7 @@ func (s *CliService) SignTradeKey(req *dto.CliSignTradeKeyReq, res *dto.CliSignT
 		if len(tx.To) > 1 {
 			return ex.Throw{Code: ex.BIZ, Msg: "tx submit target address > 1 invalid"}
 		}
-		whitelist := common.GetAllConfig().Extract.SummaryWhitelist
+		whitelist := GetAllConfig().Extract.SummaryWhitelist
 		for to, _ := range tx.To {
 			if !utils.CheckStr(to, whitelist...) {
 				return ex.Throw{Code: ex.BIZ, Msg: "tx submit blacklist invalid: " + to}
@@ -330,7 +329,7 @@ func checkAndUnmarshalTx(typ int64, data, tradeSign string) (*openwallet.RawTran
 	}
 
 	if tx.TxType == 0 { // 普通交易单，校验黑名单
-		blacklist := common.GetAllConfig().Extract.SignerBlacklist
+		blacklist := GetAllConfig().Extract.SignerBlacklist
 		for to, _ := range tx.To {
 			if utils.CheckStr(to, blacklist...) {
 				return nil, ex.Throw{Code: ex.BIZ, Msg: "tx submit blacklist invalid: " + to}
@@ -340,7 +339,7 @@ func checkAndUnmarshalTx(typ int64, data, tradeSign string) (*openwallet.RawTran
 		if len(tx.To) > 1 {
 			return nil, ex.Throw{Code: ex.BIZ, Msg: "tx submit target address > 1 invalid"}
 		}
-		whitelist := common.GetAllConfig().Extract.SummaryWhitelist
+		whitelist := GetAllConfig().Extract.SummaryWhitelist
 		for to, _ := range tx.To {
 			if !utils.CheckStr(to, whitelist...) {
 				return nil, ex.Throw{Code: ex.BIZ, Msg: "tx submit blacklist invalid: " + to}

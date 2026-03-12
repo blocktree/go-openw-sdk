@@ -13,7 +13,6 @@ import (
 
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk"
 
-	"github.com/blocktree/go-openw-sdk/v2/web/common"
 	DIC "github.com/godaddy-x/freego/common"
 	"github.com/godaddy-x/freego/utils/crypto"
 
@@ -248,7 +247,7 @@ func showCreateWallet(app *tview.Application) {
 		}
 
 		res := &dto.CliCreateWalletRes{}
-		err = CliService.CreateWallet(alias, password1, res)
+		err = cliService.CreateWallet(alias, password1, res)
 		DIC.ClearData(password1)
 
 		if err != nil {
@@ -276,7 +275,18 @@ func showCreateMPCKeyWallet(app *tview.Application) {
 		fmt.Println("Ensure 3 or 5 nodes are online and WebSocket service is running.")
 		fmt.Println()
 
-		walletID, err := CreateMPCKeygenTask()
+		fmt.Print("Enter alias for this MPC wallet (letters + digits only, non-empty): ")
+		var aliasInput string
+		fmt.Scanln(&aliasInput)
+		alias := strings.TrimSpace(aliasInput)
+		if !isValidAlias(alias) {
+			fmt.Println("\n❌ Error: Alias must be non-empty and contain only letters and digits (e.g., mpcWallet1).")
+			fmt.Print("Press Enter to return to main menu...")
+			fmt.Scanln()
+			return
+		}
+
+		walletID, err := CreateMPCKeygenTask(alias)
 		if err != nil {
 			fmt.Printf("\n❌ MPC keygen failed: %v\n", err.Error())
 			fmt.Print("Press Enter to return to main menu...")
@@ -286,7 +296,8 @@ func showCreateMPCKeyWallet(app *tview.Application) {
 
 		fmt.Printf("\n✅ MPC wallet created successfully!\n")
 		fmt.Printf("   walletID: %s\n", walletID)
-		fmt.Printf("   Saved to: %s/%s.json\n", common.GetAllConfig().Extract.WalletDir, walletID)
+		fmt.Printf("   alias   : %s\n", alias)
+		fmt.Printf("   Saved to: %s/%s.json\n", GetAllConfig().Extract.WalletDir, walletID)
 		fmt.Print("\nPress Enter to return to main menu...")
 		fmt.Scanln()
 	})
@@ -333,7 +344,7 @@ func showTestMPCSign(app *tview.Application) {
 func showWalletList(app *tview.Application) {
 	req := &dto.CliFindWalletListReq{}
 	res := &dto.CliFindWalletListRes{}
-	if err := CliService.FindWalletList(req, res); err != nil {
+	if err := cliService.FindWalletList(req, res); err != nil {
 		app.Suspend(func() {
 			fmt.Printf("\n❌ Failed to load wallets: %v\n", ex.Catch(err).Msg)
 			fmt.Print("Press Enter to return to main menu...")
@@ -387,7 +398,7 @@ func showWalletList(app *tview.Application) {
 			}
 
 			res := &dto.CliUnlockWalletRes{}
-			err = CliService.UnlockWallet(fmt.Sprintf("%s-%s.key", selected.Alias, selected.WalletID), password, res)
+			err = cliService.UnlockWallet(fmt.Sprintf("%s-%s.key", selected.Alias, selected.WalletID), password, res)
 			DIC.ClearData(password)
 
 			if err != nil {
@@ -424,7 +435,7 @@ func showWalletList(app *tview.Application) {
 
 // ==================== mode=3,5钱包解锁禁止描述 ====================
 func showDisableUnlockWallet(app *tview.Application) {
-	config := common.GetAllConfig().Extract
+	config := GetAllConfig().Extract
 	app.Suspend(func() {
 		if config.WalletMode == 3 || config.WalletMode == 5 {
 			fmt.Printf("\n🔒 Wallet unlocking is disabled in threshold/MPC mode (walletMode=%d).\n", config.WalletMode)
@@ -470,7 +481,7 @@ func showHttpService(app *tview.Application) {
 	} else {
 		app.Suspend(func() {
 			fmt.Println("\n✅ HTTP service started successfully!")
-			fmt.Println(fmt.Sprintf("   Listening on http://localhost:%d", common.GetAllConfig().GetServerConfig(project).Port))
+			fmt.Println(fmt.Sprintf("   Listening on http://localhost:%d", GetAllConfig().GetServerConfig(project).Port))
 			fmt.Print("Press Enter to return to main menu...")
 			fmt.Scanln()
 		})
@@ -507,7 +518,7 @@ func showWSService(app *tview.Application) {
 			fmt.Println("\n✅ WebSocket service started successfully!")
 			// 注意：这里需要你的配置能获取 WebSocket 端口
 			// 假设配置中有 WSPort 字段，否则请调整
-			wsPort := common.GetAllConfig().GetServerConfig(project).Port + 100
+			wsPort := GetAllConfig().GetServerConfig(project).Port + 100
 			fmt.Printf("   Listening on ws://localhost:%d\n", wsPort)
 			fmt.Print("Press Enter to return to main menu...")
 			fmt.Scanln()

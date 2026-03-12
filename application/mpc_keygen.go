@@ -12,7 +12,6 @@ import (
 
 	"github.com/blocktree/go-openw-sdk/v2/mpc"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
-	"github.com/blocktree/go-openw-sdk/v2/web/common"
 	"github.com/blocktree/openwallet/v2/hdkeystore"
 	ecc "github.com/godaddy-x/eccrypto"
 	"github.com/godaddy-x/freego/node"
@@ -41,10 +40,11 @@ type MpcKeygenTaskMeta struct {
 type KeyMeta struct {
 	WalletID      string         `json:"walletID"`
 	KeyID         string         `json:"keyID"`
-	RootPubHex    string         `json:"rootPubHex"`    // 65-byte uncompressed pubkey hex (04||X||Y)
-	NodeIDs       []string       `json:"nodeIDs"`       // 按 TSS PartyIDs 顺序
-	Threshold     int            `json:"threshold"`     // 门限 t（如 2-of-3、3-of-5）
-	IndexByNodeID map[string]int `json:"indexByNodeID"` // nodeID -> index（在 NodeIDs 中的下标）
+	Alias         string         `json:"alias,omitempty"` // 人类可读别名（字母或字母+数字），来源于 tview 创建
+	RootPubHex    string         `json:"rootPubHex"`      // 65-byte uncompressed pubkey hex (04||X||Y)
+	NodeIDs       []string       `json:"nodeIDs"`         // 按 TSS PartyIDs 顺序
+	Threshold     int            `json:"threshold"`       // 门限 t（如 2-of-3、3-of-5）
+	IndexByNodeID map[string]int `json:"indexByNodeID"`   // nodeID -> index（在 NodeIDs 中的下标）
 }
 
 // MpcKeygenNodeResult 按 (subject, taskID) 存的节点上报结果，Status 40 表示已上报 SaveData。
@@ -65,10 +65,10 @@ func truncateErr(s string, max int) string {
 	return s[:max] + "..."
 }
 
-// CreateMPCKeygenTask 协调多节点完成一次 TSS keygen，轮询直到所有节点上报结果后返回 KeyID。
+// CreateMPCKeygenTask 协调多节点完成一次 TSS keygen，轮询直到所有节点上报结果后返回 walletID。
 // 服务端只做「协调 + 校验」，不落盘任何 SaveData：节点各自持久化自己的 LocalPartySaveData。
 // 流程：1) 取在线 subject 排序为 nodeIDs  2) 下发 mpcKeygenStart  3) 轮询 mpcKeygenResult 检查状态与 KeyID 一致性  4) 返回 KeyID。
-func CreateMPCKeygenTask() (keyID string, err error) {
+func CreateMPCKeygenTask(alias string) (keyID string, err error) {
 	if server == nil {
 		return "", errors.New("ws server not initialized")
 	}
@@ -248,7 +248,7 @@ func CreateMPCKeygenTask() (keyID string, err error) {
 	}
 
 	// 将本次 keygen 的元信息持久化到本地 JSON 文件：keyMetaDir/{walletID}.json
-	keyMetaDir := common.GetAllConfig().Extract.WalletDir
+	keyMetaDir := GetAllConfig().Extract.WalletDir
 	if err := os.MkdirAll(keyMetaDir, 0o700); err != nil {
 		return "", fmt.Errorf("create key meta dir failed: %w", err)
 	}
@@ -260,6 +260,7 @@ func CreateMPCKeygenTask() (keyID string, err error) {
 	metaObj := KeyMeta{
 		WalletID:      walletID,
 		KeyID:         keyID,
+		Alias:         alias,
 		RootPubHex:    rootPubHex,
 		NodeIDs:       nodeIDs,
 		Threshold:     threshold,

@@ -1,7 +1,6 @@
 package webapp
 
 import (
-	"github.com/blocktree/go-openw-sdk/v2/web/common"
 	"github.com/godaddy-x/freego/cache"
 	"github.com/godaddy-x/freego/node"
 	"github.com/godaddy-x/freego/utils"
@@ -19,11 +18,11 @@ func NewSocket() {
 	server = node.NewWsServer(node.SubjectDeviceUnique)
 
 	// 添加JWT配置参数
-	jwtConfig := common.GetAllConfig().GetJwtConfig(project)
+	jwtConfig := GetAllConfig().GetJwtConfig(project)
 	_ = server.AddJwtConfig(jwt.JwtConfig{TokenKey: jwtConfig.TokenKey, TokenAlg: jwtConfig.TokenAlg, TokenExp: jwtConfig.TokenExp, TokenTyp: jwtConfig.TokenTyp})
 
 	// 添加系统基本参数
-	serverConfig := common.GetAllConfig().GetServerConfig(project)
+	serverConfig := GetAllConfig().GetServerConfig(project)
 
 	// 添加ECDSA配置参数,服务端私钥和客户端公钥
 	for _, v := range serverConfig.Keys {

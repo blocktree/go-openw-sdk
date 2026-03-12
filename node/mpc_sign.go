@@ -20,6 +20,27 @@ import (
 	"github.com/godaddy-x/freego/utils/sdk"
 )
 
+// ============ 新增：sign 早期消息缓存（避免 mpcSignMsg 先于 session 注册到达） ============
+var (
+	earlySignMessages   = make(map[string]earlySignBucket) // key = taskID|myNodeID
+	earlySignMessagesMu sync.Mutex
+	maxEarlySignMsgs    = 512
+	earlySignMsgTTL     = 2 * time.Minute
+)
+
+type earlySignBucket struct {
+	items     []recvItem
+	createdAt time.Time
+}
+
+func cleanupExpiredEarlySignMessagesLocked(now time.Time) {
+	for k, b := range earlySignMessages {
+		if now.Sub(b.createdAt) > earlySignMsgTTL {
+			delete(earlySignMessages, k)
+		}
+	}
+}
+
 // RunSignNodeReal 是实际执行签名的函数（由 HandleMpcSignStart 异步调用）
 // 使用本地 keyfile (keyID-nodeID.json) 中的 LocalPartySaveData，通过 WS 路由与其他节点完成一次 TSS 签名。
 func RunSignNodeReal(
@@ -181,9 +202,9 @@ func HandleMpcSignStart(wsClient *sdk.SocketSDK, myNodeID, router string, body [
 		recvCh: recvCh,
 		errCh:  errCh,
 	}
-	registerSignSession(start.TaskID, myNodeID, session)
-
+	// 先启动 delivery，再注册/回放，减少回放时塞满队列的概率
 	go runSignDelivery(session)
+	registerSignSession(start.TaskID, myNodeID, session)
 
 	// 异步执行签名
 	go func() {
@@ -369,12 +390,39 @@ func signSessionKey(taskID, nodeID string) string {
 }
 
 func registerSignSession(taskID, nodeID string, s *signSession) {
+	key := signSessionKey(taskID, nodeID)
+
+	// Step 1: 取出并清除该 session 的早期消息
+	var replayItems []recvItem
+	earlySignMessagesMu.Lock()
+	cleanupExpiredEarlySignMessagesLocked(time.Now())
+	if b, ok := earlySignMessages[key]; ok {
+		replayItems = b.items
+		delete(earlySignMessages, key)
+	}
+	earlySignMessagesMu.Unlock()
+
+	// Step 2: 注册 session
 	signSessionsMu.Lock()
-	defer signSessionsMu.Unlock()
-	signSessions[signSessionKey(taskID, nodeID)] = s
+	signSessions[key] = s
+	signSessionsMu.Unlock()
+
+	// Step 3: 回放早期消息
+	for _, item := range replayItems {
+		if !s.enqueue(item) {
+			fmt.Printf("[mpc-sign] replay early msg failed (session closed) task=%s node=%s\n", taskID, nodeID)
+		} else {
+			fmt.Printf("[mpc-sign] replayed early msg task=%s node=%s fromIndex=%d\n", taskID, nodeID, item.FromIndex)
+		}
+	}
 }
 
 func unregisterSignSession(taskID, nodeID string) {
+	// 同时清理可能残留的早期消息
+	earlySignMessagesMu.Lock()
+	delete(earlySignMessages, signSessionKey(taskID, nodeID))
+	earlySignMessagesMu.Unlock()
+
 	signSessionsMu.Lock()
 	defer signSessionsMu.Unlock()
 	delete(signSessions, signSessionKey(taskID, nodeID))
@@ -465,11 +513,40 @@ func DeliverMpcSignMsg(wsClient *sdk.SocketSDK, myNodeID, router string, body []
 
 	s := getSignSession(res.TaskID, myNodeID)
 	if s == nil || s.router == nil {
-		fmt.Println("[mpc-sign] Deliver: no session for task", res.TaskID)
+		// Session 不存在：缓存为早期消息
+		wireBytes, err := base64.StdEncoding.DecodeString(res.WireBytesBase64)
+		if err != nil {
+			fmt.Println("[mpc-sign] Deliver: base64 error =", err)
+			return err
+		}
+		sessionKey := signSessionKey(res.TaskID, myNodeID)
+
+		earlySignMessagesMu.Lock()
+		now := time.Now()
+		cleanupExpiredEarlySignMessagesLocked(now)
+		if b, exists := earlySignMessages[sessionKey]; exists && len(b.items) >= maxEarlySignMsgs {
+			earlySignMessagesMu.Unlock()
+			fmt.Printf("[mpc-sign] Deliver: dropped early msg (buffer full) task=%s node=%s\n", res.TaskID, myNodeID)
+			return nil
+		}
+		item := recvItem{
+			WireBytes:   wireBytes,
+			FromIndex:   res.FromIndex,
+			IsBroadcast: res.IsBroadcast,
+		}
+		b := earlySignMessages[sessionKey]
+		if b.createdAt.IsZero() {
+			b.createdAt = now
+		}
+		b.items = append(b.items, item)
+		earlySignMessages[sessionKey] = b
+		earlySignMessagesMu.Unlock()
+
+		fmt.Printf("[mpc-sign] Deliver: cached early msg task=%s node=%s fromIndex=%d\n", res.TaskID, myNodeID, res.FromIndex)
 		return nil
 	}
 
-	fmt.Printf("[mpc-sign] Deliver: accepted task=%s myIndex=%d fromIndex=%d\n",
+	fmt.Printf("[mpc-sign] Deliver: enqueuing to session task=%s myIndex=%d fromIndex=%d\n",
 		res.TaskID, s.router.myIndex, res.FromIndex)
 
 	if res.FromIndex == s.router.myIndex {

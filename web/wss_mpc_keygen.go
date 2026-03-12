@@ -13,6 +13,7 @@ import (
 
 	"github.com/blocktree/go-openw-sdk/v2/mpc"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
+	"github.com/blocktree/openwallet/v2/hdkeystore"
 	ecc "github.com/godaddy-x/eccrypto"
 	"github.com/godaddy-x/freego/node"
 	"github.com/godaddy-x/freego/utils"
@@ -21,8 +22,8 @@ import (
 // mpcKeygenLogMu 串行化 mpc-keygen 相关日志，避免 CreateMPCKeyTask 轮询与 handleMpcKeygenMsg 并发写 stdout 导致交错。
 var mpcKeygenLogMu sync.Mutex
 
-// keyMetaDir 服务端记录 keyID 对应节点列表的本地目录。
-// 每次 keygen 成功后会写入 keyMetaDir/{keyID}.json，内容为节点 ID 数组（nodeIDs，TSS 顺序）。
+// keyMetaDir 服务端记录 walletID 对应节点列表的本地目录。
+// 每次 keygen 成功后会写入 keyMetaDir/{walletID}.json。
 const keyMetaDir = "mpc_keys_meta"
 
 func mpcLogf(format string, args ...interface{}) {
@@ -41,9 +42,10 @@ type MpcKeygenTaskMeta struct {
 	PublicKey   map[string][]byte // subject -> temp ECDH public key (raw bytes)
 }
 
-// KeyMeta 用于持久化一把 key 的元信息到本地 JSON 文件（keyMetaDir/{keyID}.json）。
+// KeyMeta 用于持久化一把 key 的元信息到本地 JSON 文件（keyMetaDir/{walletID}.json）。
 // 方便在服务端配置丢失时，从文件恢复参与节点与门限配置。
 type KeyMeta struct {
+	WalletID      string         `json:"walletID"`
 	KeyID         string         `json:"keyID"`
 	NodeIDs       []string       `json:"nodeIDs"`       // 按 TSS PartyIDs 顺序
 	Threshold     int            `json:"threshold"`     // 门限 t（如 2-of-3、3-of-5）
@@ -232,16 +234,18 @@ func CreateMPCKeygenTask() (keyID string, err error) {
 		return "", errors.New("keyID empty")
 	}
 
-	// 将本次 keygen 的元信息持久化到本地 JSON 文件：keyMetaDir/{keyID}.json
+	walletID := hdkeystore.ComputeKeyID([]byte(keyID))
+	// 将本次 keygen 的元信息持久化到本地 JSON 文件：keyMetaDir/{walletID}.json
 	if err := os.MkdirAll(keyMetaDir, 0o700); err != nil {
 		return "", fmt.Errorf("create key meta dir failed: %w", err)
 	}
-	metaPath := filepath.Join(keyMetaDir, keyID+".json")
+	metaPath := filepath.Join(keyMetaDir, walletID+".json")
 	indexByNodeID := make(map[string]int, len(nodeIDs))
 	for i, id := range nodeIDs {
 		indexByNodeID[id] = i
 	}
 	metaObj := KeyMeta{
+		WalletID:      walletID,
 		KeyID:         keyID,
 		NodeIDs:       nodeIDs,
 		Threshold:     threshold,

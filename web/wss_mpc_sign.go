@@ -11,20 +11,22 @@ import (
 
 	"github.com/blocktree/go-openw-sdk/v2/mpc"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
+	"github.com/blocktree/openwallet/v2/hdkeystore"
 	ecc "github.com/godaddy-x/eccrypto"
 	"github.com/godaddy-x/freego/node"
 	"github.com/godaddy-x/freego/utils"
 )
 
 // CreateMPCSignTask 协调多节点完成一次 TSS 签名，返回 64 字节签名的 hex（R||S）。
-// keyID 用于确定参与节点列表与门限（从 keyMetaDir/{keyID}.json 读取），msgHashHex 为 32 字节消息哈希的 hex。
+// keyID 用于计算 walletID，并读取 keyMetaDir/{walletID}.json 获取参与节点列表与门限；msgHashHex 为 32 字节消息哈希的 hex。
 func CreateMPCSignTask(keyID, msgHashHex string) (sigHex string, err error) {
 	if server == nil {
 		return "", errors.New("ws server not initialized")
 	}
 
 	// 1) 读取 key 元信息（节点列表、门限、index 映射）
-	metaPath := filepath.Join(keyMetaDir, keyID+".json")
+	walletID := hdkeystore.ComputeKeyID([]byte(keyID))
+	metaPath := filepath.Join(keyMetaDir, walletID+".json")
 	raw, err := os.ReadFile(metaPath)
 	if err != nil {
 		return "", fmt.Errorf("read key meta failed: %w", err)

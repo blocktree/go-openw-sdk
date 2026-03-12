@@ -43,27 +43,28 @@ func CreateMPCSignTask(keyID, msgHashHex string) (sigHex string, err error) {
 		return "", fmt.Errorf("invalid msgHashHex: %w", err)
 	}
 
-	// 3) 取在线节点，确保 keyMeta.NodeIDs 覆盖在当前在线列表内
+	// 3) 全量节点提交临时公钥：要求 KeyMeta.NodeIDs 中的所有节点当前都在线，且全部参与签名
 	nodes := server.GetConnManager().GetAllSubjectDevices()
 	online := make(map[string]bool, len(nodes))
 	for s := range nodes {
 		online[s] = true
 	}
-	signNodeIDs := make([]string, 0, len(keyMeta.NodeIDs))
+	allNodeIDs := make([]string, 0, len(keyMeta.NodeIDs))
 	for _, id := range keyMeta.NodeIDs {
 		if !online[id] {
 			return "", fmt.Errorf("node %s offline for sign", id)
 		}
-		signNodeIDs = append(signNodeIDs, id)
+		allNodeIDs = append(allNodeIDs, id)
 	}
 
 	taskID := utils.GetUUID(true)
 	expiredTime := utils.UnixSecond() + 120
 
-	mpcLogf("CreateMPCSignTask: taskID=%s keyID=%s nodes=%v threshold=%d\n", taskID, keyID, signNodeIDs, keyMeta.Threshold)
+	mpcLogf("CreateMPCSignTask: taskID=%s keyID=%s allNodes=%v threshold=%d (all nodes participate)\n",
+		taskID, keyID, allNodeIDs, keyMeta.Threshold)
 
 	// 4) ECDH 临时公钥交换（module = "sign"）
-	for _, subject := range signNodeIDs {
+	for _, subject := range allNodeIDs {
 		req := &dto.CliMPCTempPublicKeyReq{
 			TaskID: taskID,
 			Module: "sign",
@@ -75,11 +76,11 @@ func CreateMPCSignTask(keyID, msgHashHex string) (sigHex string, err error) {
 
 	signMeta := &MpcKeygenTaskMeta{
 		TaskID:      taskID,
-		AllNodeIDs:  keyMeta.NodeIDs,
-		SignNodeIDs: signNodeIDs,
+		AllNodeIDs:  allNodeIDs,
+		SignNodeIDs: nil, // 初始化后在收齐临时公钥后设为全量 allNodeIDs
 		Threshold:   keyMeta.Threshold,
 		ExpiredTime: expiredTime,
-		PublicKey:   make(map[string][]byte, len(signNodeIDs)),
+		PublicKey:   make(map[string][]byte, len(allNodeIDs)),
 	}
 
 	// 等待各节点上报临时公钥
@@ -94,7 +95,7 @@ func CreateMPCSignTask(keyID, msgHashHex string) (sigHex string, err error) {
 				return errors.New("timeout waiting for all nodes to submit public keys")
 			case <-keyTicker.C:
 				allReady := true
-				for _, subject := range signNodeIDs {
+				for _, subject := range allNodeIDs {
 					cacheKey := utils.FNV1a64(utils.AddStr(subject, ":", taskID, ":sign:tempPublicKey"))
 					v, ok, _ := keyCache.Get(cacheKey, nil)
 					if !ok || v == nil {
@@ -113,6 +114,9 @@ func CreateMPCSignTask(keyID, msgHashHex string) (sigHex string, err error) {
 	if err := waitForAll(); err != nil {
 		return "", err
 	}
+	// 在全量节点都上报临时公钥后，强制所有节点都参与签名（SignNodeIDs = AllNodeIDs）
+	signNodeIDs := allNodeIDs
+	signMeta.SignNodeIDs = signNodeIDs
 
 	// 将 signMeta 存入 cache 供 handleMpcSignMsg 使用
 	metaKey := utils.FNV1a64("mpcSignMeta:" + taskID)
@@ -124,14 +128,16 @@ func CreateMPCSignTask(keyID, msgHashHex string) (sigHex string, err error) {
 	startPayload := &dto.CliMPCSignStartRes{
 		TaskID:        taskID,
 		KeyID:         keyID,
-		NodeIDs:       signNodeIDs,
+		AllNodeIDs:    allNodeIDs,
+		SignNodeIDs:   signNodeIDs,
 		Threshold:     keyMeta.Threshold,
 		MsgHashHex:    msgHashHex,
 		ExpiredTime:   expiredTime,
-		PublicKeyPair: make([]dto.CliMPCPublicKeyPair, 0, len(signMeta.PublicKey)),
+		PublicKeyPair: make([]dto.CliMPCPublicKeyPair, 0, len(allNodeIDs)),
 	}
 
-	for _, v := range signNodeIDs {
+	// PublicKeyPair 填写全量节点的临时公钥，便于参与节点按任意目标加密
+	for _, v := range allNodeIDs {
 		startPayload.PublicKeyPair = append(startPayload.PublicKeyPair, dto.CliMPCPublicKeyPair{
 			Subject:   v,
 			PublicKey: utils.Base64Encode(signMeta.PublicKey[v]),

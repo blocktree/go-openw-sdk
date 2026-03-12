@@ -200,7 +200,7 @@ type CliMPCEncryptData struct {
 type CliMPCSignStartRes struct {
 	TaskID        string                `json:"taskID"`
 	KeyID         string                `json:"keyID"`       // 要使用的根密钥 KeyID
-	NodeIDs       []string              `json:"nodeIDs"`     // 全量节点列表
+	AllNodeIDs    []string              `json:"allNodeIDs"`  // 全量节点列表
 	SignNodeIDs   []string              `json:"signNodeIDs"` // 参与签名的节点（TSS 顺序）
 	Threshold     int                   `json:"threshold"`   // 门限（通常与 keygen 一致）
 	MsgHashHex    string                `json:"msgHashHex"`  // 待签名消息哈希（32字节 hex）

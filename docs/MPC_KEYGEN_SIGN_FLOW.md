@@ -86,11 +86,14 @@
 
 ### 4.1 服务端：CreateMPCSignTask(keyID, msgHashHex)
 
-1. 从 `mpc_keys_meta/{keyID}.json` 读取 KeyMeta（NodeIDs、Threshold）；校验 msgHashHex；确认这些节点在线。
-2. 生成 `taskID`、`expiredTime`；向每个节点 **Push mpcTempPublicKey**（Module=`"sign"`）。
-3. 轮询收齐各节点公钥，写入 `signMeta.PublicKey`；将 signMeta 存入 cache（key `mpcSignMeta:taskID`）。
-4. 构造 `CliMPCSignStartRes`（TaskID, KeyID, NodeIDs, Threshold, MsgHashHex, ExpiredTime, PublicKeyPair），对每个节点用其临时公钥加密后 **Push mpcSignStart**。
-5. 轮询各节点 **POST /ws/mpcSignResult**（SignatureHex 或 Err）；校验各节点签名一致；清理 sign 相关 cache；返回 sigHex。
+> **强制全量节点在线且参与签名**：为了保证协议安全性与实现简单性，当前实现要求 `keyMeta.NodeIDs` 中的**所有节点必须在线并参与本次签名**；暂不支持只用子集（例如 2-of-3 只用 2 个节点）完成签名。
+
+1. 从 `mpc_keys_meta/{keyID}.json` 读取 KeyMeta（NodeIDs、Threshold）；校验 msgHashHex。
+2. 检查 `NodeIDs` 中的**每个节点**当前是否在线；若有任意一个离线则直接报错，拒绝本次签名请求。
+3. 生成 `taskID`、`expiredTime`；向所有节点 **Push mpcTempPublicKey**（Module=`"sign"`），要求全量节点上报临时公钥。
+4. 轮询收齐所有节点的临时公钥，写入 `signMeta.PublicKey`；将 signMeta 存入 cache（key `mpcSignMeta:taskID`）。
+5. 构造 `CliMPCSignStartRes`（包含 **AllNodeIDs=全量节点**、`SignNodeIDs=AllNodeIDs`、Threshold、MsgHashHex、全量 `PublicKeyPair` 等），对每个节点用其临时公钥加密后 **Push mpcSignStart**。
+6. 轮询所有节点 **POST /ws/mpcSignResult**（SignatureHex 或 Err）；校验各节点签名一致；清理 sign 相关 cache；返回 sigHex。
 
 ### 4.2 节点：HandleMpcSignStart
 

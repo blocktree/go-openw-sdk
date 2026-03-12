@@ -28,7 +28,7 @@ func RunSignNodeReal(
 	msgHash *big.Int,
 	wsClient *sdk.SocketSDK,
 ) (signatureHex string, err error) {
-	sortedIDs := mpc.PartyIDs(start.NodeIDs)
+	sortedIDs := mpc.PartyIDs(start.AllNodeIDs)
 	myIndex := -1
 	for i := range sortedIDs {
 		if sortedIDs[i].GetId() == myNodeID {
@@ -46,7 +46,7 @@ func RunSignNodeReal(
 	}
 
 	// 从本地 keystore 加载本节点的 SaveData
-	store := mpc.NewFileKeyStore("keys")
+	store := mpc.NewFileKeyStore("node/keys")
 	saveData, err := store.Load(start.KeyID, myNodeID)
 	if err != nil {
 		return "", fmt.Errorf("load local SaveData failed: %w", err)
@@ -135,19 +135,16 @@ func HandleMpcSignStart(wsClient *sdk.SocketSDK, myNodeID, router string, body [
 	}
 
 	for _, v := range start.PublicKeyPair {
-		if v.Subject == myNodeID {
-			continue
-		}
 		cacheKey := utils.FNV1a64(utils.AddStr(v.Subject, ":", start.TaskID, ":sign:tempPublicKey"))
 		if err := keyCache.Put(cacheKey, v.PublicKey, 600); err != nil {
 			return errors.New("handleTempPublicKey put tempPrivateKey error: " + err.Error())
 		}
 	}
 
-	fmt.Printf("[mpc-sign] node=%s task=%s start, keyID=%s threshold=%d, nodes=%v\n",
-		myNodeID, start.TaskID, start.KeyID, start.Threshold, start.NodeIDs)
+	fmt.Printf("[mpc-sign] node=%s task=%s start, keyID=%s threshold=%d, allNodes=%v signNodes=%v\n",
+		myNodeID, start.TaskID, start.KeyID, start.Threshold, start.AllNodeIDs, start.SignNodeIDs)
 
-	sortedIDs := mpc.PartyIDs(start.NodeIDs)
+	sortedIDs := mpc.PartyIDs(start.AllNodeIDs)
 	myIndex := -1
 	for i := range sortedIDs {
 		if sortedIDs[i].GetId() == myNodeID {
@@ -170,11 +167,13 @@ func HandleMpcSignStart(wsClient *sdk.SocketSDK, myNodeID, router string, body [
 	errCh := make(chan error, 4)
 
 	routerStub := &wsSignRouter{
-		taskID:    start.TaskID,
-		subject:   myNodeID,
-		sortedIDs: sortedIDs,
-		myIndex:   myIndex,
-		wsClient:  wsClient,
+		taskID:      start.TaskID,
+		subject:     myNodeID,
+		sortedIDs:   sortedIDs,
+		myIndex:     myIndex,
+		wsClient:    wsClient,
+		allNodeIDs:  start.AllNodeIDs,
+		signNodeIDs: start.SignNodeIDs,
 	}
 
 	session := &signSession{
@@ -193,7 +192,7 @@ func HandleMpcSignStart(wsClient *sdk.SocketSDK, myNodeID, router string, body [
 			unregisterSignSession(start.TaskID, myNodeID)
 			signTempPrk := utils.FNV1a64(utils.AddStr(myNodeID, ":", start.TaskID, ":sign:tempPrivateKey"))
 			_ = keyCache.Del(signTempPrk)
-			for _, v := range start.NodeIDs {
+			for _, v := range start.AllNodeIDs {
 				signTempPub := utils.FNV1a64(utils.AddStr(v, ":", start.TaskID, ":sign:tempPublicKey"))
 				_ = keyCache.Del(signTempPub)
 			}
@@ -234,40 +233,44 @@ func HandleMpcSignStart(wsClient *sdk.SocketSDK, myNodeID, router string, body [
 
 // wsSignRouter 节点侧基于 WebSocket 的 MessageRouter（签名版）
 type wsSignRouter struct {
-	taskID    string
-	myIndex   int
-	subject   string
-	sortedIDs tss.SortedPartyIDs
-	party     tss.Party
-	wsClient  *sdk.SocketSDK
+	taskID      string
+	myIndex     int
+	subject     string
+	sortedIDs   tss.SortedPartyIDs
+	allNodeIDs  []string
+	signNodeIDs []string
+	party       tss.Party
+	wsClient    *sdk.SocketSDK
 }
 
 // Send 将本节点 party 产生的消息编码后 POST 到服务端，由服务端转发给其他节点。
 func (r *wsSignRouter) Send(fromIndex int, msg tss.Message) error {
-	wireBytes, _, err := msg.WireBytes()
-	if err != nil {
-		return err
-	}
-	fmt.Printf("[mpc-sign] Send: task=%s fromIndex=%d isBroadcast=%v len=%d\n",
-		r.taskID, fromIndex, msg.IsBroadcast(), len(wireBytes))
-
 	var toNodeIDs []string
 	if !msg.IsBroadcast() {
 		for _, pid := range msg.GetTo() {
 			toNodeIDs = append(toNodeIDs, pid.GetId())
 		}
 	} else {
-		for _, v := range r.sortedIDs {
-			if v.GetId() == r.subject { // 跳过自身
+		for _, v := range r.signNodeIDs {
+			if v == r.subject { // 跳过自身
 				continue
 			}
-			toNodeIDs = append(toNodeIDs, v.GetId())
+			toNodeIDs = append(toNodeIDs, v)
 		}
 	}
 	fmt.Printf("[mpc-sign] Send: task=%s fromIndex=%d toNodeIDs=%v\n",
 		r.taskID, fromIndex, toNodeIDs)
+
+	wireBytes, _, err := msg.WireBytes()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("[mpc-sign] Send: node=%s task=%s fromIndex=%d isBroadcast=%v len=%d\n",
+		r.subject, r.taskID, fromIndex, msg.IsBroadcast(), len(wireBytes))
+
 	// 这里开始发送给服务端转发
 	for _, v := range toNodeIDs {
+
 		payload := &dto.CliMPCSignMsgRes{
 			TaskID:          r.taskID,
 			WireBytesBase64: base64.StdEncoding.EncodeToString(wireBytes),
@@ -291,18 +294,6 @@ func (r *wsSignRouter) Send(fromIndex int, msg tss.Message) error {
 			return err
 		}
 	}
-	//req := &dto.CliMPCSignMsgReq{
-	//	TaskID:          r.taskID,
-	//	WireBytesBase64: base64.StdEncoding.EncodeToString(wireBytes),
-	//	FromIndex:       fromIndex,
-	//	IsBroadcast:     msg.IsBroadcast(),
-	//	ToNodeIDs:       toNodeIDs,
-	//}
-	//var res map[string]interface{}
-	//if err := r.wsClient.SendWebSocketMessage("/ws/mpcSignMsg", req, &res, true, true, 60); err != nil {
-	//	fmt.Printf("[mpc-sign] Send: task=%s fromIndex=%d rpc error=%v\n", r.taskID, fromIndex, err)
-	//	return err
-	//}
 	return nil
 }
 

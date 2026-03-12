@@ -1294,20 +1294,20 @@ func easyjsonC5d09f7cDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto11(in *jlexe
 			} else {
 				out.KeyID = string(in.String())
 			}
-		case "nodeIDs":
+		case "allNodeIDs":
 			if in.IsNull() {
 				in.Skip()
-				out.NodeIDs = nil
+				out.AllNodeIDs = nil
 			} else {
 				in.Delim('[')
-				if out.NodeIDs == nil {
+				if out.AllNodeIDs == nil {
 					if !in.IsDelim(']') {
-						out.NodeIDs = make([]string, 0, 4)
+						out.AllNodeIDs = make([]string, 0, 4)
 					} else {
-						out.NodeIDs = []string{}
+						out.AllNodeIDs = []string{}
 					}
 				} else {
-					out.NodeIDs = (out.NodeIDs)[:0]
+					out.AllNodeIDs = (out.AllNodeIDs)[:0]
 				}
 				for !in.IsDelim(']') {
 					var v3 string
@@ -1316,7 +1316,7 @@ func easyjsonC5d09f7cDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto11(in *jlexe
 					} else {
 						v3 = string(in.String())
 					}
-					out.NodeIDs = append(out.NodeIDs, v3)
+					out.AllNodeIDs = append(out.AllNodeIDs, v3)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -1418,13 +1418,13 @@ func easyjsonC5d09f7cEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto11(out *jwri
 		out.String(string(in.KeyID))
 	}
 	{
-		const prefix string = ",\"nodeIDs\":"
+		const prefix string = ",\"allNodeIDs\":"
 		out.RawString(prefix)
-		if in.NodeIDs == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+		if in.AllNodeIDs == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v6, v7 := range in.NodeIDs {
+			for v6, v7 := range in.AllNodeIDs {
 				if v6 > 0 {
 					out.RawByte(',')
 				}

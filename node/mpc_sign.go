@@ -23,15 +23,12 @@ import (
 // RunSignNodeReal 是实际执行签名的函数（由 HandleMpcSignStart 异步调用）
 // 使用本地 keyfile (keyID-nodeID.json) 中的 LocalPartySaveData，通过 WS 路由与其他节点完成一次 TSS 签名。
 func RunSignNodeReal(
-	taskID string,
-	keyID string,
-	nodeIDs []string,
+	start dto.CliMPCSignStartRes,
 	myNodeID string,
-	threshold int,
 	msgHash *big.Int,
 	wsClient *sdk.SocketSDK,
 ) (signatureHex string, err error) {
-	sortedIDs := mpc.PartyIDs(nodeIDs)
+	sortedIDs := mpc.PartyIDs(start.NodeIDs)
 	myIndex := -1
 	for i := range sortedIDs {
 		if sortedIDs[i].GetId() == myNodeID {
@@ -43,14 +40,14 @@ func RunSignNodeReal(
 		return "", errors.New("myNodeID not in nodeIDs")
 	}
 
-	params := mpc.Parameters(sortedIDs, myIndex, threshold)
+	params := mpc.Parameters(sortedIDs, myIndex, start.Threshold)
 	if params == nil {
 		return "", errors.New("mpc: invalid sign parameters")
 	}
 
 	// 从本地 keystore 加载本节点的 SaveData
 	store := mpc.NewFileKeyStore("keys")
-	saveData, err := store.Load(keyID, myNodeID)
+	saveData, err := store.Load(start.KeyID, myNodeID)
 	if err != nil {
 		return "", fmt.Errorf("load local SaveData failed: %w", err)
 	}
@@ -62,7 +59,7 @@ func RunSignNodeReal(
 	party := signing.NewLocalParty(msgHash, params, saveData, outCh, endCh)
 
 	// 获取已注册的 session 并补全 router
-	session := getSignSession(taskID, myNodeID)
+	session := getSignSession(start.TaskID, myNodeID)
 	if session == nil {
 		return "", errors.New("sign session disappeared during RunSignNodeReal")
 	}
@@ -88,7 +85,7 @@ func RunSignNodeReal(
 		return "", startErr
 	}
 
-	fmt.Printf("[mpc-sign] node=%s task=%s: party started, waiting for messages and result\n", myNodeID, taskID)
+	fmt.Printf("[mpc-sign] node=%s task=%s: party started, waiting for messages and result\n", myNodeID, start.TaskID)
 
 	signTimeout := 2 * time.Minute
 	deadline := time.After(signTimeout)
@@ -202,7 +199,7 @@ func HandleMpcSignStart(wsClient *sdk.SocketSDK, myNodeID, router string, body [
 			}
 		}()
 
-		sigHex, err := RunSignNodeReal(start.TaskID, start.KeyID, start.NodeIDs, myNodeID, start.Threshold, msgHash, wsClient)
+		sigHex, err := RunSignNodeReal(start, myNodeID, msgHash, wsClient)
 		nodeID := myNodeID
 		if err != nil {
 			fmt.Printf("[mpc-sign] node=%s task=%s failed: %v\n", myNodeID, start.TaskID, err)

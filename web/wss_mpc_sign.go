@@ -169,7 +169,7 @@ func CreateMPCSignTask(walletID, msgHashHex string) (sigHex string, err error) {
 		}
 	}
 
-	waitResCtx, cancelRes := context.WithTimeout(context.Background(), time.Duration(timeout-5)*time.Minute)
+	waitResCtx, cancelRes := context.WithTimeout(context.Background(), time.Duration(timeout-5)*time.Second)
 	defer cancelRes()
 	if err := resultCollector.Wait(waitResCtx); err != nil {
 		return "", fmt.Errorf("timeout waiting for MPC sign result: %w", err)

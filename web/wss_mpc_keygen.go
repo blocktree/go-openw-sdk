@@ -192,7 +192,7 @@ func CreateMPCKeygenTask() (keyID string, err error) {
 
 	// 等待 keygen 结果上报（事件驱动，无需轮询 cache）
 	resultCollector := NewKeygenResultCollector(nodeIDs)
-	registerKeygenResultCollector(taskID, resultCollector, 10*time.Minute)
+	registerKeygenResultCollector(taskID, resultCollector, time.Duration(timeout)*time.Second)
 	defer unregisterKeygenResultCollector(taskID)
 
 	// cache replay：如果有节点在 collector 注册前已上报（或重试上报），这里补一遍 Submit，确保不会丢事件
@@ -206,7 +206,7 @@ func CreateMPCKeygenTask() (keyID string, err error) {
 		}
 	}
 
-	waitResCtx, cancelRes := context.WithTimeout(context.Background(), 10*time.Minute)
+	waitResCtx, cancelRes := context.WithTimeout(context.Background(), time.Duration(timeout-5)*time.Second)
 	defer cancelRes()
 	if err := resultCollector.Wait(waitResCtx); err != nil {
 		mpcLogf("CreateMPCKeyTask: timeout waiting for nodes, taskID=%s\n", taskID)

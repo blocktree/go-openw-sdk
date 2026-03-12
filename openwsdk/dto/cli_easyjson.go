@@ -1321,6 +1321,33 @@ func easyjsonC5d09f7cDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto11(in *jlexe
 				}
 				in.Delim(']')
 			}
+		case "signNodeIDs":
+			if in.IsNull() {
+				in.Skip()
+				out.SignNodeIDs = nil
+			} else {
+				in.Delim('[')
+				if out.SignNodeIDs == nil {
+					if !in.IsDelim(']') {
+						out.SignNodeIDs = make([]string, 0, 4)
+					} else {
+						out.SignNodeIDs = []string{}
+					}
+				} else {
+					out.SignNodeIDs = (out.SignNodeIDs)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v4 string
+					if in.IsNull() {
+						in.Skip()
+					} else {
+						v4 = string(in.String())
+					}
+					out.SignNodeIDs = append(out.SignNodeIDs, v4)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
 		case "threshold":
 			if in.IsNull() {
 				in.Skip()
@@ -1355,13 +1382,13 @@ func easyjsonC5d09f7cDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto11(in *jlexe
 					out.PublicKeyPair = (out.PublicKeyPair)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v4 CliMPCPublicKeyPair
+					var v5 CliMPCPublicKeyPair
 					if in.IsNull() {
 						in.Skip()
 					} else {
-						(v4).UnmarshalEasyJSON(in)
+						(v5).UnmarshalEasyJSON(in)
 					}
-					out.PublicKeyPair = append(out.PublicKeyPair, v4)
+					out.PublicKeyPair = append(out.PublicKeyPair, v5)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -1397,11 +1424,27 @@ func easyjsonC5d09f7cEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto11(out *jwri
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v5, v6 := range in.NodeIDs {
-				if v5 > 0 {
+			for v6, v7 := range in.NodeIDs {
+				if v6 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v6))
+				out.String(string(v7))
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"signNodeIDs\":"
+		out.RawString(prefix)
+		if in.SignNodeIDs == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v8, v9 := range in.SignNodeIDs {
+				if v8 > 0 {
+					out.RawByte(',')
+				}
+				out.String(string(v9))
 			}
 			out.RawByte(']')
 		}
@@ -1428,11 +1471,11 @@ func easyjsonC5d09f7cEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto11(out *jwri
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v7, v8 := range in.PublicKeyPair {
-				if v7 > 0 {
+			for v10, v11 := range in.PublicKeyPair {
+				if v10 > 0 {
 					out.RawByte(',')
 				}
-				(v8).MarshalEasyJSON(out)
+				(v11).MarshalEasyJSON(out)
 			}
 			out.RawByte(']')
 		}
@@ -1768,13 +1811,13 @@ func easyjsonC5d09f7cDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto14(in *jlexe
 					out.ToNodeIDs = (out.ToNodeIDs)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v9 string
+					var v12 string
 					if in.IsNull() {
 						in.Skip()
 					} else {
-						v9 = string(in.String())
+						v12 = string(in.String())
 					}
-					out.ToNodeIDs = append(out.ToNodeIDs, v9)
+					out.ToNodeIDs = append(out.ToNodeIDs, v12)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -1820,11 +1863,11 @@ func easyjsonC5d09f7cEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto14(out *jwri
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v10, v11 := range in.ToNodeIDs {
-				if v10 > 0 {
+			for v13, v14 := range in.ToNodeIDs {
+				if v13 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v11))
+				out.String(string(v14))
 			}
 			out.RawByte(']')
 		}
@@ -1909,13 +1952,13 @@ func easyjsonC5d09f7cDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto15(in *jlexe
 					out.ToNodeIDs = (out.ToNodeIDs)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v12 string
+					var v15 string
 					if in.IsNull() {
 						in.Skip()
 					} else {
-						v12 = string(in.String())
+						v15 = string(in.String())
 					}
-					out.ToNodeIDs = append(out.ToNodeIDs, v12)
+					out.ToNodeIDs = append(out.ToNodeIDs, v15)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -1995,11 +2038,11 @@ func easyjsonC5d09f7cEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto15(out *jwri
 		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v13, v14 := range in.ToNodeIDs {
-				if v13 > 0 {
+			for v16, v17 := range in.ToNodeIDs {
+				if v16 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v14))
+				out.String(string(v17))
 			}
 			out.RawByte(']')
 		}
@@ -2237,13 +2280,13 @@ func easyjsonC5d09f7cDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto18(in *jlexe
 					out.NodeIDs = (out.NodeIDs)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v15 string
+					var v18 string
 					if in.IsNull() {
 						in.Skip()
 					} else {
-						v15 = string(in.String())
+						v18 = string(in.String())
 					}
-					out.NodeIDs = append(out.NodeIDs, v15)
+					out.NodeIDs = append(out.NodeIDs, v18)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -2276,13 +2319,13 @@ func easyjsonC5d09f7cDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto18(in *jlexe
 					out.PublicKeyPair = (out.PublicKeyPair)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v16 CliMPCPublicKeyPair
+					var v19 CliMPCPublicKeyPair
 					if in.IsNull() {
 						in.Skip()
 					} else {
-						(v16).UnmarshalEasyJSON(in)
+						(v19).UnmarshalEasyJSON(in)
 					}
-					out.PublicKeyPair = append(out.PublicKeyPair, v16)
+					out.PublicKeyPair = append(out.PublicKeyPair, v19)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -2313,11 +2356,11 @@ func easyjsonC5d09f7cEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto18(out *jwri
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v17, v18 := range in.NodeIDs {
-				if v17 > 0 {
+			for v20, v21 := range in.NodeIDs {
+				if v20 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v18))
+				out.String(string(v21))
 			}
 			out.RawByte(']')
 		}
@@ -2339,11 +2382,11 @@ func easyjsonC5d09f7cEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto18(out *jwri
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v19, v20 := range in.PublicKeyPair {
-				if v19 > 0 {
+			for v22, v23 := range in.PublicKeyPair {
+				if v22 > 0 {
 					out.RawByte(',')
 				}
-				(v20).MarshalEasyJSON(out)
+				(v23).MarshalEasyJSON(out)
 			}
 			out.RawByte(']')
 		}
@@ -2679,13 +2722,13 @@ func easyjsonC5d09f7cDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto21(in *jlexe
 					out.ToNodeIDs = (out.ToNodeIDs)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v21 string
+					var v24 string
 					if in.IsNull() {
 						in.Skip()
 					} else {
-						v21 = string(in.String())
+						v24 = string(in.String())
 					}
-					out.ToNodeIDs = append(out.ToNodeIDs, v21)
+					out.ToNodeIDs = append(out.ToNodeIDs, v24)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -2731,11 +2774,11 @@ func easyjsonC5d09f7cEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto21(out *jwri
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v22, v23 := range in.ToNodeIDs {
-				if v22 > 0 {
+			for v25, v26 := range in.ToNodeIDs {
+				if v25 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v23))
+				out.String(string(v26))
 			}
 			out.RawByte(']')
 		}
@@ -2820,13 +2863,13 @@ func easyjsonC5d09f7cDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto22(in *jlexe
 					out.ToNodeIDs = (out.ToNodeIDs)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v24 string
+					var v27 string
 					if in.IsNull() {
 						in.Skip()
 					} else {
-						v24 = string(in.String())
+						v27 = string(in.String())
 					}
-					out.ToNodeIDs = append(out.ToNodeIDs, v24)
+					out.ToNodeIDs = append(out.ToNodeIDs, v27)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -2906,11 +2949,11 @@ func easyjsonC5d09f7cEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto22(out *jwri
 		out.RawString(prefix)
 		{
 			out.RawByte('[')
-			for v25, v26 := range in.ToNodeIDs {
-				if v25 > 0 {
+			for v28, v29 := range in.ToNodeIDs {
+				if v28 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v26))
+				out.String(string(v29))
 			}
 			out.RawByte(']')
 		}
@@ -3088,13 +3131,13 @@ func easyjsonC5d09f7cDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto24(in *jlexe
 					out.Result = (out.Result)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v27 WalletResult
+					var v30 WalletResult
 					if in.IsNull() {
 						in.Skip()
 					} else {
-						(v27).UnmarshalEasyJSON(in)
+						(v30).UnmarshalEasyJSON(in)
 					}
-					out.Result = append(out.Result, v27)
+					out.Result = append(out.Result, v30)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -3120,11 +3163,11 @@ func easyjsonC5d09f7cEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto24(out *jwri
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v28, v29 := range in.Result {
-				if v28 > 0 {
+			for v31, v32 := range in.Result {
+				if v31 > 0 {
 					out.RawByte(',')
 				}
-				(v29).MarshalEasyJSON(out)
+				(v32).MarshalEasyJSON(out)
 			}
 			out.RawByte(']')
 		}
@@ -3518,13 +3561,13 @@ func easyjsonC5d09f7cDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto28(in *jlexe
 					out.OtherOwnerKeys = (out.OtherOwnerKeys)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v30 string
+					var v33 string
 					if in.IsNull() {
 						in.Skip()
 					} else {
-						v30 = string(in.String())
+						v33 = string(in.String())
 					}
-					out.OtherOwnerKeys = append(out.OtherOwnerKeys, v30)
+					out.OtherOwnerKeys = append(out.OtherOwnerKeys, v33)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -3590,11 +3633,11 @@ func easyjsonC5d09f7cEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto28(out *jwri
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v31, v32 := range in.OtherOwnerKeys {
-				if v31 > 0 {
+			for v34, v35 := range in.OtherOwnerKeys {
+				if v34 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v32))
+				out.String(string(v35))
 			}
 			out.RawByte(']')
 		}

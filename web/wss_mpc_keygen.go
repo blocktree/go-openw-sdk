@@ -188,96 +188,85 @@ func CreateMPCKeygenTask() (keyID string, err error) {
 		}
 	}
 
-	maxWait := time.After(10 * time.Minute)
-	ticker := time.NewTicker(500 * time.Millisecond)
-	defer ticker.Stop()
+	// 等待 keygen 结果上报（事件驱动，无需轮询 cache）
+	resultCollector := NewKeygenResultCollector(nodeIDs)
+	registerKeygenResultCollector(taskID, resultCollector, 10*time.Minute)
+	defer unregisterKeygenResultCollector(taskID)
 
-	for {
-		select {
-		case <-maxWait:
-			mpcLogf("CreateMPCKeyTask: timeout waiting for nodes, taskID=%s\n", taskID)
-			return "", errors.New("timeout waiting for all nodes to submit MPC keygen result")
-		case <-ticker.C:
-			allDone := true
-			var firstKeyID string
-			// 汇总当前各节点状态，用于日志
-			statusLine := ""
-			for _, subject := range nodeIDs {
-				cacheKey := utils.FNV1a64(utils.AddStr(subject, taskID))
-				v, ok, _ := keyCache.Get(cacheKey, nil)
-				if !ok || v == nil {
-					allDone = false
-					statusLine += subject + "=missing "
-					continue
-				}
-				res := v.(*MpcKeygenNodeResult)
-				statusLine += fmt.Sprintf("%s=status:%d ", subject, res.Status)
-				if res.KeyID != "" {
-					statusLine += "keyID=" + res.KeyID + " "
-				}
-				if res.Err != "" {
-					statusLine += "err=" + truncateErr(res.Err, 64) + " "
-				}
-				if res.Status != 40 {
-					allDone = false
-				} else {
-					if res.Err != "" {
-						return "", errors.New("node " + res.NodeID + " keygen failed: " + res.Err)
-					}
-					if firstKeyID == "" {
-						firstKeyID = res.KeyID
-					} else if res.KeyID != firstKeyID {
-						return "", errors.New("keyID mismatch between nodes")
-					}
-				}
+	// cache replay：如果有节点在 collector 注册前已上报（或重试上报），这里补一遍 Submit，确保不会丢事件
+	for _, subject := range nodeIDs {
+		cacheKey := utils.FNV1a64(utils.AddStr(subject, taskID))
+		v, ok, _ := keyCache.Get(cacheKey, nil)
+		if ok && v != nil {
+			if res, ok := v.(*MpcKeygenNodeResult); ok && res != nil {
+				resultCollector.Submit(subject, res)
 			}
-			mpcLogf("CreateMPCKeyTask: taskID=%s state: %s\n", taskID, statusLine)
-			if !allDone {
-				continue
-			}
-			keyID = firstKeyID
-			if keyID == "" {
-				return "", errors.New("keyID empty")
-			}
-
-			// 将本次 keygen 的元信息持久化到本地 JSON 文件：keyMetaDir/{keyID}.json
-			if err := os.MkdirAll(keyMetaDir, 0o700); err != nil {
-				return "", fmt.Errorf("create key meta dir failed: %w", err)
-			}
-			metaPath := filepath.Join(keyMetaDir, keyID+".json")
-			indexByNodeID := make(map[string]int, len(nodeIDs))
-			for i, id := range nodeIDs {
-				indexByNodeID[id] = i
-			}
-			metaObj := KeyMeta{
-				KeyID:         keyID,
-				NodeIDs:       nodeIDs,
-				Threshold:     threshold,
-				IndexByNodeID: indexByNodeID,
-			}
-			metaData, err := json.Marshal(&metaObj)
-			if err != nil {
-				return "", fmt.Errorf("marshal key meta failed: %w", err)
-			}
-			if err := os.WriteFile(metaPath, metaData, 0o600); err != nil {
-				return "", fmt.Errorf("write key meta file failed: %w", err)
-			}
-
-			// 清理与本次任务相关的缓存（节点状态、临时公钥、任务元信息）
-			for _, subject := range nodeIDs {
-				nodeCacheKey := utils.FNV1a64(utils.AddStr(subject, taskID))
-				_ = keyCache.Del(nodeCacheKey)
-				tempPubKey := utils.FNV1a64(utils.AddStr(subject, ":", taskID, ":keygen:tempPublicKey"))
-				_ = keyCache.Del(tempPubKey)
-			}
-			_ = keyCache.Del(metaKey)
-
-			mpcLogf("CreateMPCKeyTask: taskID=%s caches cleared\n", taskID)
-
-			mpcLogf("CreateMPCKeyTask: taskID=%s all nodes done, keyID=%s\n", taskID, keyID)
-			return keyID, nil
 		}
 	}
+
+	waitResCtx, cancelRes := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancelRes()
+	if err := resultCollector.Wait(waitResCtx); err != nil {
+		mpcLogf("CreateMPCKeyTask: timeout waiting for nodes, taskID=%s\n", taskID)
+		return "", fmt.Errorf("timeout waiting for all nodes to submit MPC keygen result: %w", err)
+	}
+
+	results := resultCollector.GetResults()
+	var firstKeyID string
+	for _, subject := range nodeIDs {
+		res := results[subject]
+		if res == nil {
+			return "", errors.New("missing keygen result from " + subject)
+		}
+		if res.Err != "" {
+			return "", errors.New("node " + res.NodeID + " keygen failed: " + res.Err)
+		}
+		if firstKeyID == "" {
+			firstKeyID = res.KeyID
+		} else if res.KeyID != firstKeyID {
+			return "", errors.New("keyID mismatch between nodes")
+		}
+	}
+	keyID = firstKeyID
+	if keyID == "" {
+		return "", errors.New("keyID empty")
+	}
+
+	// 将本次 keygen 的元信息持久化到本地 JSON 文件：keyMetaDir/{keyID}.json
+	if err := os.MkdirAll(keyMetaDir, 0o700); err != nil {
+		return "", fmt.Errorf("create key meta dir failed: %w", err)
+	}
+	metaPath := filepath.Join(keyMetaDir, keyID+".json")
+	indexByNodeID := make(map[string]int, len(nodeIDs))
+	for i, id := range nodeIDs {
+		indexByNodeID[id] = i
+	}
+	metaObj := KeyMeta{
+		KeyID:         keyID,
+		NodeIDs:       nodeIDs,
+		Threshold:     threshold,
+		IndexByNodeID: indexByNodeID,
+	}
+	metaData, err := json.Marshal(&metaObj)
+	if err != nil {
+		return "", fmt.Errorf("marshal key meta failed: %w", err)
+	}
+	if err := os.WriteFile(metaPath, metaData, 0o600); err != nil {
+		return "", fmt.Errorf("write key meta file failed: %w", err)
+	}
+
+	// 清理与本次任务相关的缓存（节点状态、临时公钥、任务元信息）
+	for _, subject := range nodeIDs {
+		nodeCacheKey := utils.FNV1a64(utils.AddStr(subject, taskID))
+		_ = keyCache.Del(nodeCacheKey)
+		tempPubKey := utils.FNV1a64(utils.AddStr(subject, ":", taskID, ":keygen:tempPublicKey"))
+		_ = keyCache.Del(tempPubKey)
+	}
+	_ = keyCache.Del(metaKey)
+
+	mpcLogf("CreateMPCKeyTask: taskID=%s caches cleared\n", taskID)
+	mpcLogf("CreateMPCKeyTask: taskID=%s all nodes done, keyID=%s\n", taskID, keyID)
+	return keyID, nil
 }
 
 // handleTempPublicKey 节点上传 ECDH 临时公钥到服务端
@@ -330,6 +319,8 @@ func handleMpcKeygenResult(ctx context.Context, connCtx *node.ConnectionContext,
 	if err := keyCache.Put(cacheKey, nodeRes, 300); err != nil {
 		return &dto.CliMPCKeygenResultRes{OK: false, Err: err.Error()}, nil
 	}
+	// event-driven collector notify (if any)
+	submitKeygenResultToCollector(req.TaskID, subject, nodeRes)
 	mpcLogf("CreateMPCKeyTask: node reported result taskID=%s node=%s status=40 keyID=%s err=%s\n",
 		req.TaskID, subject, req.KeyID, truncateErr(req.Err, 64))
 	return &dto.CliMPCKeygenResultRes{OK: true}, nil

@@ -151,57 +151,61 @@ func CreateMPCSignTask(keyID, msgHashHex string) (sigHex string, err error) {
 		}
 	}
 
-	// 6) 轮询签名结果（每节点一份，但签名应一致）
-	maxWait := time.After(2 * time.Minute)
-	ticker := time.NewTicker(500 * time.Millisecond)
-	defer ticker.Stop()
+	// 6) 等待签名结果（事件驱动，无需轮询 cache）
+	resultCollector := NewSignResultCollector(signNodeIDs)
+	registerSignResultCollector(taskID, resultCollector, time.Duration(timeout)*time.Minute)
+	defer unregisterSignResultCollector(taskID)
 
-	var sigHexFirst string
-
-	for {
-		select {
-		case <-maxWait:
-			return "", errors.New("timeout waiting for MPC sign result")
-		case <-ticker.C:
-			allDone := true
-			for _, subject := range signNodeIDs {
-				cacheKey := utils.FNV1a64(utils.AddStr("sign:", subject, ":", taskID))
-				v, ok, _ := keyCache.Get(cacheKey, nil)
-				if !ok || v == nil {
-					allDone = false
-					break
-				}
-				res := v.(*dto.CliMPCSignResultReq)
-				if res.Err != "" {
-					return "", fmt.Errorf("node %s sign failed: %s", res.NodeID, res.Err)
-				}
-				if sigHexFirst == "" {
-					sigHexFirst = res.SignatureHex
-				} else if res.SignatureHex != sigHexFirst {
-					return "", errors.New("signature mismatch between nodes")
-				}
+	// cache replay：如果有节点在 collector 注册前已上报（或重试上报），这里补一遍 Submit，确保不会丢事件
+	for _, subject := range signNodeIDs {
+		cacheKey := utils.FNV1a64(utils.AddStr("sign:", subject, ":", taskID))
+		v, ok, _ := keyCache.Get(cacheKey, nil)
+		if ok && v != nil {
+			if res, ok := v.(*dto.CliMPCSignResultReq); ok && res != nil {
+				resultCollector.Submit(subject, res)
 			}
-			if !allDone {
-				continue
-			}
-			if sigHexFirst == "" {
-				return "", errors.New("empty signature from nodes")
-			}
-			// 清理与本次签名任务相关的缓存（签名结果、临时公钥、任务元信息）
-			for _, subject := range signNodeIDs {
-				resKey := utils.FNV1a64(utils.AddStr("sign:", subject, ":", taskID))
-				_ = keyCache.Del(resKey)
-				tempPubKey := utils.FNV1a64(utils.AddStr(subject, ":", taskID, ":sign:tempPublicKey"))
-				_ = keyCache.Del(tempPubKey)
-			}
-			metaKey = utils.FNV1a64("mpcSignMeta:" + taskID)
-			_ = keyCache.Del(metaKey)
-
-			mpcLogf("CreateMPCSignTask: taskID=%s caches cleared\n", taskID)
-
-			return sigHexFirst, nil
 		}
 	}
+
+	waitResCtx, cancelRes := context.WithTimeout(context.Background(), time.Duration(timeout-5)*time.Minute)
+	defer cancelRes()
+	if err := resultCollector.Wait(waitResCtx); err != nil {
+		return "", fmt.Errorf("timeout waiting for MPC sign result: %w", err)
+	}
+
+	results := resultCollector.GetResults()
+	var sigHexFirst string
+	for _, subject := range signNodeIDs {
+		res := results[subject]
+		if res == nil {
+			return "", errors.New("missing sign result from " + subject)
+		}
+		if res.Err != "" {
+			return "", fmt.Errorf("node %s sign failed: %s", res.NodeID, res.Err)
+		}
+		if sigHexFirst == "" {
+			sigHexFirst = res.SignatureHex
+		} else if res.SignatureHex != sigHexFirst {
+			return "", errors.New("signature mismatch between nodes")
+		}
+	}
+	if sigHexFirst == "" {
+		return "", errors.New("empty signature from nodes")
+	}
+
+	// 清理与本次签名任务相关的缓存（签名结果、临时公钥、任务元信息）
+	for _, subject := range signNodeIDs {
+		resKey := utils.FNV1a64(utils.AddStr("sign:", subject, ":", taskID))
+		_ = keyCache.Del(resKey)
+		tempPubKey := utils.FNV1a64(utils.AddStr(subject, ":", taskID, ":sign:tempPublicKey"))
+		_ = keyCache.Del(tempPubKey)
+	}
+	metaKey = utils.FNV1a64("mpcSignMeta:" + taskID)
+	_ = keyCache.Del(metaKey)
+
+	mpcLogf("CreateMPCSignTask: taskID=%s caches cleared\n", taskID)
+
+	return sigHexFirst, nil
 }
 
 // handleMpcSignResult 节点上报 MPC 签名结果，服务端仅用于汇总与一致性校验。
@@ -218,6 +222,8 @@ func handleMpcSignResult(ctx context.Context, connCtx *node.ConnectionContext, b
 	if err := keyCache.Put(cacheKey, req, 300); err != nil {
 		return &dto.CliMPCSignResultRes{OK: false, Err: err.Error()}, nil
 	}
+	// event-driven collector notify (if any)
+	submitSignResultToCollector(req.TaskID, subject, req)
 	return &dto.CliMPCSignResultRes{OK: true}, nil
 }
 

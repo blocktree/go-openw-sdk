@@ -34,7 +34,8 @@ func mpcLogf(format string, args ...interface{}) {
 // MpcKeygenTaskMeta 按 taskID 存的 MPC keygen 任务元信息（NodeIDs、门限等），用于转发 TSS 消息时查表。
 type MpcKeygenTaskMeta struct {
 	TaskID      string
-	NodeIDs     []string
+	AllNodeIDs  []string
+	SignNodeIDs []string
 	Threshold   int
 	ExpiredTime int64
 	PublicKey   map[string][]byte // subject -> temp ECDH public key (raw bytes)
@@ -108,7 +109,8 @@ func CreateMPCSignTask(keyID, msgHashHex string) (sigHex string, err error) {
 
 	signMeta := &MpcKeygenTaskMeta{
 		TaskID:      taskID,
-		NodeIDs:     signNodeIDs,
+		AllNodeIDs:  keyMeta.NodeIDs,
+		SignNodeIDs: signNodeIDs,
 		Threshold:   keyMeta.Threshold,
 		ExpiredTime: expiredTime,
 		PublicKey:   make(map[string][]byte, len(signNodeIDs)),
@@ -308,7 +310,7 @@ func CreateMPCKeyTask() (keyID string, err error) {
 
 	meta := &MpcKeygenTaskMeta{
 		TaskID:      taskID,
-		NodeIDs:     nodeIDs,
+		AllNodeIDs:  nodeIDs,
 		Threshold:   threshold,
 		ExpiredTime: expiredTime,
 		PublicKey:   make(map[string][]byte, 5),

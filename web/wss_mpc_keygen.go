@@ -105,7 +105,12 @@ func CreateMPCKeygenTask() (keyID string, err error) {
 
 	mpcLogf("CreateMPCKeyTask: taskID=%s subjects=%v nodeIDs(tss-order)=%v threshold=%d\n", taskID, subjects, nodeIDs, threshold)
 
-	// 发送通知节点提交临时公钥
+	// 发送通知节点提交临时公钥（事件驱动等待，避免轮询）
+	timeout := 130
+	collector := NewPubkeyCollector(nodeIDs)
+	registerPubkeyCollector("keygen", taskID, collector, time.Duration(timeout)*time.Second)
+	defer unregisterPubkeyCollector("keygen", taskID)
+
 	for _, subject := range nodeIDs {
 		req := &dto.CliMPCTempPublicKeyReq{
 			TaskID: taskID,
@@ -116,44 +121,27 @@ func CreateMPCKeygenTask() (keyID string, err error) {
 		}
 	}
 
+	// cache replay：如果有节点在 collector 注册前已上报（或重试上报），这里补一遍 Submit，确保不会丢事件
+	for _, subject := range nodeIDs {
+		cacheKey := utils.FNV1a64(utils.AddStr(subject, ":", taskID, ":keygen:tempPublicKey"))
+		v, ok, _ := keyCache.Get(cacheKey, nil)
+		if ok && v != nil {
+			collector.Submit(subject, v.([]byte))
+		}
+	}
+
+	waitCtx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout-5)*time.Second)
+	defer cancel()
+	if err := collector.Wait(waitCtx); err != nil {
+		return "", fmt.Errorf("timeout waiting for all nodes to submit public keys: %w", err)
+	}
+
 	meta := &MpcKeygenTaskMeta{
 		TaskID:      taskID,
 		AllNodeIDs:  nodeIDs,
 		Threshold:   threshold,
 		ExpiredTime: expiredTime,
-		PublicKey:   make(map[string][]byte, 5),
-	}
-
-	// 轮询检查多节点提交公钥状态
-	keyMaxWait := time.After(30 * time.Second)
-	keyTicker := time.NewTicker(300 * time.Millisecond)
-	defer keyTicker.Stop()
-
-	waitForAll := func() error {
-		for {
-			select {
-			case <-keyMaxWait:
-				return errors.New("timeout waiting for all nodes to submit public keys")
-			case <-keyTicker.C:
-				allReady := true
-				for _, subject := range nodeIDs {
-					cacheKey := utils.FNV1a64(utils.AddStr(subject, ":", taskID, ":keygen:tempPublicKey"))
-					v, ok, _ := keyCache.Get(cacheKey, nil)
-					if !ok || v == nil {
-						allReady = false
-						break
-					}
-					meta.PublicKey[subject] = v.([]byte)
-				}
-				if allReady {
-					return nil
-				}
-			}
-		}
-	}
-
-	if err := waitForAll(); err != nil {
-		return "", err
+		PublicKey:   collector.GetPubkeys(),
 	}
 
 	metaKey := utils.FNV1a64("mpcMeta:" + taskID)
@@ -314,6 +302,8 @@ func handleTempPublicKey(ctx context.Context, connCtx *node.ConnectionContext, b
 	if err := keyCache.Put(cacheKey, pub.Bytes(), 120); err != nil { // 120秒有效
 		return nil, err
 	}
+	// event-driven collector notify (if any)
+	submitPubkeyToCollector(request.Module, request.TaskID, subject, pub.Bytes())
 	return &dto.CliMPCTempPublicKeyRes{Success: true}, nil
 }
 

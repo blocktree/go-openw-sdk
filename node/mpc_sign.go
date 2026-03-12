@@ -46,7 +46,7 @@ func RunSignNodeReal(
 	}
 
 	// 从本地 keystore 加载本节点的 SaveData
-	store := mpc.NewFileKeyStore("node/keys")
+	store := mpc.NewFileKeyStore("keys")
 	saveData, err := store.Load(start.KeyID, myNodeID)
 	if err != nil {
 		return "", fmt.Errorf("load local SaveData failed: %w", err)

@@ -64,6 +64,12 @@ func CreateMPCSignTask(keyID, msgHashHex string) (sigHex string, err error) {
 		taskID, keyID, allNodeIDs, keyMeta.Threshold)
 
 	// 4) ECDH 临时公钥交换（module = "sign"）
+	// 先注册 collector，避免节点快速上报导致事件丢失；并在注册后从 cache 回放一次已存在的公钥。
+	timeout := 35
+	collector := NewPubkeyCollector(allNodeIDs)
+	registerPubkeyCollector("sign", taskID, collector, time.Duration(timeout)*time.Second)
+	defer unregisterPubkeyCollector("sign", taskID)
+
 	for _, subject := range allNodeIDs {
 		req := &dto.CliMPCTempPublicKeyReq{
 			TaskID: taskID,
@@ -74,46 +80,30 @@ func CreateMPCSignTask(keyID, msgHashHex string) (sigHex string, err error) {
 		}
 	}
 
+	// cache replay：如果有节点在 collector 注册前已上报（或重试上报），这里补一遍 Submit，确保不会丢事件
+	for _, subject := range allNodeIDs {
+		cacheKey := utils.FNV1a64(utils.AddStr(subject, ":", taskID, ":sign:tempPublicKey"))
+		v, ok, _ := keyCache.Get(cacheKey, nil)
+		if ok && v != nil {
+			collector.Submit(subject, v.([]byte))
+		}
+	}
+
+	waitCtx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout-5)*time.Second)
+	defer cancel()
+	if err := collector.Wait(waitCtx); err != nil {
+		return "", fmt.Errorf("timeout waiting for all nodes to submit public keys: %w", err)
+	}
+
 	signMeta := &MpcKeygenTaskMeta{
 		TaskID:      taskID,
 		AllNodeIDs:  allNodeIDs,
 		SignNodeIDs: nil, // 初始化后在收齐临时公钥后设为全量 allNodeIDs
 		Threshold:   keyMeta.Threshold,
 		ExpiredTime: expiredTime,
-		PublicKey:   make(map[string][]byte, len(allNodeIDs)),
+		PublicKey:   collector.GetPubkeys(),
 	}
 
-	// 等待各节点上报临时公钥
-	keyMaxWait := time.After(30 * time.Second)
-	keyTicker := time.NewTicker(300 * time.Millisecond)
-	defer keyTicker.Stop()
-
-	waitForAll := func() error {
-		for {
-			select {
-			case <-keyMaxWait:
-				return errors.New("timeout waiting for all nodes to submit public keys")
-			case <-keyTicker.C:
-				allReady := true
-				for _, subject := range allNodeIDs {
-					cacheKey := utils.FNV1a64(utils.AddStr(subject, ":", taskID, ":sign:tempPublicKey"))
-					v, ok, _ := keyCache.Get(cacheKey, nil)
-					if !ok || v == nil {
-						allReady = false
-						break
-					}
-					signMeta.PublicKey[subject] = v.([]byte)
-				}
-				if allReady {
-					return nil
-				}
-			}
-		}
-	}
-
-	if err := waitForAll(); err != nil {
-		return "", err
-	}
 	// 在全量节点都上报临时公钥后，强制所有节点都参与签名（SignNodeIDs = AllNodeIDs）
 	signNodeIDs := allNodeIDs
 	signMeta.SignNodeIDs = signNodeIDs

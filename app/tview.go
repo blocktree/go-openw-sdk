@@ -4,9 +4,11 @@ package app
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"unicode"
@@ -34,7 +36,8 @@ var (
 )
 
 const (
-	menuCreateMPCWallet = iota
+	menuListMPCWallets = iota
+	menuCreateMPCWallet
 	menuCreateECDSA
 	menuStartHttp
 	menuStartWebsocket
@@ -139,8 +142,9 @@ func showMainMenu(app *tview.Application) {
 	}
 	wsServerMu.Unlock()
 
+	list.AddItem("List MPC Wallets", "Show MPC walletID / alias / algorithm from walletDir", menuNumber(menuListMPCWallets), nil)
 	list.AddItem("Create MPC Wallet (TSS)", "Multi-node TSS keygen (3 or 5 nodes online)", menuNumber(menuCreateMPCWallet), nil)
-	list.AddItem("Generate ECDSA", "Print base64-encoded ECDSA key pair to terminal", menuNumber(menuCreateECDSA), nil) // ← 新增
+	list.AddItem("Generate ECDSA", "Print base64-encoded ECDSA key pair to terminal", menuNumber(menuCreateECDSA), nil)
 	list.AddItem("Start HTTP Service"+status, "Launch HTTP signing API", menuNumber(menuStartHttp), nil)
 	list.AddItem("Start WebSocket Service"+wsStatus, "Launch WebSocket signing API", menuNumber(menuStartWebsocket), nil)
 	list.AddItem("Exit", "Quit the app", menuNumber(menuExit), nil)
@@ -151,6 +155,8 @@ func showMainMenu(app *tview.Application) {
 			showCreateMPCKeyWallet(app)
 		case menuCreateECDSA:
 			showGenerateECDSA(app)
+		case menuListMPCWallets:
+			showMPCWalletList(app)
 		case menuStartHttp:
 			showHttpService(app)
 		case menuStartWebsocket:
@@ -299,6 +305,75 @@ func showCreateMPCKeyWallet(app *tview.Application) {
 		fmt.Printf("   alias   : %s\n", alias)
 		fmt.Printf("   Saved to: %s/%s.json\n", GetAllConfig().Extract.WalletDir, walletID)
 		fmt.Print("\nPress Enter to return to main menu...")
+		fmt.Scanln()
+	})
+	showMainMenu(app)
+}
+
+// showMPCWalletList 列出当前 walletDir 下的 MPC 钱包（walletID.json），展示别名 / 算法 / 节点列表等信息。
+// 仅使用 stdout 打印，按 Enter 返回主菜单。
+func showMPCWalletList(app *tview.Application) {
+	app.Suspend(func() {
+		fmt.Print("\n")
+		fmt.Println("📄 MPC Wallet List")
+		fmt.Println("──────────────────")
+		fmt.Println()
+
+		walletDir := GetAllConfig().Extract.WalletDir
+		entries, err := os.ReadDir(walletDir)
+		if err != nil {
+			fmt.Printf("Failed to read walletDir(%s): %v\n", walletDir, err)
+			fmt.Print("\nPress Enter to return to main menu...")
+			fmt.Scanln()
+			return
+		}
+
+		shown := 0
+		for _, e := range entries {
+			if e.IsDir() {
+				continue
+			}
+			name := e.Name()
+			if !strings.HasSuffix(name, ".json") {
+				continue
+			}
+			walletID := strings.TrimSuffix(name, ".json")
+			path := filepath.Join(walletDir, name)
+			raw, err := os.ReadFile(path)
+			if err != nil {
+				fmt.Printf("- walletID=%s (read error: %v)\n", walletID, err)
+				continue
+			}
+			var meta KeyMeta
+			if err := json.Unmarshal(raw, &meta); err != nil {
+				fmt.Printf("- walletID=%s (unmarshal error: %v)\n", walletID, err)
+				continue
+			}
+			if meta.WalletID == "" {
+				meta.WalletID = walletID
+			}
+			shown++
+			fmt.Printf("- walletID : %s\n", meta.WalletID)
+			if meta.Alias != "" {
+				fmt.Printf("  alias    : %s\n", meta.Alias)
+			}
+			if meta.Algorithm != "" {
+				fmt.Printf("  algorithm: %s\n", meta.Algorithm)
+			}
+			if len(meta.NodeIDs) > 0 {
+				fmt.Printf("  nodes    : %v\n", meta.NodeIDs)
+			}
+			if meta.Threshold > 0 {
+				fmt.Printf("  threshold: %d\n", meta.Threshold)
+			}
+			fmt.Println()
+		}
+
+		if shown == 0 {
+			fmt.Println("No MPC wallets found in walletDir.")
+		}
+
+		fmt.Print("Press Enter to return to main menu...")
 		fmt.Scanln()
 	})
 	showMainMenu(app)

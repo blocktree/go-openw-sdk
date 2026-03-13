@@ -11,6 +11,9 @@ server:
       - name: 2
         public_key: "BL9HfxXeg9+L0vR24xFbMHw8XIUzhKFouFvVQ6T9bbEvzrS0i9fhNTzPYALSzRUZBF//8a3BSb0yu9NurwLqz6k="
         private_key: "bsnBl3aP0hrgpwp6oqA5Dr87VWwfM8xJ/6jy9NBkVVo="
+      - name: 3 # 业务系统 - CLI交互
+        public_key: "BBmbUczNP4LcmA8hQv7JRhFOtuy3cXfHEx/0En3Tys76vnWxmz94nGEi+Yq8U6NFNU/T9TB7AAjIJ7PdA94ShRc=" # 8xBOZ2lJFjssqzC13rq/LuMUtdZX3I4K4uHM5V7UVaU=
+        private_key: "yRR2MArJezOUUo9jV5AIo9g96hiFYlpp+Rd6I2i/2O0=" # BIc/kRgCbH/sSX3yVi7fCjoDBYyO99NzC6lJj/c16e5wcZzDT9OEDzEEff9dniAvMP/4LKuB/4R9XRtLHSAS8Bs=
 
 
 jwt:

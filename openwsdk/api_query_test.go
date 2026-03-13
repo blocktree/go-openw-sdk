@@ -11,15 +11,6 @@ import (
 	"github.com/godaddy-x/freego/utils/sdk"
 )
 
-var (
-	opsConfig = ReadJson("ops.json")
-	cliConfig = ReadJson("cli.json")
-)
-
-var opsHttpSDK = NewHttpSDK(opsConfig)
-
-var cliHttpSDK = NewHttpSDK(cliConfig)
-
 func TestGetPublicKey(t *testing.T) {
 	_, publicKey, _, err := opsHttpSDK.GetPublicKey()
 	if err != nil {

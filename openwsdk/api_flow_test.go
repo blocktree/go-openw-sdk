@@ -3,12 +3,22 @@ package openwsdk
 import (
 	"errors"
 	"fmt"
+	"strings"
+	"testing"
+
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
 	"github.com/blocktree/openwallet/v2/openwallet"
 	"github.com/godaddy-x/freego/utils"
-	"strings"
-	"testing"
 )
+
+var (
+	opsConfig = ReadJson("ops.json")
+	cliConfig = ReadJson("cli.json")
+)
+
+var opsHttpSDK = NewHttpSDK(opsConfig)
+
+var cliHttpSDK = NewHttpSDK(cliConfig)
 
 // 流程：1.从CLI程序读取钱包文件列表 2.上传WalletID信息到云端
 func TestCreateWallet(t *testing.T) {
@@ -19,18 +29,18 @@ func TestCreateWallet(t *testing.T) {
 		fmt.Println(err)
 	}
 
-	for _, v := range cliResponseData.Result {
-		requestData := dto.CreateWalletReq{
-			WalletID: v.WalletID,
-			Alias:    v.Alias,
-			RootPath: v.RootPath,
-		}
-		responseData := dto.CreateWalletRes{}
-		if err := opsHttpSDK.PostByAuth("/api/CreateWallet", &requestData, &responseData, true); err != nil {
-			fmt.Println(err)
-		}
-		fmt.Println(responseData)
-	}
+	//for _, v := range cliResponseData.Result {
+	//	requestData := dto.CreateWalletReq{
+	//		WalletID: v.WalletID,
+	//		Alias:    v.Alias,
+	//		RootPath: v.RootPath,
+	//	}
+	//	responseData := dto.CreateWalletRes{}
+	//	if err := opsHttpSDK.PostByAuth("/api/CreateWallet", &requestData, &responseData, true); err != nil {
+	//		fmt.Println(err)
+	//	}
+	fmt.Println(cliResponseData)
+	//}
 
 }
 

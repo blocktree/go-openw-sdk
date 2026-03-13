@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/blocktree/go-openw-sdk/v2/mpc"
+	"github.com/blocktree/go-openw-sdk/v2/mpc/alg_ecdsa"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
 	"github.com/bnb-chain/tss-lib/common"
 	"github.com/bnb-chain/tss-lib/ecdsa/signing"
@@ -49,7 +49,7 @@ func RunSignNodeReal(
 	msgHash *big.Int,
 	wsClient *sdk.SocketSDK,
 ) (signatureHex string, err error) {
-	sortedIDs := mpc.PartyIDs(start.AllNodeIDs)
+	sortedIDs := alg_ecdsa.PartyIDs(start.AllNodeIDs)
 	myIndex := -1
 	for i := range sortedIDs {
 		if sortedIDs[i].GetId() == myNodeID {
@@ -61,13 +61,13 @@ func RunSignNodeReal(
 		return "", errors.New("myNodeID not in nodeIDs")
 	}
 
-	params := mpc.Parameters(sortedIDs, myIndex, start.Threshold)
+	params := alg_ecdsa.Parameters(sortedIDs, myIndex, start.Threshold)
 	if params == nil {
 		return "", errors.New("mpc: invalid sign parameters")
 	}
 
 	// 从本地 keystore 加载本节点的 SaveData
-	store := mpc.NewFileKeyStore("keys")
+	store := alg_ecdsa.NewFileKeyStore("keys")
 	saveData, err := store.Load(start.KeyID, myNodeID)
 	if err != nil {
 		return "", fmt.Errorf("load local SaveData failed: %w", err)
@@ -118,7 +118,7 @@ func RunSignNodeReal(
 			// 聚合签名数据为 64 字节 R||S hex
 			r := new(big.Int).SetBytes(sigData.GetR())
 			s := new(big.Int).SetBytes(sigData.GetS())
-			sig := append(mpc.Pad32(r.Bytes()), mpc.Pad32(s.Bytes())...)
+			sig := append(alg_ecdsa.Pad32(r.Bytes()), alg_ecdsa.Pad32(s.Bytes())...)
 			return hex.EncodeToString(sig), nil
 		case <-deadline:
 			return "", errors.New("mpc sign timeout")
@@ -165,7 +165,7 @@ func HandleMpcSignStart(wsClient *sdk.SocketSDK, myNodeID, router string, body [
 	fmt.Printf("[mpc-sign] node=%s task=%s start, keyID=%s threshold=%d, allNodes=%v signNodes=%v\n",
 		myNodeID, start.TaskID, start.KeyID, start.Threshold, start.AllNodeIDs, start.SignNodeIDs)
 
-	sortedIDs := mpc.PartyIDs(start.AllNodeIDs)
+	sortedIDs := alg_ecdsa.PartyIDs(start.AllNodeIDs)
 	myIndex := -1
 	for i := range sortedIDs {
 		if sortedIDs[i].GetId() == myNodeID {
@@ -178,7 +178,7 @@ func HandleMpcSignStart(wsClient *sdk.SocketSDK, myNodeID, router string, body [
 	}
 
 	// 解析消息哈希
-	msgHash, err := mpc.MessageHashFromTxHash(start.MsgHashHex)
+	msgHash, err := alg_ecdsa.MessageHashFromTxHash(start.MsgHashHex)
 	if err != nil {
 		return fmt.Errorf("invalid msgHashHex: %w", err)
 	}

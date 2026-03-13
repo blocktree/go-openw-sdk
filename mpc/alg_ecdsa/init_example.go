@@ -1,6 +1,6 @@
 // 本文件演示 MPC 密钥初始化流程：如何跑 keygen、保存/下发 SaveData、与门限/节点数的关系。
 // 可直接复制到业务代码中按需修改（如接 Web 接口、持久化、PreParams 预生成等）。
-package mpc
+package alg_ecdsa
 
 import (
 	"fmt"
@@ -110,8 +110,8 @@ func ExampleLoadAndSign() {
 	}
 
 	// 用加载的 keys 做一次签名（msgHash 需为待签名的 32 字节哈希的 big.Int）
-	// msgHash, _ := mpc.MessageHashFromTxHash(hexTxHash)
-	// sig, err := mpc.RunSign(nodeIDs, keysInOrder, msgHash, router)
+	// msgHash, _ := MessageHashFromTxHash(hexTxHash)
+	// sig, err := RunSign(nodeIDs, keysInOrder, msgHash, router)
 	_ = keysInOrder
 }
 

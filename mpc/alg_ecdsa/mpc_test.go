@@ -1,4 +1,4 @@
-package mpc_test
+package alg_ecdsa_test
 
 import (
 	"crypto/sha256"
@@ -11,21 +11,21 @@ import (
 	"testing"
 	"time"
 
-	"github.com/blocktree/go-openw-sdk/v2/mpc"
+	"github.com/blocktree/go-openw-sdk/v2/mpc/alg_ecdsa"
 	"github.com/bnb-chain/tss-lib/crypto"
 	"github.com/bnb-chain/tss-lib/tss"
 )
 
 func TestExampleInitKey(t *testing.T) {
-	mpc.ExampleInitKey()
+	alg_ecdsa.ExampleInitKey()
 }
 
 func TestExampleLoadAndSign(t *testing.T) {
-	mpc.ExampleLoadAndSign()
+	alg_ecdsa.ExampleLoadAndSign()
 }
 
 func TestPartyIDs(t *testing.T) {
-	ids := mpc.PartyIDs([]string{"node1", "node2", "node3"})
+	ids := alg_ecdsa.PartyIDs([]string{"node1", "node2", "node3"})
 	if len(ids) != 3 {
 		t.Fatalf("expected 3 party ids, got %d", len(ids))
 	}
@@ -42,8 +42,8 @@ func TestKeygenAndSignInProcess(t *testing.T) {
 	threshold := 2
 	errCh := make(chan *tss.Error, 8)
 
-	router := &mpc.InProcessRouter{ErrCh: errCh}
-	result, err := mpc.RunKeygen(nodeIDs, threshold, router, mpc.KeygenConfig{
+	router := &alg_ecdsa.InProcessRouter{ErrCh: errCh}
+	result, err := alg_ecdsa.RunKeygen(nodeIDs, threshold, router, alg_ecdsa.KeygenConfig{
 		PreParamsTimeout: 1 * time.Minute,
 	}, nil)
 	if err != nil {
@@ -61,7 +61,7 @@ func TestKeygenAndSignInProcess(t *testing.T) {
 		msgHash = new(big.Int).SetBytes(msgHash.Bytes()[:32])
 	}
 
-	sigResult, err := mpc.RunSign(nodeIDs, result.SaveData, msgHash, router)
+	sigResult, err := alg_ecdsa.RunSign(nodeIDs, result.SaveData, msgHash, router)
 	if err != nil {
 		t.Fatalf("sign failed: %v", err)
 	}
@@ -84,28 +84,28 @@ func TestDeriveAccountIDFromRootPub(t *testing.T) {
 
 	// 2) chainCode：无 seed 时用 KeyID 派生；这里用固定 KeyID 模拟
 	keyID := "test-mpc-key-id"
-	chainCode := mpc.ChainCodeFromKeyID(keyID)
+	chainCode := alg_ecdsa.ChainCodeFromKeyID(keyID)
 	if len(chainCode) != 32 {
 		t.Fatalf("chainCode length want 32, got %d", len(chainCode))
 	}
 
 	// 3) 路径：账户索引 0、1 对应不同 AccountID
-	path0 := mpc.PathFromAccountIndex(0)
-	path1 := mpc.PathFromAccountIndex(1)
+	path0 := alg_ecdsa.PathFromAccountIndex(0)
+	path1 := alg_ecdsa.PathFromAccountIndex(1)
 
 	// 4) 派生子公钥
-	delta0, childPub0, err := mpc.DeriveChildPubFromPath(rootPoint, chainCode, path0)
+	delta0, childPub0, err := alg_ecdsa.DeriveChildPubFromPath(rootPoint, chainCode, path0)
 	if err != nil {
 		t.Fatalf("derive path0: %v", err)
 	}
-	delta1, childPub1, err := mpc.DeriveChildPubFromPath(rootPoint, chainCode, path1)
+	delta1, childPub1, err := alg_ecdsa.DeriveChildPubFromPath(rootPoint, chainCode, path1)
 	if err != nil {
 		t.Fatalf("derive path1: %v", err)
 	}
 
 	// 5) 子公钥 → 公钥 hex（生产环境可交给 openwallet.GenAccountID(pubKeyHex)）
-	pubHex0 := mpc.PubKeyToHex(childPub0)
-	pubHex1 := mpc.PubKeyToHex(childPub1)
+	pubHex0 := alg_ecdsa.PubKeyToHex(childPub0)
+	pubHex1 := alg_ecdsa.PubKeyToHex(childPub1)
 	if len(pubHex0) != 130 || len(pubHex1) != 130 {
 		t.Fatalf("pub hex length want 130, got %d / %d", len(pubHex0), len(pubHex1))
 	}
@@ -123,14 +123,14 @@ func TestDeriveAccountIDFromRootPub(t *testing.T) {
 	t.Logf("path1 delta=%s accountID=%s", delta1.Text(10), accountID1)
 
 	// 同一 path 再次派生，结果应一致
-	delta0Again, childPub0Again, err := mpc.DeriveChildPubFromPath(rootPoint, chainCode, path0)
+	delta0Again, childPub0Again, err := alg_ecdsa.DeriveChildPubFromPath(rootPoint, chainCode, path0)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if delta0Again.Cmp(delta0) != 0 {
 		t.Error("delta should be deterministic for same path")
 	}
-	if mpc.PubKeyToHex(childPub0Again) != pubHex0 {
+	if alg_ecdsa.PubKeyToHex(childPub0Again) != pubHex0 {
 		t.Error("child pub should be deterministic for same path")
 	}
 	_ = accountID0
@@ -144,8 +144,8 @@ func TestDeriveAccountIDFromKeygenResult(t *testing.T) {
 	}
 	nodeIDs := []string{"n1", "n2", "n3"}
 	errCh := make(chan *tss.Error, 8)
-	router := &mpc.InProcessRouter{ErrCh: errCh}
-	result, err := mpc.RunKeygen(nodeIDs, 2, router, mpc.KeygenConfig{PreParamsTimeout: 1 * time.Minute}, nil)
+	router := &alg_ecdsa.InProcessRouter{ErrCh: errCh}
+	result, err := alg_ecdsa.RunKeygen(nodeIDs, 2, router, alg_ecdsa.KeygenConfig{PreParamsTimeout: 1 * time.Minute}, nil)
 	if err != nil {
 		t.Fatalf("keygen: %v", err)
 	}
@@ -153,15 +153,15 @@ func TestDeriveAccountIDFromKeygenResult(t *testing.T) {
 	// 根公钥来自任意一份 SaveData
 	rootPub := result.SaveData[0].ECDSAPub
 	keyID := result.KeyID
-	chainCode := mpc.ChainCodeFromKeyID(keyID)
-	path := mpc.PathFromAccountIndex(0)
+	chainCode := alg_ecdsa.ChainCodeFromKeyID(keyID)
+	path := alg_ecdsa.PathFromAccountIndex(0)
 
-	delta, childPub, err := mpc.DeriveChildPubFromPath(rootPub, chainCode, path)
+	delta, childPub, err := alg_ecdsa.DeriveChildPubFromPath(rootPub, chainCode, path)
 	if err != nil {
 		t.Fatalf("derive: %v", err)
 	}
 
-	pubHex := mpc.PubKeyToHex(childPub)
+	pubHex := alg_ecdsa.PubKeyToHex(childPub)
 	h := sha256.Sum256([]byte(pubHex))
 	accountID := hex.EncodeToString(h[:])
 
@@ -182,7 +182,7 @@ func TestRealDeriveAccountIDFromMpcKeys(t *testing.T) {
 	if _, err := os.Stat(baseDir); os.IsNotExist(err) {
 		t.Fatalf("未找到 mpc_keys 目录（已尝试 ./mpc_keys 与 ./mpc/mpc_keys），请先跑 keygen 并 Save 到 mpc_keys")
 	}
-	keyStore := mpc.NewFileKeyStore(baseDir)
+	keyStore := alg_ecdsa.NewFileKeyStore(baseDir)
 
 	// 1) 枚举 keyID：mpc_keys 下的子目录名
 	entries, err := os.ReadDir(baseDir)
@@ -235,15 +235,15 @@ func TestRealDeriveAccountIDFromMpcKeys(t *testing.T) {
 	}
 
 	// 5) chainCode + path 派生子公钥
-	chainCode := mpc.ChainCodeFromKeyID(keyID)
-	path := mpc.PathFromAccountIndex(0)
-	delta, childPub, err := mpc.DeriveChildPubFromPath(rootPub, chainCode, path)
+	chainCode := alg_ecdsa.ChainCodeFromKeyID(keyID)
+	path := alg_ecdsa.PathFromAccountIndex(0)
+	delta, childPub, err := alg_ecdsa.DeriveChildPubFromPath(rootPub, chainCode, path)
 	if err != nil {
 		t.Fatalf("DeriveChildPubFromPath: %v", err)
 	}
 
 	// 6) 子公钥 → 公钥 hex → AccountID（示例用 SHA256 hex；业务可用 openwallet.GenAccountID(pubHex)）
-	pubHex := mpc.PubKeyToHex(childPub)
+	pubHex := alg_ecdsa.PubKeyToHex(childPub)
 	h := sha256.Sum256([]byte(pubHex))
 	accountID := hex.EncodeToString(h[:])
 

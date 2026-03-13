@@ -1,6 +1,6 @@
-// Package mpc 基于 bnb-chain/tss-lib 的 TSS 多方门限签名（MPC）架构。
-// 支持 (t,n) threshold ECDSA：keygen 与 sign 均不重建完整私钥。
-package mpc
+// Package alg_ecdsa 基于 bnb-chain/tss-lib 的 ECDSA (t,n) 门限签名实现。
+// keygen 与 sign 均不重建完整私钥，供 mpc 上层按算法选用。
+package alg_ecdsa
 
 import (
 	"crypto/sha256"

@@ -1,4 +1,4 @@
-package mpc
+package alg_ecdsa
 
 import (
 	"crypto/ecdsa"

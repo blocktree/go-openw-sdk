@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/blocktree/go-openw-sdk/v2/mpc"
+	"github.com/blocktree/go-openw-sdk/v2/mpc/alg_ecdsa"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
 	"github.com/blocktree/openwallet/v2/hdkeystore"
 	ecc "github.com/godaddy-x/eccrypto"
@@ -65,10 +66,25 @@ func truncateErr(s string, max int) string {
 	return s[:max] + "..."
 }
 
-// CreateMPCKeygenTask 协调多节点完成一次 TSS keygen，轮询直到所有节点上报结果后返回 walletID。
-// 服务端只做「协调 + 校验」，不落盘任何 SaveData：节点各自持久化自己的 LocalPartySaveData。
-// 流程：1) 取在线 subject 排序为 nodeIDs  2) 下发 mpcKeygenStart  3) 轮询 mpcKeygenResult 检查状态与 KeyID 一致性  4) 返回 KeyID。
-func CreateMPCKeygenTask(alias string) (keyID string, err error) {
+// CreateMPCKeygenTaskByAlg 按算法协调多节点完成一次 TSS keygen，最终返回 walletID。
+// 当前仅实现 ECDSA（AlgECDSA），后续可在此处增加 AlgEd25519 等分支。
+func CreateMPCKeygenTaskByAlg(alg mpc.Algorithm, alias string) (walletID string, err error) {
+	switch alg {
+	case "", mpc.AlgECDSA:
+		return createMPCKeygenTaskECDSA(alias)
+	default:
+		return "", fmt.Errorf("unsupported MPC algorithm for keygen: %s", alg)
+	}
+}
+
+// CreateMPCKeygenTask 向后兼容的默认入口：使用 ECDSA 算法。
+func CreateMPCKeygenTask(alias string) (walletID string, err error) {
+	return CreateMPCKeygenTaskByAlg(mpc.AlgECDSA, alias)
+}
+
+// createMPCKeygenTaskECDSA 使用 ECDSA (secp256k1) 协调多节点完成一次 TSS keygen。
+// 流程：1) 取在线 subject 排序为 nodeIDs  2) 下发 mpcKeygenStart  3) 事件驱动等 mpcKeygenResult 收齐  4) 落盘 walletID.json 并返回 walletID。
+func createMPCKeygenTaskECDSA(alias string) (keyID string, err error) {
 	if server == nil {
 		return "", errors.New("ws server not initialized")
 	}
@@ -81,9 +97,9 @@ func CreateMPCKeygenTask(alias string) (keyID string, err error) {
 	sort.Strings(subjects)
 
 	// 注意：TSS 的 party index 由 tss.SortPartyIDs（按 PartyID.Key）决定，
-	// 并不等于字符串排序 subjects 的下标。服务端下发/保存的 NodeIDs 必须与 mpc.PartyIDs() 顺序一致，
+	// 并不等于字符串排序 subjects 的下标。服务端下发/保存的 NodeIDs 必须与 alg_ecdsa.PartyIDs() 顺序一致，
 	// 否则节点计算的 myIndex/fromIndex 会与服务端转发时用的 (meta.NodeIDs, fromIndex) 映射错位。
-	partyIDs := mpc.PartyIDs(subjects)
+	partyIDs := alg_ecdsa.PartyIDs(subjects)
 	nodeIDs := make([]string, 0, len(partyIDs))
 	for _, pid := range partyIDs {
 		nodeIDs = append(nodeIDs, pid.GetId())

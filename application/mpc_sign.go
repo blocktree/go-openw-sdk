@@ -10,15 +10,32 @@ import (
 	"time"
 
 	"github.com/blocktree/go-openw-sdk/v2/mpc"
+	"github.com/blocktree/go-openw-sdk/v2/mpc/alg_ecdsa"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
 	ecc "github.com/godaddy-x/eccrypto"
 	"github.com/godaddy-x/freego/node"
 	"github.com/godaddy-x/freego/utils"
 )
 
-// CreateMPCSignTask 协调多节点完成一次 TSS 签名，返回 64 字节签名的 hex（R||S）。
-// keyID 用于计算 walletID，并读取 keyMetaDir/{walletID}.json 获取参与节点列表与门限；msgHashHex 为 32 字节消息哈希的 hex。
+// CreateMPCSignTaskByAlg 按算法协调多节点完成一次 TSS 签名，返回 64 字节签名 hex（R||S）。
+// 当前仅实现 ECDSA（AlgECDSA），后续可在此处增加 AlgEd25519 等分支。
+func CreateMPCSignTaskByAlg(alg mpc.Algorithm, walletID, msgHashHex string) (sigHex string, err error) {
+	switch alg {
+	case "", mpc.AlgECDSA:
+		return createMPCSignTaskECDSA(walletID, msgHashHex)
+	default:
+		return "", fmt.Errorf("unsupported MPC algorithm for sign: %s", alg)
+	}
+}
+
+// CreateMPCSignTask 向后兼容的默认入口：使用 ECDSA 算法。
 func CreateMPCSignTask(walletID, msgHashHex string) (sigHex string, err error) {
+	return CreateMPCSignTaskByAlg(mpc.AlgECDSA, walletID, msgHashHex)
+}
+
+// createMPCSignTaskECDSA 使用 ECDSA (secp256k1) 协调多节点完成一次 TSS 签名。
+// keyID 用于计算 walletID，并读取 keyMetaDir/{walletID}.json 获取参与节点列表与门限；msgHashHex 为 32 字节消息哈希的 hex。
+func createMPCSignTaskECDSA(walletID, msgHashHex string) (sigHex string, err error) {
 	if server == nil {
 		return "", errors.New("ws server not initialized")
 	}
@@ -42,7 +59,7 @@ func CreateMPCSignTask(walletID, msgHashHex string) (sigHex string, err error) {
 	keyID := keyMeta.KeyID
 
 	// 2) 解析消息哈希
-	_, err = mpc.MessageHashFromTxHash(msgHashHex)
+	_, err = alg_ecdsa.MessageHashFromTxHash(msgHashHex)
 	if err != nil {
 		return "", fmt.Errorf("invalid msgHashHex: %w", err)
 	}

@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/blocktree/go-openw-sdk/v2/mpc"
+	"github.com/blocktree/go-openw-sdk/v2/mpc/alg_ecdsa"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
 	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
 	"github.com/bnb-chain/tss-lib/tss"
@@ -284,7 +284,7 @@ func DeliverMpcKeygenMsg(wsClient *sdk.SocketSDK, myNodeID, router string, body 
 // ============ 以下是你原有的业务逻辑（未改动，仅保留上下文） ============
 
 func RunKeygenNodeReal(taskID string, nodeIDs []string, myNodeID string, threshold int, wsClient *sdk.SocketSDK) (saveData keygen.LocalPartySaveData, keyID string, err error) {
-	sortedIDs := mpc.PartyIDs(nodeIDs)
+	sortedIDs := alg_ecdsa.PartyIDs(nodeIDs)
 	myIndex := -1
 	for i := range sortedIDs {
 		if sortedIDs[i].GetId() == myNodeID {
@@ -296,7 +296,7 @@ func RunKeygenNodeReal(taskID string, nodeIDs []string, myNodeID string, thresho
 		return keygen.LocalPartySaveData{}, "", errors.New("myNodeID not in nodeIDs")
 	}
 
-	params := mpc.Parameters(sortedIDs, myIndex, threshold)
+	params := alg_ecdsa.Parameters(sortedIDs, myIndex, threshold)
 	if params == nil {
 		return keygen.LocalPartySaveData{}, "", errors.New("mpc: invalid parameters")
 	}
@@ -349,7 +349,7 @@ func RunKeygenNodeReal(taskID string, nodeIDs []string, myNodeID string, thresho
 			return keygen.LocalPartySaveData{}, "", e
 		case save := <-endCh:
 			if save.ECDSAPub != nil {
-				keyID = mpc.KeyIDFromSaveData(save.ECDSAPub.X(), save.ECDSAPub.Y())
+				keyID = alg_ecdsa.KeyIDFromSaveData(save.ECDSAPub.X(), save.ECDSAPub.Y())
 			}
 			return save, keyID, nil
 		case <-deadline:
@@ -366,7 +366,7 @@ func SubmitKeygenResult(wsClient *sdk.SocketSDK, taskID, nodeID, keyID string, s
 			X:     saveData.ECDSAPub.X(),
 			Y:     saveData.ECDSAPub.Y(),
 		}
-		rootPubHex = mpc.PubKeyToHex(pub)
+		rootPubHex = alg_ecdsa.PubKeyToHex(pub)
 	}
 	req := &dto.CliMPCKeygenResultReq{
 		TaskID:     taskID,
@@ -440,7 +440,7 @@ func HandleMpcKeygenStart(wsClient *sdk.SocketSDK, myNodeID, router string, body
 	fmt.Printf("[mpc-keygen] node=%s task=%s start, threshold=%d, nodes=%v\n",
 		myNodeID, start.TaskID, start.Threshold, start.NodeIDs)
 
-	sortedIDs := mpc.PartyIDs(start.NodeIDs)
+	sortedIDs := alg_ecdsa.PartyIDs(start.NodeIDs)
 	myIndex := -1
 	for i := range sortedIDs {
 		if sortedIDs[i].GetId() == myNodeID {
@@ -495,7 +495,7 @@ func HandleMpcKeygenStart(wsClient *sdk.SocketSDK, myNodeID, router string, body
 			myNodeID, start.TaskID, keyID)
 
 		baseDir := fmt.Sprintf("keys")
-		store := mpc.NewFileKeyStore(baseDir)
+		store := alg_ecdsa.NewFileKeyStore(baseDir)
 		if err := store.Save(keyID, myNodeID, saveData); err != nil {
 			fmt.Printf("[mpc-keygen] node=%s task=%s save local share failed: %v\n", myNodeID, start.TaskID, err)
 			_ = submitKeygenResultErr(wsClient, start.TaskID, myNodeID, "save local share failed: "+err.Error())

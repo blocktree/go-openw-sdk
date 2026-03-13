@@ -1,4 +1,4 @@
-package webapp
+package app
 
 import (
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"

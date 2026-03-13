@@ -1288,6 +1288,12 @@ func easyjsonC5d09f7cDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto11(in *jlexe
 			} else {
 				out.TaskID = string(in.String())
 			}
+		case "algorithm":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.Algorithm = string(in.String())
+			}
 		case "keyID":
 			if in.IsNull() {
 				in.Skip()
@@ -1411,6 +1417,11 @@ func easyjsonC5d09f7cEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto11(out *jwri
 		const prefix string = ",\"taskID\":"
 		out.RawString(prefix[1:])
 		out.String(string(in.TaskID))
+	}
+	if in.Algorithm != "" {
+		const prefix string = ",\"algorithm\":"
+		out.RawString(prefix)
+		out.String(string(in.Algorithm))
 	}
 	{
 		const prefix string = ",\"keyID\":"
@@ -2264,6 +2275,12 @@ func easyjsonC5d09f7cDecodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto18(in *jlexe
 			} else {
 				out.TaskID = string(in.String())
 			}
+		case "algorithm":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.Algorithm = string(in.String())
+			}
 		case "nodeIDs":
 			if in.IsNull() {
 				in.Skip()
@@ -2348,6 +2365,11 @@ func easyjsonC5d09f7cEncodeGithubComBlocktreeGoOpenwSdkV2OpenwsdkDto18(out *jwri
 		const prefix string = ",\"taskID\":"
 		out.RawString(prefix[1:])
 		out.String(string(in.TaskID))
+	}
+	if in.Algorithm != "" {
+		const prefix string = ",\"algorithm\":"
+		out.RawString(prefix)
+		out.String(string(in.Algorithm))
 	}
 	{
 		const prefix string = ",\"nodeIDs\":"

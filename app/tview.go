@@ -1,6 +1,6 @@
 // webapp/tview_app.go
 
-package webapp
+package app
 
 import (
 	"bytes"
@@ -143,7 +143,7 @@ func showMainMenu(app *tview.Application) {
 	list.AddItem("Generate ECDSA", "Print base64-encoded ECDSA key pair to terminal", menuNumber(menuCreateECDSA), nil) // ← 新增
 	list.AddItem("Start HTTP Service"+status, "Launch HTTP signing API", menuNumber(menuStartHttp), nil)
 	list.AddItem("Start WebSocket Service"+wsStatus, "Launch WebSocket signing API", menuNumber(menuStartWebsocket), nil)
-	list.AddItem("Exit", "Quit the application", menuNumber(menuExit), nil)
+	list.AddItem("Exit", "Quit the app", menuNumber(menuExit), nil)
 
 	list.SetSelectedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
 		switch index {

@@ -1,4 +1,4 @@
-package webapp
+package app
 
 import (
 	"context"
@@ -21,7 +21,7 @@ import (
 // 当前仅实现 ECDSA（AlgECDSA），后续可在此处增加 AlgEd25519 等分支。
 func CreateMPCSignTaskByAlg(alg mpc.Algorithm, walletID, msgHashHex string) (sigHex string, err error) {
 	switch alg {
-	case "", mpc.AlgECDSA:
+	case mpc.AlgECDSA:
 		return createMPCSignTaskECDSA(walletID, msgHashHex)
 	default:
 		return "", fmt.Errorf("unsupported MPC algorithm for sign: %s", alg)
@@ -138,6 +138,7 @@ func createMPCSignTaskECDSA(walletID, msgHashHex string) (sigHex string, err err
 	// 5) 下发 mpcSignStart（加密）
 	startPayload := &dto.CliMPCSignStartRes{
 		TaskID:        taskID,
+		Algorithm:     string(mpc.AlgECDSA), // 当前实现为 ECDSA
 		KeyID:         keyID,
 		AllNodeIDs:    allNodeIDs,
 		SignNodeIDs:   signNodeIDs,

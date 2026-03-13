@@ -117,6 +117,7 @@ type CliMPCPublicKeyPair struct {
 //easyjson:json
 type CliMPCKeygenStartRes struct {
 	TaskID        string                `json:"taskID"`
+	Algorithm     string                `json:"algorithm,omitempty"` // MPC 算法标识，例如 \"ecdsa\"、\"ed25519\"
 	NodeIDs       []string              `json:"nodeIDs"`
 	Threshold     int                   `json:"threshold"`
 	ExpiredTime   int64                 `json:"expiredTime"`
@@ -200,12 +201,13 @@ type CliMPCEncryptData struct {
 //easyjson:json
 type CliMPCSignStartRes struct {
 	TaskID        string                `json:"taskID"`
-	KeyID         string                `json:"keyID"`       // 要使用的根密钥 KeyID
-	AllNodeIDs    []string              `json:"allNodeIDs"`  // 全量节点列表
-	SignNodeIDs   []string              `json:"signNodeIDs"` // 参与签名的节点（TSS 顺序）
-	Threshold     int                   `json:"threshold"`   // 门限（通常与 keygen 一致）
-	MsgHashHex    string                `json:"msgHashHex"`  // 待签名消息哈希（32字节 hex）
-	ExpiredTime   int64                 `json:"expiredTime"` // 任务过期时间，秒级时间戳
+	Algorithm     string                `json:"algorithm,omitempty"` // MPC 算法标识，例如 \"ecdsa\"、\"ed25519\"
+	KeyID         string                `json:"keyID"`               // 要使用的根密钥 KeyID
+	AllNodeIDs    []string              `json:"allNodeIDs"`          // 全量节点列表
+	SignNodeIDs   []string              `json:"signNodeIDs"`         // 参与签名的节点（TSS 顺序）
+	Threshold     int                   `json:"threshold"`           // 门限（通常与 keygen 一致）
+	MsgHashHex    string                `json:"msgHashHex"`          // 待签名消息哈希（32字节 hex）
+	ExpiredTime   int64                 `json:"expiredTime"`         // 任务过期时间，秒级时间戳
 	PublicKeyPair []CliMPCPublicKeyPair `json:"publicKeyPair"`
 }
 

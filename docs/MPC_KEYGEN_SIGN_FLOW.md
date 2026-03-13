@@ -23,7 +23,7 @@
      |  服务端不解密 Data，看不到 TSS 明文
 ```
 
-- **服务端**：下发任务（mpcKeygenStart / mpcSignStart）、临时公钥交换协调、**按 Subject 转发** mpcKeygenMsg / mpcSignMsg、轮询结果；不存储 SaveData，不参与 TSS 计算。
+- **服务端**：下发任务（mpcKeygenStart / mpcSignStart）、临时公钥交换协调、**按 Subject 转发** mpcKeygenMsg / mpcSignMsg，并通过事件驱动的 collector 汇总结果（非简单轮询）；不存储 SaveData，不参与 TSS 计算。
 - **节点**：持有临时 ECDH 密钥对；收到 Start 后存**其他节点临时公钥**；TSS 产生的每条消息**按目标节点分别加密**，每条请求只带一个目标（Subject + 密文 Data）；收到 Push 时用本节点私钥解密后投递给 TSS party。
 
 ---
@@ -45,21 +45,21 @@
 
 ## 3. Keygen 流程
 
-### 3.1 服务端：CreateMPCKeyTask()
+### 3.1 服务端：CreateMPCKeygenTask()
 
-1. 取在线 subject，按 TSS 顺序得到 `nodeIDs`（3 或 5 个），确定 `threshold`（3→2，5→3）。
+1. 取在线 subject，按 TSS 顺序得到 `nodeIDs`（3 或 5 个），确定 `threshold`（3→2，5→3）。当前实现为 **ECDSA** 算法（`mpc.AlgECDSA`），后续可按 `Algorithm` 字段扩展 Ed25519 等。
 2. 生成 `taskID`、`expiredTime`；向每个节点 **Push mpcTempPublicKey**（Module=`"keygen"`）。
-3. 轮询直到所有节点通过 POST `/ws/mpcTempPublicKey` 上报公钥，写入 `meta.PublicKey[nodeID]`；将 `MpcKeygenTaskMeta` 存入 cache（key `mpcMeta:taskID`）。
-4. 构造 `CliMPCKeygenStartRes`（TaskID, NodeIDs, Threshold, ExpiredTime, PublicKeyPair），对每个节点用**该节点临时公钥**加密后 **Push mpcKeygenStart**，Body 为 `CliMPCEncryptData{ TaskID, Data: base64(密文) }`。
-5. 轮询各节点上报的 **POST /ws/mpcKeygenResult**（Status=40、KeyID、Err）；校验 KeyID 一致、无 Err。
-6. 计算 `walletID = ComputeKeyID([]byte(keyID))`，并将 KeyMeta（WalletID, KeyID, NodeIDs, Threshold, IndexByNodeID）写入 `mpc_keys_meta/{walletID}.json`；清理任务与临时公钥 cache；返回 KeyID。
+3. **事件驱动**等待所有节点通过 POST `/ws/mpcTempPublicKey` 上报公钥：在内存中注册 `PubkeyCollector`，收到上报后立即 `Submit`；collector 完成后写入 `meta.PublicKey[nodeID]`，并将 `MpcKeygenTaskMeta` 存入 cache（key `mpcMeta:taskID`），同时支持「cache replay」避免 collector 注册前的上报丢失。
+4. 构造 `CliMPCKeygenStartRes`（TaskID, **Algorithm**, NodeIDs, Threshold, ExpiredTime, PublicKeyPair），对每个节点用**该节点临时公钥**加密后 **Push mpcKeygenStart**，Body 为 `CliMPCEncryptData{ TaskID, Data: base64(密文) }`。
+5. 通过 `KeygenResultCollector` **事件驱动**收集各节点上报的 **POST /ws/mpcKeygenResult**（Status=40、KeyID、RootPubHex、Err），并做「cache replay」；校验 KeyID 与 RootPubHex 在所有节点上一致、且无 Err。
+6. 计算 `walletID = ComputeKeyID([]byte(keyID))`，并将 KeyMeta（WalletID, KeyID, RootPubHex, NodeIDs, Threshold, IndexByNodeID, 可选别名 Alias）写入 `walletDir/{walletID}.json`（`walletDir` 来自配置）；清理任务与临时公钥 cache；返回 `walletID`。
 
 ### 3.2 节点：HandleMpcKeygenStart
 
-1. 收到 **Push mpcKeygenStart**，Body 为 `CliMPCEncryptData`；用本节点在该 task 的**临时私钥**解密 `Data`，AAD 为 `taskID|myNodeID|mpcKeygenStart`，得到 `CliMPCKeygenStartRes`。
+1. 收到 **Push mpcKeygenStart**，Body 为 `CliMPCEncryptData`；用本节点在该 task 的**临时私钥**解密 `Data`，AAD 为 `taskID|myNodeID|mpcKeygenStart`，得到 `CliMPCKeygenStartRes`（其中 `Algorithm` 指明本次使用的 MPC 算法，如 `"ecdsa"`）。
 2. 将 **其他节点**的临时公钥写入本地 cache：对 `start.PublicKeyPair` 中除自己外的每条，`keyCache.Put( (v.Subject, taskID, "keygen:tempPublicKey"), v.PublicKey )`。
-3. 注册 keygen 会话（router + recvCh），启动 delivery 协程；**异步**执行 RunKeygenNodeReal（生成 PreParams、创建 LocalParty、消费 outCh 并 Send、等待 endCh 得到 SaveData）。
-4. Keygen 成功后：本地 `FileKeyStore.Save(keyID, myNodeID, saveData)`，再 **POST /ws/mpcKeygenResult** 上报 KeyID；失败则 POST 时带 Err。会话结束时删除本节点临时私钥 cache。
+3. 注册 keygen 会话（router + recvCh），启动 delivery 协程；**异步**执行 `RunKeygenNodeRealByAlg(Algorithm, ...)`（当前仅实现 ECDSA：生成 PreParams、创建 LocalParty、消费 outCh 并 Send、等待 endCh 得到 SaveData）。
+4. Keygen 成功后：本地 `FileKeyStore.Save(keyID, myNodeID, saveData)`，再 **POST /ws/mpcKeygenResult` 上报 KeyID + RootPubHex；失败则 POST 时带 Err。会话结束时删除本节点临时私钥 cache。
 
 ### 3.3 节点：Send（Keygen）— 按目标加密
 
@@ -84,21 +84,21 @@
 
 ## 4. Sign 流程
 
-### 4.1 服务端：CreateMPCSignTask(keyID, msgHashHex)
+### 4.1 服务端：CreateMPCSignTask(walletID, msgHashHex)
 
 > **强制全量节点在线且参与签名**：为了保证协议质量与安全性，当前实现要求 `keyMeta.NodeIDs` 中的**所有节点必须在线并参与本次签名**；暂不支持只用子集（例如 2-of-3 只用 2 个节点）完成签名。
 
-1. 从 `mpc_keys_meta/{walletID}.json` 读取 KeyMeta（NodeIDs、Threshold）；其中 `walletID = ComputeKeyID([]byte(keyID))`；校验 msgHashHex。
+1. 从 `walletDir/{walletID}.json` 读取 KeyMeta（KeyID、RootPubHex、NodeIDs、Threshold、Alias、Algorithm 等）；校验 msgHashHex。
 2. 检查 `NodeIDs` 中的**每个节点**当前是否在线；若有任意一个离线则直接报错，拒绝本次签名请求。
 3. 生成 `taskID`、`expiredTime`；向所有节点 **Push mpcTempPublicKey**（Module=`"sign"`），要求全量节点上报临时公钥。
-4. 轮询收齐所有节点的临时公钥，写入 `signMeta.PublicKey`；将 signMeta 存入 cache（key `mpcSignMeta:taskID`）。
-5. 构造 `CliMPCSignStartRes`（包含 **AllNodeIDs=全量节点**、`SignNodeIDs=AllNodeIDs`、Threshold、MsgHashHex、全量 `PublicKeyPair` 等），对每个节点用其临时公钥加密后 **Push mpcSignStart**。
-6. 轮询所有节点 **POST /ws/mpcSignResult**（SignatureHex 或 Err）；校验各节点签名一致；清理 sign 相关 cache；返回 sigHex。
+4. 使用 `PubkeyCollector` **事件驱动**收齐所有节点的临时公钥（并做 cache replay），写入 `signMeta.PublicKey`；将 signMeta 存入 cache（key `mpcSignMeta:taskID`）。
+5. 构造 `CliMPCSignStartRes`（包含 **Algorithm**、**AllNodeIDs=全量节点**、`SignNodeIDs=AllNodeIDs`、Threshold、MsgHashHex、全量 `PublicKeyPair` 等），对每个节点用其临时公钥加密后 **Push mpcSignStart**。
+6. 使用 `SignResultCollector` **事件驱动**收集所有节点 **POST /ws/mpcSignResult**（SignatureHex 或 Err），并做 cache replay；校验各节点签名一致；清理 sign 相关 cache；返回 sigHex。
 
 ### 4.2 节点：HandleMpcSignStart
 
-1. 收到 **Push mpcSignStart**，解密得到 `CliMPCSignStartRes`；将**其他节点**临时公钥存入 cache（key 含 `v.Subject, taskID, "sign:tempPublicKey"`）。
-2. 注册 sign 会话，启动 delivery 协程；**异步**执行 RunSignNodeReal（加载 keyfile、创建 signing LocalParty、Send/Receive、等待签名结果）。
+1. 收到 **Push mpcSignStart**，解密得到 `CliMPCSignStartRes`（包含 Algorithm）；将**其他节点**临时公钥存入 cache（key 含 `v.Subject, taskID, "sign:tempPublicKey"`）。
+2. 注册 sign 会话，启动 delivery 协程；**异步**执行 `RunSignNodeRealByAlg(Algorithm, ...)`（当前仅实现 ECDSA：加载 keyfile、创建 signing LocalParty、Send/Receive、等待签名结果）。
 3. 成功则 **POST /ws/mpcSignResult** 上报 SignatureHex；失败则上报 Err。会话结束时删除本节点 sign 临时私钥。
 
 ### 4.3 节点：Send（Sign）— 按目标加密
@@ -121,7 +121,7 @@
 | 服务端→节点 | Push `mpcKeygenStart` | 下发 keygen 任务（Body 为 CliMPCEncryptData，密文内为 CliMPCKeygenStartRes） |
 | 节点→服务端 | POST `/ws/mpcKeygenMsg` | 每条 Body 为 CliMPCEncryptData{ TaskID, Subject, Data }，Data=按目标加密的 CliMPCKeygenMsgRes |
 | 服务端→节点 | Push `mpcKeygenMsg` | 服务端将收到的 req 原样转发给 req.Subject |
-| 节点→服务端 | POST `/ws/mpcKeygenResult` | 上报 KeyID（及可选 Err） |
+| 节点→服务端 | POST `/ws/mpcKeygenResult` | 上报 KeyID、RootPubHex（及可选 Err） |
 | 服务端→节点 | Push `mpcSignStart` | 下发 sign 任务（Body 为 CliMPCEncryptData，密文内为 CliMPCSignStartRes） |
 | 节点→服务端 | POST `/ws/mpcSignMsg` | 每条 Body 为 CliMPCEncryptData{ TaskID, Subject, Data }，Data=按目标加密的 CliMPCSignMsgRes |
 | 服务端→节点 | Push `mpcSignMsg` | 服务端将 req 原样转发给 req.Subject |
@@ -137,13 +137,13 @@
 
 ---
 
-## 7. 相关代码位置
+## 7. 相关代码位置（按重构后的目录）
 
 | 内容 | 路径 |
 |------|------|
-| 服务端 Keygen/Sign 协调与转发 | `web/websocket2.go`（CreateMPCKeyTask, CreateMPCSignTask, handleMpcKeygenMsg, handleMpcSignMsg, handleMpcKeygenResult, handleMpcSignResult 等） |
-| 路由注册 | `web/websocket.go`（/ws/mpcTempPublicKey, /ws/mpcKeygenMsg, /ws/mpcKeygenResult, /ws/mpcSignMsg, /ws/mpcSignResult） |
-| 节点 Keygen | `node/mpc_keygen.go`（HandleMpcKeygenStart, Send 按目标加密, DeliverMpcKeygenMsg） |
-| 节点 Sign | `node/mpc_sign.go`（HandleMpcSignStart, Send 按目标加密, DeliverMpcSignMsg） |
-| 节点公钥交换与 Push 分发 | `node/main.go`（handleTempPublicKey, Push 回调 mpcKeygenStart/mpcKeygenMsg/mpcSignStart/mpcSignMsg） |
-| DTO | `openwsdk/dto/cli.go`（CliMPCEncryptData, CliMPCKeygenStartRes, CliMPCKeygenMsgRes, CliMPCSignStartRes, CliMPCSignMsgRes 等） |
+| 服务端 Keygen/Sign 协调与转发 | `app/mpc_keygen.go`、`app/mpc_sign.go`（CreateMPCKeygenTaskByAlg, CreateMPCSignTaskByAlg, handleMpcKeygenMsg, handleMpcSignMsg, handleMpcKeygenResult, handleMpcSignResult 等） |
+| 路由注册 | `app/websocket.go`（/ws/mpcTempPublicKey, /ws/mpcKeygenMsg, /ws/mpcKeygenResult, /ws/mpcSignMsg, /ws/mpcSignResult） |
+| 节点 Keygen | `node/mpc_keygen.go`（HandleMpcKeygenStart, RunKeygenNodeRealByAlg, Send 按目标加密, DeliverMpcKeygenMsg） |
+| 节点 Sign | `node/mpc_sign.go`（HandleMpcSignStart, RunSignNodeRealByAlg, Send 按目标加密, DeliverMpcSignMsg） |
+| 节点公钥交换与 Push 分发 | `node/main.go`（mpcTempPublicKey Push 回调、mpcKeygenStart/mpcKeygenMsg/mpcSignStart/mpcSignMsg 回调） |
+| DTO | `openwsdk/dto/cli.go`（CliMPCEncryptData, CliMPCKeygenStartRes, CliMPCKeygenMsgRes, CliMPCSignStartRes, CliMPCSignMsgRes, 结果与临时公钥 DTO 等） |

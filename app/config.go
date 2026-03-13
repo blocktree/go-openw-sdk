@@ -1,4 +1,4 @@
-package webapp
+package app
 
 import (
 	"encoding/hex"

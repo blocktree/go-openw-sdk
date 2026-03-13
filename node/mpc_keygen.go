@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/blocktree/go-openw-sdk/v2/mpc"
 	"github.com/blocktree/go-openw-sdk/v2/mpc/alg_ecdsa"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
 	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
@@ -283,8 +284,20 @@ func DeliverMpcKeygenMsg(wsClient *sdk.SocketSDK, myNodeID, router string, body 
 
 // ============ 以下是你原有的业务逻辑（未改动，仅保留上下文） ============
 
-func RunKeygenNodeReal(taskID string, nodeIDs []string, myNodeID string, threshold int, wsClient *sdk.SocketSDK) (saveData keygen.LocalPartySaveData, keyID string, err error) {
-	sortedIDs := alg_ecdsa.PartyIDs(nodeIDs)
+// RunKeygenNodeRealByAlg 按算法运行一次本节点的 keygen 协议。
+// 当前仅实现 ECDSA（AlgECDSA），后续可根据 Algorithm 扩展 Ed25519 等。
+func RunKeygenNodeRealByAlg(start dto.CliMPCKeygenStartRes, myNodeID string, wsClient *sdk.SocketSDK) (saveData keygen.LocalPartySaveData, keyID string, err error) {
+	switch mpc.Algorithm(start.Algorithm) {
+	case mpc.AlgECDSA:
+		return runKeygenNodeRealECDSA(start, myNodeID, wsClient)
+	default:
+		return keygen.LocalPartySaveData{}, "", fmt.Errorf("unsupported MPC algorithm for keygen on node: %s", start.Algorithm)
+	}
+}
+
+// runKeygenNodeRealECDSA 为 secp256k1 ECDSA 的具体实现。
+func runKeygenNodeRealECDSA(start dto.CliMPCKeygenStartRes, myNodeID string, wsClient *sdk.SocketSDK) (saveData keygen.LocalPartySaveData, keyID string, err error) {
+	sortedIDs := alg_ecdsa.PartyIDs(start.NodeIDs)
 	myIndex := -1
 	for i := range sortedIDs {
 		if sortedIDs[i].GetId() == myNodeID {
@@ -296,17 +309,17 @@ func RunKeygenNodeReal(taskID string, nodeIDs []string, myNodeID string, thresho
 		return keygen.LocalPartySaveData{}, "", errors.New("myNodeID not in nodeIDs")
 	}
 
-	params := alg_ecdsa.Parameters(sortedIDs, myIndex, threshold)
+	params := alg_ecdsa.Parameters(sortedIDs, myIndex, start.Threshold)
 	if params == nil {
 		return keygen.LocalPartySaveData{}, "", errors.New("mpc: invalid parameters")
 	}
 
-	fmt.Printf("[mpc-keygen] node=%s task=%s: generating preparams...\n", myNodeID, taskID)
+	fmt.Printf("[mpc-keygen] node=%s task=%s: generating preparams...\n", myNodeID, start.TaskID)
 	preParams, err := keygen.GeneratePreParams(90*time.Second, 2)
 	if err != nil {
 		return keygen.LocalPartySaveData{}, "", fmt.Errorf("preparams: %w", err)
 	}
-	fmt.Printf("[mpc-keygen] node=%s task=%s: preparams generated\n", myNodeID, taskID)
+	fmt.Printf("[mpc-keygen] node=%s task=%s: preparams generated\n", myNodeID, start.TaskID)
 
 	outCh := make(chan tss.Message, 8)
 	endCh := make(chan keygen.LocalPartySaveData, 1)
@@ -314,7 +327,7 @@ func RunKeygenNodeReal(taskID string, nodeIDs []string, myNodeID string, thresho
 
 	party := keygen.NewLocalParty(params, outCh, endCh, *preParams)
 
-	session := getKeygenSession(taskID, myNodeID)
+	session := getKeygenSession(start.TaskID, myNodeID)
 	if session == nil {
 		return keygen.LocalPartySaveData{}, "", errors.New("session disappeared during keygen")
 	}
@@ -339,7 +352,7 @@ func RunKeygenNodeReal(taskID string, nodeIDs []string, myNodeID string, thresho
 		return keygen.LocalPartySaveData{}, "", startErr
 	}
 
-	fmt.Printf("[mpc-keygen] node=%s task=%s: party started, waiting for messages and result\n", myNodeID, taskID)
+	fmt.Printf("[mpc-keygen] node=%s task=%s: party started, waiting for messages and result\n", myNodeID, start.TaskID)
 
 	keygenTimeout := 10 * time.Minute
 	deadline := time.After(keygenTimeout)
@@ -437,8 +450,8 @@ func HandleMpcKeygenStart(wsClient *sdk.SocketSDK, myNodeID, router string, body
 		}
 	}
 
-	fmt.Printf("[mpc-keygen] node=%s task=%s start, threshold=%d, nodes=%v\n",
-		myNodeID, start.TaskID, start.Threshold, start.NodeIDs)
+	fmt.Printf("[mpc-keygen] node=%s task=%s start, alg=%s threshold=%d, nodes=%v\n",
+		myNodeID, start.TaskID, start.Algorithm, start.Threshold, start.NodeIDs)
 
 	sortedIDs := alg_ecdsa.PartyIDs(start.NodeIDs)
 	myIndex := -1
@@ -484,7 +497,7 @@ func HandleMpcKeygenStart(wsClient *sdk.SocketSDK, myNodeID, router string, body
 			}
 		}()
 
-		saveData, keyID, err := RunKeygenNodeReal(start.TaskID, start.NodeIDs, myNodeID, start.Threshold, wsClient)
+		saveData, keyID, err := RunKeygenNodeRealByAlg(start, myNodeID, wsClient)
 		if err != nil {
 			fmt.Printf("[mpc-keygen] node=%s task=%s failed: %v\n", myNodeID, start.TaskID, err)
 			_ = submitKeygenResultErr(wsClient, start.TaskID, myNodeID, err.Error())

@@ -1,4 +1,4 @@
-package webapp
+package app
 
 import (
 	"context"
@@ -41,11 +41,12 @@ type MpcKeygenTaskMeta struct {
 type KeyMeta struct {
 	WalletID      string         `json:"walletID"`
 	KeyID         string         `json:"keyID"`
-	Alias         string         `json:"alias,omitempty"` // 人类可读别名（字母或字母+数字），来源于 tview 创建
-	RootPubHex    string         `json:"rootPubHex"`      // 65-byte uncompressed pubkey hex (04||X||Y)
-	NodeIDs       []string       `json:"nodeIDs"`         // 按 TSS PartyIDs 顺序
-	Threshold     int            `json:"threshold"`       // 门限 t（如 2-of-3、3-of-5）
-	IndexByNodeID map[string]int `json:"indexByNodeID"`   // nodeID -> index（在 NodeIDs 中的下标）
+	Algorithm     string         `json:"algorithm,omitempty"` // MPC 算法标识，例如 \"ecdsa\"、\"ed25519\"
+	Alias         string         `json:"alias,omitempty"`     // 人类可读别名（字母或字母+数字），来源于 tview 创建
+	RootPubHex    string         `json:"rootPubHex"`          // 65-byte uncompressed pubkey hex (04||X||Y)
+	NodeIDs       []string       `json:"nodeIDs"`             // 按 TSS PartyIDs 顺序
+	Threshold     int            `json:"threshold"`           // 门限 t（如 2-of-3、3-of-5）
+	IndexByNodeID map[string]int `json:"indexByNodeID"`       // nodeID -> index（在 NodeIDs 中的下标）
 }
 
 // MpcKeygenNodeResult 按 (subject, taskID) 存的节点上报结果，Status 40 表示已上报 SaveData。
@@ -70,7 +71,7 @@ func truncateErr(s string, max int) string {
 // 当前仅实现 ECDSA（AlgECDSA），后续可在此处增加 AlgEd25519 等分支。
 func CreateMPCKeygenTaskByAlg(alg mpc.Algorithm, alias string) (walletID string, err error) {
 	switch alg {
-	case "", mpc.AlgECDSA:
+	case mpc.AlgECDSA:
 		return createMPCKeygenTaskECDSA(alias)
 	default:
 		return "", fmt.Errorf("unsupported MPC algorithm for keygen: %s", alg)
@@ -165,6 +166,7 @@ func createMPCKeygenTaskECDSA(alias string) (keyID string, err error) {
 
 	startPayload := &dto.CliMPCKeygenStartRes{
 		TaskID:        taskID,
+		Algorithm:     string(mpc.AlgECDSA), // 当前实现为 ECDSA
 		NodeIDs:       nodeIDs,
 		Threshold:     threshold,
 		ExpiredTime:   expiredTime,
@@ -276,6 +278,7 @@ func createMPCKeygenTaskECDSA(alias string) (keyID string, err error) {
 	metaObj := KeyMeta{
 		WalletID:      walletID,
 		KeyID:         keyID,
+		Algorithm:     string(mpc.AlgECDSA),
 		Alias:         alias,
 		RootPubHex:    rootPubHex,
 		NodeIDs:       nodeIDs,

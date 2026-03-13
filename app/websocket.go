@@ -1,4 +1,4 @@
-package webapp
+package app
 
 import (
 	"github.com/godaddy-x/freego/cache"

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	webapp "github.com/blocktree/go-openw-sdk/v2/application"
+	webapp "github.com/blocktree/go-openw-sdk/v2/app"
 )
 
 // 测试参数

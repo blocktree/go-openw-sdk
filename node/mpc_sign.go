@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/blocktree/go-openw-sdk/v2/mpc"
 	"github.com/blocktree/go-openw-sdk/v2/mpc/alg_ecdsa"
 	"github.com/blocktree/go-openw-sdk/v2/openwsdk/dto"
 	"github.com/bnb-chain/tss-lib/common"
@@ -41,9 +42,25 @@ func cleanupExpiredEarlySignMessagesLocked(now time.Time) {
 	}
 }
 
-// RunSignNodeReal 是实际执行签名的函数（由 HandleMpcSignStart 异步调用）
+// RunSignNodeRealByAlg 按算法执行本节点的签名逻辑（由 HandleMpcSignStart 异步调用）。
+// 当前仅实现 ECDSA（AlgECDSA），后续可根据 Algorithm 扩展 Ed25519 等。
+func RunSignNodeRealByAlg(
+	start dto.CliMPCSignStartRes,
+	myNodeID string,
+	msgHash *big.Int,
+	wsClient *sdk.SocketSDK,
+) (signatureHex string, err error) {
+	switch mpc.Algorithm(start.Algorithm) {
+	case mpc.AlgECDSA:
+		return runSignNodeRealECDSA(start, myNodeID, msgHash, wsClient)
+	default:
+		return "", fmt.Errorf("unsupported MPC algorithm for sign on node: %s", mpc.Algorithm(start.Algorithm))
+	}
+}
+
+// runSignNodeRealECDSA 为 secp256k1 ECDSA 的具体实现。
 // 使用本地 keyfile (keyID-nodeID.json) 中的 LocalPartySaveData，通过 WS 路由与其他节点完成一次 TSS 签名。
-func RunSignNodeReal(
+func runSignNodeRealECDSA(
 	start dto.CliMPCSignStartRes,
 	myNodeID string,
 	msgHash *big.Int,
@@ -162,8 +179,8 @@ func HandleMpcSignStart(wsClient *sdk.SocketSDK, myNodeID, router string, body [
 		}
 	}
 
-	fmt.Printf("[mpc-sign] node=%s task=%s start, keyID=%s threshold=%d, allNodes=%v signNodes=%v\n",
-		myNodeID, start.TaskID, start.KeyID, start.Threshold, start.AllNodeIDs, start.SignNodeIDs)
+	fmt.Printf("[mpc-sign] node=%s task=%s start, alg=%s keyID=%s threshold=%d, allNodes=%v signNodes=%v\n",
+		myNodeID, start.TaskID, start.Algorithm, start.KeyID, start.Threshold, start.AllNodeIDs, start.SignNodeIDs)
 
 	sortedIDs := alg_ecdsa.PartyIDs(start.AllNodeIDs)
 	myIndex := -1
@@ -219,7 +236,7 @@ func HandleMpcSignStart(wsClient *sdk.SocketSDK, myNodeID, router string, body [
 			}
 		}()
 
-		sigHex, err := RunSignNodeReal(start, myNodeID, msgHash, wsClient)
+		sigHex, err := RunSignNodeRealByAlg(start, myNodeID, msgHash, wsClient)
 		nodeID := myNodeID
 		if err != nil {
 			fmt.Printf("[mpc-sign] node=%s task=%s failed: %v\n", myNodeID, start.TaskID, err)

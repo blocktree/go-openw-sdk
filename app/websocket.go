@@ -37,7 +37,7 @@ func NewSocket() {
 	server.AddLocalCache(nil)
 
 	// 配置连接池
-	if err := server.NewPool(100, 10, 5, 30); err != nil {
+	if err := server.NewPool(300, 20, 100, 10); err != nil {
 		panic(err)
 	}
 

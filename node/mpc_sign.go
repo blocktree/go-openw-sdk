@@ -42,6 +42,10 @@ func cleanupExpiredEarlySignMessagesLocked(now time.Time) {
 	}
 }
 
+func logSignf(format string, args ...interface{}) {
+	fmt.Printf("[mpc-sign] "+format, args...)
+}
+
 // RunSignNodeRealByAlg 按算法执行本节点的签名逻辑（由 HandleMpcSignStart 异步调用）。
 // 当前仅实现 ECDSA（AlgECDSA），后续可根据 Algorithm 扩展 Ed25519 等。
 func RunSignNodeRealByAlg(
@@ -123,7 +127,7 @@ func runSignNodeRealECDSA(
 		return "", startErr
 	}
 
-	fmt.Printf("[mpc-sign] node=%s task=%s: party started, waiting for messages and result\n", myNodeID, start.TaskID)
+	logSignf("node=%s task=%s: party started, waiting for messages and result\n", myNodeID, start.TaskID)
 
 	signTimeout := 2 * time.Minute
 	deadline := time.After(signTimeout)
@@ -179,7 +183,7 @@ func HandleMpcSignStart(wsClient *sdk.SocketSDK, myNodeID, router string, body [
 		}
 	}
 
-	fmt.Printf("[mpc-sign] node=%s task=%s start, alg=%s keyID=%s threshold=%d, allNodes=%v signNodes=%v\n",
+	logSignf("node=%s task=%s start, alg=%s keyID=%s threshold=%d, allNodes=%v signNodes=%v\n",
 		myNodeID, start.TaskID, start.Algorithm, start.KeyID, start.Threshold, start.AllNodeIDs, start.SignNodeIDs)
 
 	sortedIDs := alg_ecdsa.PartyIDs(start.AllNodeIDs)
@@ -239,7 +243,7 @@ func HandleMpcSignStart(wsClient *sdk.SocketSDK, myNodeID, router string, body [
 		sigHex, err := RunSignNodeRealByAlg(start, myNodeID, msgHash, wsClient)
 		nodeID := myNodeID
 		if err != nil {
-			fmt.Printf("[mpc-sign] node=%s task=%s failed: %v\n", myNodeID, start.TaskID, err)
+			logSignf("node=%s task=%s failed: %v\n", myNodeID, start.TaskID, err)
 			req := &dto.CliMPCSignResultReq{
 				TaskID: start.TaskID,
 				NodeID: nodeID,
@@ -251,7 +255,7 @@ func HandleMpcSignStart(wsClient *sdk.SocketSDK, myNodeID, router string, body [
 			return
 		}
 
-		fmt.Printf("[mpc-sign] node=%s task=%s succeeded, keyID=%s, signature=%s\n",
+		logSignf("node=%s task=%s succeeded, keyID=%s, signature=%s\n",
 			myNodeID, start.TaskID, start.KeyID, sigHex)
 
 		req := &dto.CliMPCSignResultReq{
@@ -262,7 +266,7 @@ func HandleMpcSignStart(wsClient *sdk.SocketSDK, myNodeID, router string, body [
 		}
 		var res dto.CliMPCSignResultRes
 		if err := wsClient.SendWebSocketMessage("/ws/mpcSignResult", req, &res, true, true, 30); err != nil {
-			fmt.Printf("[mpc-sign] node=%s task=%s submit sign result failed: %v\n", myNodeID, start.TaskID, err)
+			logSignf("node=%s task=%s submit sign result failed: %v\n", myNodeID, start.TaskID, err)
 		}
 	}()
 
@@ -296,14 +300,14 @@ func (r *wsSignRouter) Send(fromIndex int, msg tss.Message) error {
 			toNodeIDs = append(toNodeIDs, v)
 		}
 	}
-	fmt.Printf("[mpc-sign] Send: task=%s fromIndex=%d toNodeIDs=%v\n",
+	logSignf("Send: task=%s fromIndex=%d toNodeIDs=%v\n",
 		r.taskID, fromIndex, toNodeIDs)
 
 	wireBytes, _, err := msg.WireBytes()
 	if err != nil {
 		return err
 	}
-	fmt.Printf("[mpc-sign] Send: node=%s task=%s fromIndex=%d isBroadcast=%v len=%d\n",
+	logSignf("Send: node=%s task=%s fromIndex=%d isBroadcast=%v len=%d\n",
 		r.subject, r.taskID, fromIndex, msg.IsBroadcast(), len(wireBytes))
 
 	// 这里开始发送给服务端转发
@@ -328,7 +332,7 @@ func (r *wsSignRouter) Send(fromIndex int, msg tss.Message) error {
 			return err
 		}
 		if err := r.wsClient.SendWebSocketMessage("/ws/mpcSignMsg", &dto.CliMPCEncryptData{Data: utils.Base64Encode(encrypt), TaskID: r.taskID, Subject: v}, &dto.CliMPCResultRes{}, true, true, 60); err != nil {
-			fmt.Printf("[mpc-sign] Send: task=%s fromIndex=%d rpc error=%v\n", r.taskID, fromIndex, err)
+			logSignf("Send: task=%s fromIndex=%d rpc error=%v\n", r.taskID, fromIndex, err)
 			return err
 		}
 	}
@@ -346,14 +350,14 @@ func (r *wsSignRouter) Receive(toIndex int, wireBytes []byte, fromIndex int, isB
 	fromPartyID := r.sortedIDs[fromIndex]
 	parsed, err := tss.ParseWireMessage(wireBytes, fromPartyID, isBroadcast)
 	if err != nil {
-		fmt.Printf("[mpc-sign] Receive: task=%s parse error fromIndex=%d: %v\n",
+		logSignf("Receive: task=%s parse error fromIndex=%d: %v\n",
 			r.taskID, fromIndex, err)
 		return err
 	}
 	_, err = r.party.Update(parsed)
 	if err != nil {
 		if err.Error() != "Error is nil" {
-			fmt.Printf("[mpc-sign] Receive: task=%s Update error fromIndex=%d: %v\n",
+			logSignf("Receive: task=%s Update error fromIndex=%d: %v\n",
 				r.taskID, fromIndex, err)
 		}
 	}
@@ -380,7 +384,7 @@ func (s *signSession) enqueue(item recvItem) bool {
 	case s.recvCh <- item:
 		return true
 	default:
-		fmt.Printf("[mpc-sign] Deliver: recvCh full, dropping message fromIndex=%d (task=%s)\n",
+		logSignf("Deliver: recvCh full, dropping message fromIndex=%d (task=%s)\n",
 			item.FromIndex, s.router.taskID)
 		return false
 	}
@@ -427,9 +431,9 @@ func registerSignSession(taskID, nodeID string, s *signSession) {
 	// Step 3: 回放早期消息
 	for _, item := range replayItems {
 		if !s.enqueue(item) {
-			fmt.Printf("[mpc-sign] replay early msg failed (session closed) task=%s node=%s\n", taskID, nodeID)
+			logSignf("replay early msg failed (session closed) task=%s node=%s\n", taskID, nodeID)
 		} else {
-			fmt.Printf("[mpc-sign] replayed early msg task=%s node=%s fromIndex=%d\n", taskID, nodeID, item.FromIndex)
+			logSignf("replayed early msg task=%s node=%s fromIndex=%d\n", taskID, nodeID, item.FromIndex)
 		}
 	}
 }
@@ -453,7 +457,7 @@ func getSignSession(taskID, nodeID string) *signSession {
 
 // runSignDelivery 串行处理收到的签名消息，确保 party.Update 不并发。
 func runSignDelivery(s *signSession) {
-	fmt.Printf("[mpc-sign] task=%s myIndex=%d delivery goroutine started\n", s.router.taskID, s.router.myIndex)
+	logSignf("task=%s myIndex=%d delivery goroutine started\n", s.router.taskID, s.router.myIndex)
 
 	var earlyMsgs []recvItem
 
@@ -474,24 +478,24 @@ func runSignDelivery(s *signSession) {
 
 		if len(earlyMsgs) < 512 {
 			earlyMsgs = append(earlyMsgs, item)
-			fmt.Printf("[mpc-sign] task=%s cached early msg fromIndex=%d (total=%d)\n",
+			logSignf("task=%s cached early msg fromIndex=%d (total=%d)\n",
 				s.router.taskID, item.FromIndex, len(earlyMsgs))
 		} else {
-			fmt.Printf("[mpc-sign] task=%s dropped early msg (buffer full) fromIndex=%d\n",
+			logSignf("task=%s dropped early msg (buffer full) fromIndex=%d\n",
 				s.router.taskID, item.FromIndex)
 		}
 	}
 }
 
 func processSignMessage(s *signSession, item recvItem) {
-	fmt.Printf("[mpc-sign] task=%s myIndex=%d before Update fromIndex=%d\n",
+	logSignf("task=%s myIndex=%d before Update fromIndex=%d\n",
 		s.router.taskID, s.router.myIndex, item.FromIndex)
 	err := s.router.Receive(s.router.myIndex, item.WireBytes, item.FromIndex, item.IsBroadcast)
-	fmt.Printf("[mpc-sign] task=%s myIndex=%d after Update fromIndex=%d err=%v\n",
+	logSignf("task=%s myIndex=%d after Update fromIndex=%d err=%v\n",
 		s.router.taskID, s.router.myIndex, item.FromIndex, err)
 	c := atomic.AddUint32(&s.recvCount, 1)
 	if c <= 10 || c%20 == 0 {
-		fmt.Printf("[mpc-sign] task=%s myIndex=%d recvCount=%d fromIndex=%d\n",
+		logSignf("task=%s myIndex=%d recvCount=%d fromIndex=%d\n",
 			s.router.taskID, s.router.myIndex, c, item.FromIndex)
 	}
 	if err != nil && err.Error() != "Error is nil" {
@@ -524,7 +528,7 @@ func DeliverMpcSignMsg(wsClient *sdk.SocketSDK, myNodeID, router string, body []
 	}
 	var res dto.CliMPCSignMsgRes
 	if err := utils.JsonUnmarshal(msg, &res); err != nil {
-		fmt.Println("[mpc-sign] Deliver: json error =", err)
+		logSignf("Deliver: json error = %v\n", err)
 		return err
 	}
 
@@ -533,7 +537,7 @@ func DeliverMpcSignMsg(wsClient *sdk.SocketSDK, myNodeID, router string, body []
 		// Session 不存在：缓存为早期消息
 		wireBytes, err := base64.StdEncoding.DecodeString(res.WireBytesBase64)
 		if err != nil {
-			fmt.Println("[mpc-sign] Deliver: base64 error =", err)
+			logSignf("Deliver: base64 error = %v\n", err)
 			return err
 		}
 		sessionKey := signSessionKey(res.TaskID, myNodeID)
@@ -543,7 +547,7 @@ func DeliverMpcSignMsg(wsClient *sdk.SocketSDK, myNodeID, router string, body []
 		cleanupExpiredEarlySignMessagesLocked(now)
 		if b, exists := earlySignMessages[sessionKey]; exists && len(b.items) >= maxEarlySignMsgs {
 			earlySignMessagesMu.Unlock()
-			fmt.Printf("[mpc-sign] Deliver: dropped early msg (buffer full) task=%s node=%s\n", res.TaskID, myNodeID)
+			logSignf("Deliver: dropped early msg (buffer full) task=%s node=%s\n", res.TaskID, myNodeID)
 			return nil
 		}
 		item := recvItem{
@@ -559,21 +563,21 @@ func DeliverMpcSignMsg(wsClient *sdk.SocketSDK, myNodeID, router string, body []
 		earlySignMessages[sessionKey] = b
 		earlySignMessagesMu.Unlock()
 
-		fmt.Printf("[mpc-sign] Deliver: cached early msg task=%s node=%s fromIndex=%d\n", res.TaskID, myNodeID, res.FromIndex)
+		logSignf("Deliver: cached early msg task=%s node=%s fromIndex=%d\n", res.TaskID, myNodeID, res.FromIndex)
 		return nil
 	}
 
-	fmt.Printf("[mpc-sign] Deliver: enqueuing to session task=%s myIndex=%d fromIndex=%d\n",
+	logSignf("Deliver: enqueuing to session task=%s myIndex=%d fromIndex=%d\n",
 		res.TaskID, s.router.myIndex, res.FromIndex)
 
 	if res.FromIndex == s.router.myIndex {
-		fmt.Printf("[mpc-sign] Deliver: dropped (own) task=%s myIndex=%d fromIndex=%d\n",
+		logSignf("Deliver: dropped (own) task=%s myIndex=%d fromIndex=%d\n",
 			res.TaskID, s.router.myIndex, res.FromIndex)
 		return nil
 	}
 	wireBytes, err := base64.StdEncoding.DecodeString(res.WireBytesBase64)
 	if err != nil {
-		fmt.Println("[mpc-sign] Deliver: base64 error =", err)
+		logSignf("Deliver: base64 error = %v\n", err)
 		return err
 	}
 	item := recvItem{
@@ -582,9 +586,9 @@ func DeliverMpcSignMsg(wsClient *sdk.SocketSDK, myNodeID, router string, body []
 		IsBroadcast: res.IsBroadcast,
 	}
 	if !s.enqueue(item) {
-		fmt.Println("[mpc-sign] Deliver: session already closed for task", res.TaskID)
+		logSignf("Deliver: session already closed for task %s\n", res.TaskID)
 		return nil
 	}
-	fmt.Printf("[mpc-sign] Deliver: enqueued myIndex=%d fromIndex=%d task=%s\n", s.router.myIndex, res.FromIndex, res.TaskID)
+	logSignf("Deliver: enqueued myIndex=%d fromIndex=%d task=%s\n", s.router.myIndex, res.FromIndex, res.TaskID)
 	return nil
 }

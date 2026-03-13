@@ -41,6 +41,10 @@ func cleanupExpiredEarlyKeygenMessagesLocked(now time.Time) {
 	}
 }
 
+func logKeygenf(format string, args ...interface{}) {
+	fmt.Printf("[mpc-keygen] "+format, args...)
+}
+
 // ============ 原有类型保持不变 ============
 type recvItem struct {
 	WireBytes   []byte
@@ -67,7 +71,7 @@ func (s *keygenSession) enqueue(item recvItem) bool {
 	case s.recvCh <- item:
 		return true
 	default:
-		fmt.Printf("[mpc-keygen] Deliver: recvCh full, dropping message fromIndex=%d (task=%s)\n",
+		logKeygenf("Deliver: recvCh full, dropping message fromIndex=%d (task=%s)\n",
 			item.FromIndex, s.router.taskID)
 		return false
 	}
@@ -118,9 +122,9 @@ func registerKeygenSession(taskID, nodeID string, s *keygenSession) {
 	// Step 3: 回放早期消息
 	for _, item := range replayItems {
 		if !s.enqueue(item) {
-			fmt.Printf("[mpc-keygen] replay early msg failed (session closed) task=%s node=%s\n", taskID, nodeID)
+			logKeygenf("replay early msg failed (session closed) task=%s node=%s\n", taskID, nodeID)
 		} else {
-			fmt.Printf("[mpc-keygen] replayed early msg task=%s node=%s fromIndex=%d\n", taskID, nodeID, item.FromIndex)
+			logKeygenf("replayed early msg task=%s node=%s fromIndex=%d\n", taskID, nodeID, item.FromIndex)
 		}
 	}
 }
@@ -144,7 +148,7 @@ func getKeygenSession(taskID, nodeID string) *keygenSession {
 
 // ============ 消息投递逻辑（不变） ============
 func runKeygenDelivery(s *keygenSession) {
-	fmt.Printf("[mpc-keygen] task=%s myIndex=%d delivery goroutine started\n", s.router.taskID, s.router.myIndex)
+	logKeygenf("task=%s myIndex=%d delivery goroutine started\n", s.router.taskID, s.router.myIndex)
 
 	var earlyMsgs []recvItem
 
@@ -166,24 +170,24 @@ func runKeygenDelivery(s *keygenSession) {
 		// party 未就绪：缓存（最多512条）
 		if len(earlyMsgs) < 512 {
 			earlyMsgs = append(earlyMsgs, item)
-			fmt.Printf("[mpc-keygen] task=%s cached early msg fromIndex=%d (total=%d)\n",
+			logKeygenf("task=%s cached early msg fromIndex=%d (total=%d)\n",
 				s.router.taskID, item.FromIndex, len(earlyMsgs))
 		} else {
-			fmt.Printf("[mpc-keygen] task=%s dropped early msg (buffer full) fromIndex=%d\n",
+			logKeygenf("task=%s dropped early msg (buffer full) fromIndex=%d\n",
 				s.router.taskID, item.FromIndex)
 		}
 	}
 }
 
 func processMessage(s *keygenSession, item recvItem) {
-	fmt.Printf("[mpc-keygen] task=%s myIndex=%d before Update fromIndex=%d\n",
+	logKeygenf("task=%s myIndex=%d before Update fromIndex=%d\n",
 		s.router.taskID, s.router.myIndex, item.FromIndex)
 	err := s.router.Receive(s.router.myIndex, item.WireBytes, item.FromIndex, item.IsBroadcast)
-	fmt.Printf("[mpc-keygen] task=%s myIndex=%d after Update fromIndex=%d err=%v\n",
+	logKeygenf("task=%s myIndex=%d after Update fromIndex=%d err=%v\n",
 		s.router.taskID, s.router.myIndex, item.FromIndex, err)
 	c := atomic.AddUint32(&s.recvCount, 1)
 	if c <= 10 || c%20 == 0 {
-		fmt.Printf("[mpc-keygen] task=%s myIndex=%d recvCount=%d fromIndex=%d\n",
+		logKeygenf("task=%s myIndex=%d recvCount=%d fromIndex=%d\n",
 			s.router.taskID, s.router.myIndex, c, item.FromIndex)
 	}
 	if err != nil && err.Error() != "Error is nil" {
@@ -216,7 +220,7 @@ func DeliverMpcKeygenMsg(wsClient *sdk.SocketSDK, myNodeID, router string, body 
 	}
 	var res dto.CliMPCKeygenMsgRes
 	if err := utils.JsonUnmarshal(msg, &res); err != nil {
-		fmt.Println("[mpc-keygen] Deliver: json error =", err)
+		logKeygenf("Deliver: json error = %v\n", err)
 		return err
 	}
 
@@ -228,7 +232,7 @@ func DeliverMpcKeygenMsg(wsClient *sdk.SocketSDK, myNodeID, router string, body 
 		// ❗ Session 不存在：缓存为早期消息
 		wireBytes, err := base64.StdEncoding.DecodeString(res.WireBytesBase64)
 		if err != nil {
-			fmt.Println("[mpc-keygen] Deliver: base64 decode error =", err)
+			logKeygenf("Deliver: base64 decode error = %v\n", err)
 			return err
 		}
 
@@ -237,7 +241,7 @@ func DeliverMpcKeygenMsg(wsClient *sdk.SocketSDK, myNodeID, router string, body 
 		cleanupExpiredEarlyKeygenMessagesLocked(now)
 		if b, exists := earlyKeygenMessages[sessionKey]; exists && len(b.items) >= maxEarlyMessages {
 			earlyKeygenMessagesMu.Unlock()
-			fmt.Printf("[mpc-keygen] Deliver: dropped early msg (buffer full) task=%s node=%s\n", taskID, myNodeID)
+			logKeygenf("Deliver: dropped early msg (buffer full) task=%s node=%s\n", taskID, myNodeID)
 			return nil
 		}
 		item := recvItem{
@@ -253,20 +257,20 @@ func DeliverMpcKeygenMsg(wsClient *sdk.SocketSDK, myNodeID, router string, body 
 		earlyKeygenMessages[sessionKey] = b
 		earlyKeygenMessagesMu.Unlock()
 
-		fmt.Printf("[mpc-keygen] Deliver: cached early msg task=%s node=%s fromIndex=%d\n", taskID, myNodeID, res.FromIndex)
+		logKeygenf("Deliver: cached early msg task=%s node=%s fromIndex=%d\n", taskID, myNodeID, res.FromIndex)
 		return nil
 	}
 
 	// 己方消息不处理
 	if res.FromIndex == s.router.myIndex {
-		fmt.Printf("[mpc-keygen] Deliver: dropped (own) task=%s myIndex=%d fromIndex=%d\n",
+		logKeygenf("Deliver: dropped (own) task=%s myIndex=%d fromIndex=%d\n",
 			taskID, s.router.myIndex, res.FromIndex)
 		return nil
 	}
 
 	wireBytes, err := base64.StdEncoding.DecodeString(res.WireBytesBase64)
 	if err != nil {
-		fmt.Println("[mpc-keygen] Deliver: base64 error =", err)
+		logKeygenf("Deliver: base64 error = %v\n", err)
 		return err
 	}
 	item := recvItem{
@@ -275,10 +279,10 @@ func DeliverMpcKeygenMsg(wsClient *sdk.SocketSDK, myNodeID, router string, body 
 		IsBroadcast: res.IsBroadcast,
 	}
 	if !s.enqueue(item) {
-		fmt.Println("[mpc-keygen] Deliver: session already closed for task", taskID)
+		logKeygenf("Deliver: session already closed for task %s\n", taskID)
 		return nil
 	}
-	fmt.Printf("[mpc-keygen] Deliver: enqueued myIndex=%d fromIndex=%d task=%s\n", s.router.myIndex, res.FromIndex, taskID)
+	logKeygenf("Deliver: enqueued myIndex=%d fromIndex=%d task=%s\n", s.router.myIndex, res.FromIndex, taskID)
 	return nil
 }
 
@@ -314,12 +318,12 @@ func runKeygenNodeRealECDSA(start dto.CliMPCKeygenStartRes, myNodeID string, wsC
 		return keygen.LocalPartySaveData{}, "", errors.New("mpc: invalid parameters")
 	}
 
-	fmt.Printf("[mpc-keygen] node=%s task=%s: generating preparams...\n", myNodeID, start.TaskID)
+	logKeygenf("node=%s task=%s: generating preparams...\n", myNodeID, start.TaskID)
 	preParams, err := keygen.GeneratePreParams(90*time.Second, 2)
 	if err != nil {
 		return keygen.LocalPartySaveData{}, "", fmt.Errorf("preparams: %w", err)
 	}
-	fmt.Printf("[mpc-keygen] node=%s task=%s: preparams generated\n", myNodeID, start.TaskID)
+	logKeygenf("node=%s task=%s: preparams generated\n", myNodeID, start.TaskID)
 
 	outCh := make(chan tss.Message, 8)
 	endCh := make(chan keygen.LocalPartySaveData, 1)
@@ -352,7 +356,7 @@ func runKeygenNodeRealECDSA(start dto.CliMPCKeygenStartRes, myNodeID string, wsC
 		return keygen.LocalPartySaveData{}, "", startErr
 	}
 
-	fmt.Printf("[mpc-keygen] node=%s task=%s: party started, waiting for messages and result\n", myNodeID, start.TaskID)
+	logKeygenf("node=%s task=%s: party started, waiting for messages and result\n", myNodeID, start.TaskID)
 
 	keygenTimeout := 10 * time.Minute
 	deadline := time.After(keygenTimeout)
@@ -450,7 +454,7 @@ func HandleMpcKeygenStart(wsClient *sdk.SocketSDK, myNodeID, router string, body
 		}
 	}
 
-	fmt.Printf("[mpc-keygen] node=%s task=%s start, alg=%s threshold=%d, nodes=%v\n",
+	logKeygenf("node=%s task=%s start, alg=%s threshold=%d, nodes=%v\n",
 		myNodeID, start.TaskID, start.Algorithm, start.Threshold, start.NodeIDs)
 
 	sortedIDs := alg_ecdsa.PartyIDs(start.NodeIDs)
@@ -499,24 +503,24 @@ func HandleMpcKeygenStart(wsClient *sdk.SocketSDK, myNodeID, router string, body
 
 		saveData, keyID, err := RunKeygenNodeRealByAlg(start, myNodeID, wsClient)
 		if err != nil {
-			fmt.Printf("[mpc-keygen] node=%s task=%s failed: %v\n", myNodeID, start.TaskID, err)
+			logKeygenf("node=%s task=%s failed: %v\n", myNodeID, start.TaskID, err)
 			_ = submitKeygenResultErr(wsClient, start.TaskID, myNodeID, err.Error())
 			return
 		}
 
-		fmt.Printf("[mpc-keygen] node=%s task=%s succeeded, keyID=%s, saving local share and submitting result\n",
+		logKeygenf("node=%s task=%s succeeded, keyID=%s, saving local share and submitting result\n",
 			myNodeID, start.TaskID, keyID)
 
 		baseDir := fmt.Sprintf("keys")
 		store := alg_ecdsa.NewFileKeyStore(baseDir)
 		if err := store.Save(keyID, myNodeID, saveData); err != nil {
-			fmt.Printf("[mpc-keygen] node=%s task=%s save local share failed: %v\n", myNodeID, start.TaskID, err)
+			logKeygenf("node=%s task=%s save local share failed: %v\n", myNodeID, start.TaskID, err)
 			_ = submitKeygenResultErr(wsClient, start.TaskID, myNodeID, "save local share failed: "+err.Error())
 			return
 		}
 
 		if err := SubmitKeygenResult(wsClient, start.TaskID, myNodeID, keyID, saveData); err != nil {
-			fmt.Printf("[mpc-keygen] node=%s task=%s submit result failed: %v\n", myNodeID, start.TaskID, err)
+			logKeygenf("node=%s task=%s submit result failed: %v\n", myNodeID, start.TaskID, err)
 			_ = submitKeygenResultErr(wsClient, start.TaskID, myNodeID, "submit result failed: "+err.Error())
 		}
 	}()
@@ -538,7 +542,7 @@ func (r *wsKeygenRouter) Send(fromIndex int, msg tss.Message) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("[mpc-keygen] Send: task=%s fromIndex=%d isBroadcast=%v len=%d\n",
+	logKeygenf("Send: task=%s fromIndex=%d isBroadcast=%v len=%d\n",
 		r.taskID, fromIndex, msg.IsBroadcast(), len(wireBytes))
 
 	var toNodeIDs []string
@@ -546,7 +550,7 @@ func (r *wsKeygenRouter) Send(fromIndex int, msg tss.Message) error {
 		for _, pid := range msg.GetTo() {
 			toNodeIDs = append(toNodeIDs, pid.GetId())
 		}
-		fmt.Printf("[mpc-keygen] Send: task=%s fromIndex=%d toNodeIDs=%v\n",
+		logKeygenf("Send: task=%s fromIndex=%d toNodeIDs=%v\n",
 			r.taskID, fromIndex, toNodeIDs)
 	} else {
 		for _, v := range r.sortedIDs {
@@ -573,7 +577,7 @@ func (r *wsKeygenRouter) Send(fromIndex int, msg tss.Message) error {
 			return err
 		}
 		if len(publicKey) == 0 {
-			fmt.Printf("[mpc-keygen] Send: task=%s no public key for target %s, skip\n", r.taskID, targetNodeID)
+			logKeygenf("Send: task=%s no public key for target %s, skip\n", r.taskID, targetNodeID)
 			continue
 		}
 		encrypt, err := ecc.Encrypt(nil, publicKey, data, utils.Str2Bytes(utils.AddStr(r.taskID, "|", targetNodeID, "|mpcKeygenMsg")))
@@ -585,7 +589,7 @@ func (r *wsKeygenRouter) Send(fromIndex int, msg tss.Message) error {
 			Subject: targetNodeID,
 			Data:    utils.Base64Encode(encrypt),
 		}, &dto.CliMPCResultRes{}, true, true, 60); err != nil {
-			fmt.Printf("[mpc-keygen] Send: task=%s fromIndex=%d to %s rpc error=%v\n", r.taskID, fromIndex, targetNodeID, err)
+			logKeygenf("Send: task=%s fromIndex=%d to %s rpc error=%v\n", r.taskID, fromIndex, targetNodeID, err)
 			return err
 		}
 	}
@@ -602,14 +606,14 @@ func (r *wsKeygenRouter) Receive(toIndex int, wireBytes []byte, fromIndex int, i
 	fromPartyID := r.sortedIDs[fromIndex]
 	parsed, err := tss.ParseWireMessage(wireBytes, fromPartyID, isBroadcast)
 	if err != nil {
-		fmt.Printf("[mpc-keygen] Receive: task=%s parse error fromIndex=%d: %v\n",
+		logKeygenf("Receive: task=%s parse error fromIndex=%d: %v\n",
 			r.taskID, fromIndex, err)
 		return err
 	}
 	_, err = r.party.Update(parsed)
 	if err != nil {
 		if err.Error() != "Error is nil" {
-			fmt.Printf("[mpc-keygen] Receive: task=%s Update error fromIndex=%d: %v\n",
+			logKeygenf("Receive: task=%s Update error fromIndex=%d: %v\n",
 				r.taskID, fromIndex, err)
 		}
 	}

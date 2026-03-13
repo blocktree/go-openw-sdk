@@ -144,7 +144,7 @@ func (s *CliService) FindWalletList(req *dto.CliFindWalletListReq, res *dto.CliF
 	for _, v := range fileList {
 		res.Result = append(res.Result, dto.WalletResult{
 			Alias:    v.Alias,
-			WalletID: v.KeyID,
+			WalletID: v.WalletID,
 			RootPath: v.RootPubHex,
 		})
 	}
